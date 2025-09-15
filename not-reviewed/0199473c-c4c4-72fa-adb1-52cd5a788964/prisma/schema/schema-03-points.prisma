@@ -1,0 +1,69 @@
+/// Stores the current point balance for each member. This main business
+/// entity tracks points accumulated by users based on message activity.
+/// Points are updated in real-time and are essential for minigames and user
+/// rankings. References the member owning the points.
+///
+/// @namespace Points
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_points {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced member's {@link chatbot_members.id} owning these points.
+  chatbot_member_id String
+  
+  /// Current total points accumulated by the user.
+  points Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([chatbot_member_id])
+  @@index([created_at])
+}
+
+/// Records the last point award time per member to enforce the 1-second
+/// cooldown rule. Tracks when a user last earned points to prevent rapid
+/// point farming. This supporting entity complements the points system for
+/// fair point distribution.
+///
+/// @namespace Points
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_point_cooldowns {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced member's {@link chatbot_members.id} for cooldown tracking.
+  chatbot_member_id String
+  
+  /// Timestamp of the last point awarded to the member.
+  last_point_time DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([chatbot_member_id])
+  @@index([last_point_time])
+}

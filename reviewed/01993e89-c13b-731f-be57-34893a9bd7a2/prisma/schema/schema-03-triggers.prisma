@@ -1,0 +1,57 @@
+/// Stores runtime TriggerInstances for notification workflows representing
+/// workflow executions with idempotency key, status, current cursor
+/// position, retry attempts, and availability scheduling. References the
+/// target workflow and supports lifecycle management and worker processing
+/// coordination.
+///
+/// @namespace Triggers
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_trigger_instances {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced workflow's notification_workflow_workflows.id.
+  workflow_id String
+  
+  /// Idempotency key to ensure uniqueness and prevent duplicate trigger
+  /// creation per workflow.
+  idempotency_key String
+  
+  /// Current node id cursor indicating the next node to execute in the
+  /// workflow DAG.
+  cursor_current_node_id String?
+  
+  /// Status of the trigger instance, enum values: enqueued, processing,
+  /// completed, failed.
+  status String
+  
+  /// Count of execution attempts for retry logic, starting from zero.
+  attempts Int
+  
+  /// Timestamp indicating when the trigger instance becomes available for
+  /// processing or retry.
+  available_at DateTime
+  
+  /// Input data payload in JSON format for the workflow trigger execution
+  /// context.
+  payload String
+  
+  /// Timestamp when the TriggerInstance was created.
+  created_at DateTime
+  
+  /// Timestamp when the TriggerInstance was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  workflow notification_workflow_workflows @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  
+  notification_workflow_step_execution_logs notification_workflow_step_execution_logs[]
+  
+  @@unique([workflow_id, idempotency_key], map: "notification_workflow_trigger_instances_workflow_id_id_27f56185")
+  @@index([workflow_id, status, available_at], map: "notification_workflow_trigger_instances_workflow_id_st_5837ba23")
+}

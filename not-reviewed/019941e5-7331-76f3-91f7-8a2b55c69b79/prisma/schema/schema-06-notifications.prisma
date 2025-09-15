@@ -1,0 +1,190 @@
+/// Stores email notification logs sent via EasySign. Records recipient
+/// address, content, status, associated user if applicable, and timestamps
+/// for auditing and tracking delivery attempts.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_email_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The recipient user linked to this notification. May reference different
+  /// user tables. {@link easy_sign_freelancerusers.id,
+  /// easy_sign_corporateusers.id, easy_sign_teamleaders.id,
+  /// easy_sign_admins.id}
+  user_id String?
+  
+  /// Email recipient address.
+  email_to String
+  
+  /// Carbon copy email addresses separated by commas if multiple.
+  email_cc String?
+  
+  /// Subject line of the email message.
+  subject String
+  
+  /// Body content of the email notification.
+  body String
+  
+  /// Current status of email notification (e.g., pending, sent, failed).
+  status String
+  
+  /// Timestamp when email was sent, nullable if not sent yet.
+  sent_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last record update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_freelancerusers? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([email_to, subject, sent_at])
+  @@index([user_id, status])
+}
+
+/// Tracks notifications sent through KakaoTalk by EasySign. Includes
+/// recipient phone number, message text, status, linked user if any, and
+/// timestamps for comprehensive tracking.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_kakao_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Recipient user linked with the Kakao notification, referencing existing
+  /// user tables.
+  user_id String?
+  
+  /// Recipient phone number in E.164 international format.
+  phone_number String
+  
+  /// Text message content sent via KakaoTalk.
+  message String
+  
+  /// Current status of the Kakao notification (pending, sent, failed).
+  status String
+  
+  /// Timestamp at which the notification was sent, nullable if pending.
+  sent_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, null if record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_corporateusers? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([phone_number, sent_at])
+  @@index([user_id, status])
+}
+
+/// Stores SMS notification logs sent by EasySign, including recipient phone
+/// number, message content, send status, linked user if applicable, and
+/// record timestamps.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_sms_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated user receiving the SMS notification, linked to existing user
+  /// tables.
+  user_id String?
+  
+  /// Phone number of the SMS recipient in international format.
+  phone_number String
+  
+  /// Content of the SMS message.
+  message String
+  
+  /// SMS sending status, e.g., pending, sent, failed.
+  status String
+  
+  /// Timestamp when the SMS was sent, nullable if not yet sent.
+  sent_at DateTime?
+  
+  /// Timestamp of record creation.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null when record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_teamleaders? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([phone_number, sent_at])
+  @@index([user_id, status])
+}
+
+/// Contains configuration and metadata for third-party external services
+/// integrated with EasySign, like Zapier, Google Drive, Dropbox, and Slack.
+/// Contains API keys, statuses, activation flags, and timestamps for
+/// management and auditing.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_external_integrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the external service such as Zapier, Google Drive, Dropbox, Slack.
+  service_name String
+  
+  /// API key or token used to authenticate with the external service.
+  api_key String
+  
+  /// Flag indicating whether this integration is currently enabled.
+  enabled Boolean
+  
+  /// Current status of the integration (active, inactive, error).
+  status String
+  
+  /// Timestamp when the integration record was created.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null when record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([service_name])
+  @@index([status])
+}

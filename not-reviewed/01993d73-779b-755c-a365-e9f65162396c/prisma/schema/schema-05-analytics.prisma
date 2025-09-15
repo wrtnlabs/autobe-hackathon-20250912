@@ -1,0 +1,84 @@
+/// Aggregated study progress analytics per student and study phase,
+/// providing metrics such as completed tasks count, total tasks count, and
+/// completion rate. Related to students and study phases for tracking
+/// learning progress across phases.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_study_progress_analytics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated student {@link study_planner_students.id}.
+  student_id String
+  
+  /// Associated study phase {@link study_planner_study_phases.id}.
+  study_phase_id String
+  
+  /// Number of completed tasks for the student in the given study phase.
+  completed_tasks_count Int
+  
+  /// Total number of tasks assigned to the student in the study phase.
+  total_tasks_count Int
+  
+  /// Completion rate computed as completed tasks divided by total tasks.
+  completion_rate Float
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  student study_planner_students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  studyPhase study_planner_study_phases @relation(fields: [study_phase_id], references: [id], onDelete: Cascade)
+  
+  @@unique([student_id, study_phase_id], map: "study_planner_study_progress_analytics_student_id_stud_6e01aaeb")
+  @@index([study_phase_id, updated_at], map: "study_planner_study_progress_analytics_study_phase_id__63516c0c")
+}
+
+/// Analytics data showing learning gap statistics per student and subject
+/// category, highlighting underperformed areas in study tasks. Links to
+/// students and subject categories to assist targeted improvements and
+/// visualization.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_learning_gap_charts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated student {@link study_planner_students.id}.
+  student_id String
+  
+  /// Subject category {@link study_planner_subject_categories.id} representing
+  /// study topic.
+  subject_category_id String
+  
+  /// Quantified measure of the learning gap for the subject category.
+  gap_metric Float
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  student study_planner_students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  subjectCategory study_planner_subject_categories @relation(fields: [subject_category_id], references: [id], onDelete: Cascade)
+  
+  @@unique([student_id, subject_category_id], map: "study_planner_learning_gap_charts_student_id_subject_c_5fb2f886")
+  @@index([subject_category_id, updated_at], map: "study_planner_learning_gap_charts_subject_category_id__a94b45bc")
+}

@@ -1,0 +1,80 @@
+/// Administrative logs capturing system admin user actions and operations
+/// for auditing and compliance. Enables tracking of privileged operations
+/// performed by system administrators, including login events, configuration
+/// changes, and critical management activities. Linked to admin users
+/// through foreign keys where applicable, with timestamps for creation,
+/// updates, and soft deletion ability if needed. These logs are read-only
+/// from the user perspective and support audit trail requirements.
+///
+/// @namespace Administration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_admin_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated admin user's id. {@link easy_sign_admins.id}
+  admin_user_id String
+  
+  /// Type of admin action performed, e.g., LOGIN, UPDATE_CONFIG,
+  /// USER_MANAGEMENT
+  action_type String
+  
+  /// Detailed description of the admin action
+  action_detail String?
+  
+  /// Timestamp when the log entry was created
+  created_at DateTime
+  
+  /// Timestamp when the log entry was last updated
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if not deleted
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  adminUser easy_sign_admins @relation(fields: [admin_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([admin_user_id, created_at])
+}
+
+/// System-wide audit log recording all significant system events and changes
+/// for security and traceability. Includes events such as system startup,
+/// shutdown, configuration alterations, and automated tasks. Designed to
+/// support forensic analysis and compliance audits. These logs are
+/// append-only and read-only for users, with timestamps and soft deletion
+/// capability.
+///
+/// @namespace Administration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_system_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type of system event, e.g., SYSTEM_START, SYSTEM_STOP, CONFIG_CHANGE
+  event_type String
+  
+  /// Detailed description of the system event
+  event_description String?
+  
+  /// Timestamp when the event was logged
+  created_at DateTime
+  
+  /// Timestamp when the event log was last updated
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if not deleted
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([event_type, created_at])
+}

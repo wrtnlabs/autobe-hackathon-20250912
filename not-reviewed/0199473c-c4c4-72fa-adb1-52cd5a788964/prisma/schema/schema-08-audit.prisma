@@ -1,0 +1,45 @@
+/// Audit log entries recording detailed operational events across the
+/// chatbot system, including minigame results, command executions, stock
+/// transactions, and stock price changes. It preserves immutable historical
+/// data for compliance, analysis, and debugging purposes. References users
+/// ({@link chatbot_members.id}), rooms ({@link chatbot_room_tuples.id}) and
+/// event types to support filtering and auditing.
+///
+/// @namespace Audit
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced chatbot member {@link chatbot_members.id} associated with the
+  /// audit event. Nullable if event is system generated.
+  chatbot_member_id String?
+  
+  /// Referenced chatbot room tuple {@link chatbot_room_tuples.id} related to
+  /// the event. Nullable when not applicable.
+  chatbot_room_tuple_id String?
+  
+  /// Type of audit event such as 'command_execution', 'minigame_play',
+  /// 'stock_transaction', or 'stock_price_change'.
+  event_type String
+  
+  /// Detailed JSON-encoded string containing the event specifics, parameters,
+  /// and results for audit purposes.
+  event_payload String
+  
+  /// Timestamp when the audit event was recorded in the system.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members? @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  roomTuple chatbot_room_tuples? @relation(fields: [chatbot_room_tuple_id], references: [id], onDelete: Cascade)
+  
+  @@index([event_type, created_at])
+  @@index([chatbot_member_id, created_at])
+  @@index([chatbot_room_tuple_id, created_at])
+}

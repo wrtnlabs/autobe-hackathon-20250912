@@ -1,0 +1,88 @@
+/// User accounts representing authenticated individuals who can manage their
+/// own subscriptions, vendors, and reminder settings. Includes secure
+/// authentication fields such as email and password hash. Primary key is
+/// UUID `id`. Contains audit timestamps for creation and updates.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_user {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User's unique email address used for login and identification.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Timestamp when the user account was created.
+  created_at DateTime
+  
+  /// Timestamp when the user account was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  subscription_renewal_guardian_subscriptions subscription_renewal_guardian_subscriptions[]
+  
+  @@unique([email])
+}
+
+/// Administrator accounts with read-only access to all users’ subscription
+/// data. Includes login credentials and audit timestamps. Primary key is
+/// UUID `id`. Email must be unique across admins.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_admin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's unique email address.
+  email String
+  
+  /// Hashed password for admin authentication.
+  password_hash String
+  
+  /// Timestamp when the admin account was created.
+  created_at DateTime
+  
+  /// Timestamp when the admin account was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// Guest users are unauthenticated visitors who can register and login. This
+/// table tracks guest registration attempts or temporary data as needed.
+/// Primary key is UUID `id`. Created and updated timestamps for record
+/// maintenance.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_guest {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Guest user's email address for registration or identification.
+  email String
+  
+  /// Timestamp when the guest record was created.
+  created_at DateTime
+  
+  /// Timestamp when the guest record was last updated.
+  updated_at DateTime
+}

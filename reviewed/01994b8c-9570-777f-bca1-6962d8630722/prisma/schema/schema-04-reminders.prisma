@@ -1,0 +1,42 @@
+/// Reminder settings attached to subscriptions for renewal notifications.
+/// Each setting defines how many days before renewal to notify and via which
+/// channel. Uniqueness enforced on subscription and days_before. Supports
+/// created_at, updated_at, and soft delete timestamps.
+///
+/// @namespace Reminders
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_reminder_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced subscription's {@link
+  /// subscription_renewal_guardian_subscriptions.id}.
+  subscription_id String
+  
+  /// Number of days before the subscription renewal to send the reminder.
+  /// Allowed values are 7, 3, or 1.
+  days_before Int
+  
+  /// Communication channel for reminders. Allowed values are 'EMAIL' or 'NONE'.
+  channel String
+  
+  /// Timestamp when the reminder setting was created.
+  created_at DateTime
+  
+  /// Timestamp when the reminder setting was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the reminder setting was soft deleted. Null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  subscription subscription_renewal_guardian_subscriptions @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  
+  @@unique([subscription_id, days_before], map: "subscription_renewal_guardian_reminder_settings_subscr_127a3533")
+  @@index([created_at, updated_at], map: "subscription_renewal_guardian_reminder_settings_create_18870aaa")
+}

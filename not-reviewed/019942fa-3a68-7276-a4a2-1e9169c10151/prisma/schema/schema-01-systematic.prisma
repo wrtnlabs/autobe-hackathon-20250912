@@ -1,0 +1,108 @@
+/// Holds detailed information about specialty coffee cafes including name,
+/// address, contact details, opening hours, menu description, and photo.
+/// This table is a core business entity accessible to all users for browsing
+/// and searching cafe information. Enforces uniqueness on cafe name to
+/// prevent duplicates and supports soft deletion for data integrity and
+/// recovery.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_cafes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the specialty coffee cafe.
+  name String
+  
+  /// Physical address of the cafe.
+  address String
+  
+  /// Contact information such as phone number or email.
+  contact_info String?
+  
+  /// Human-readable opening hours of the cafe.
+  opening_hours String?
+  
+  /// Brief description of the cafe menu offerings.
+  menu_description String?
+  
+  /// URL string pointing to a photo of the cafe.
+  photo_url String?
+  
+  /// Timestamp when the cafe record was created.
+  created_at DateTime
+  
+  /// Timestamp when the cafe record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the cafe was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  specialty_coffee_log_coffee_logs specialty_coffee_log_coffee_logs[]
+  
+  @@unique([name])
+  @@index([created_at, deleted_at])
+}
+
+/// Stores user-submitted suggestions for adding new cafes or editing
+/// existing cafe information. Suggestions include proposed cafe data and
+/// track status for review workflow, allowing independent management of
+/// suggestions separate from the core cafe data. Each suggestion is linked
+/// to the member who submitted it for accountability.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_cafe_suggestions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Submitting member's {@link specialty_coffee_log_members.id}.
+  member_id String
+  
+  /// Proposed cafe name in the suggestion.
+  name String
+  
+  /// Proposed physical address in the suggestion.
+  address String?
+  
+  /// Proposed contact info such as phone or email.
+  contact_info String?
+  
+  /// Proposed opening hours in human-readable format.
+  opening_hours String?
+  
+  /// Proposed menu description.
+  menu_description String?
+  
+  /// Proposed photo URL for the cafe.
+  photo_url String?
+  
+  /// Review status of the suggestion, such as 'pending', 'approved', or
+  /// 'rejected'.
+  status String
+  
+  /// Timestamp when the suggestion was created.
+  created_at DateTime
+  
+  /// Timestamp when the suggestion was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the suggestion was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member specialty_coffee_log_members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  @@index([member_id, status, created_at], map: "specialty_coffee_log_cafe_suggestions_member_id_status_e01b508f")
+}

@@ -1,0 +1,193 @@
+/// Assignment of roles to users within the FlexOffice system. Links users to
+/// roles, enforcing RBAC. Tracks creation, update timestamps and supports
+/// soft deletion. Primary entity enabling role-based access control.
+///
+/// @namespace AccessControl
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_role_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's flex_office_admins.id, flex_office_editors.id, or
+  /// flex_office_viewers.id.
+  user_id String
+  
+  /// Name of the assigned role, e.g., Admin, Editor, Viewer.
+  role_name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to support recoverability.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user flex_office_admins @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, role_name])
+  @@index([role_name, created_at])
+}
+
+/// Defines distinct permissions available in the FlexOffice system.
+/// Permissions describe specific access rights or actions. Supports active
+/// status and audit tracking.
+///
+/// @namespace AccessControl
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique permission identifier key, e.g., 'edit_pages', 'view_reports'.
+  permission_key String
+  
+  /// Detailed description of what this permission grants.
+  description String?
+  
+  /// Status of the permission, e.g., active or disabled.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for recoverability.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_table_permissions flex_office_table_permissions[]
+  
+  @@unique([permission_key])
+  @@index([status, created_at])
+}
+
+/// Permissions scoped to specific database tables in the FlexOffice system.
+/// Defines which permissions apply to which tables. Subsidiary entity
+/// supporting granular access control.
+///
+/// @namespace AccessControl
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_table_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced permission's flex_office_permissions.id.
+  permission_id String
+  
+  /// Name of the database table this permission applies to.
+  table_name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  permission flex_office_permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  
+  flex_office_column_permissions flex_office_column_permissions[]
+  flex_office_row_permissions flex_office_row_permissions[]
+  
+  @@unique([permission_id, table_name])
+  @@index([table_name, created_at])
+}
+
+/// Permissions scoped to specific columns within tables in FlexOffice.
+/// Supports fine-grained column access control. Subsidiary entity supporting
+/// detailed permission coverage.
+///
+/// @namespace AccessControl
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_column_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced table permission's flex_office_table_permissions.id.
+  table_permission_id String
+  
+  /// Name of the column this permission controls.
+  column_name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tablePermission flex_office_table_permissions @relation(fields: [table_permission_id], references: [id], onDelete: Cascade)
+  
+  @@unique([table_permission_id, column_name], map: "flex_office_column_permissions_table_permission_id_col_d3b171d0")
+  @@index([column_name, created_at])
+}
+
+/// Row-level permissions enabling filtering rules for data access control in
+/// FlexOffice. Supports complex conditions for row filtering. Subsidiary
+/// entity for detailed security enforcement.
+///
+/// @namespace AccessControl
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_row_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced table permission's flex_office_table_permissions.id.
+  table_permission_id String
+  
+  /// Filter condition as a SQL WHERE clause or expression for row-level access
+  /// control.
+  filter_condition String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for record recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tablePermission flex_office_table_permissions @relation(fields: [table_permission_id], references: [id], onDelete: Cascade)
+  
+  @@index([table_permission_id])
+  
+  @@index([created_at])
+}

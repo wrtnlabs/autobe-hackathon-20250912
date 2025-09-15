@@ -1,0 +1,182 @@
+/// User-submitted download job requests capturing parameters such as channel
+/// ID, filters, and status. Used to track download lifecycle and quota
+/// enforcement.
+///
+/// @namespace FileManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_download_jobs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged end user's {@link telegram_file_downloader_endusers.id}.
+  enduser_id String?
+  
+  /// Belonged developer's {@link telegram_file_downloader_developers.id}.
+  developer_id String?
+  
+  /// Telegram channel or group identifier targeted for file download.
+  channel_id String
+  
+  /// Comma-separated list of requested file extensions for filtering, e.g.,
+  /// "mp4,zip,jpg,pdf".
+  file_types String?
+  
+  /// Start date of inclusive date range to filter files.
+  date_start DateTime?
+  
+  /// End date of inclusive date range to filter files.
+  date_end DateTime?
+  
+  /// Current status code of the download job (e.g., pending, in_progress,
+  /// completed, failed).
+  status String
+  
+  /// Timestamp when the download job was created.
+  created_at DateTime
+  
+  /// Timestamp when the download job was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for logical deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  enduser telegram_file_downloader_endusers? @relation(fields: [enduser_id], references: [id], onDelete: Cascade)
+  developer telegram_file_downloader_developers? @relation(fields: [developer_id], references: [id], onDelete: Cascade)
+  
+  telegram_file_downloader_files telegram_file_downloader_files[]
+  
+  @@index([enduser_id, created_at], map: "telegram_file_downloader_download_jobs_enduser_id_crea_5d2337f2")
+  @@index([developer_id, created_at], map: "telegram_file_downloader_download_jobs_developer_id_cr_208a2a3d")
+  @@index([status, created_at])
+}
+
+/// Metadata and storage details of files downloaded from Telegram
+/// channels/groups. Stores URLs and file information for retrieval and quota
+/// calculations.
+///
+/// @namespace FileManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_files {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to associated download job {@link
+  /// telegram_file_downloader_download_jobs.id}.
+  download_job_id String
+  
+  /// Name of the downloaded file including extension.
+  filename String
+  
+  /// File extension or type, e.g., mp4, zip, jpg, pdf.
+  file_extension String
+  
+  /// Size of the file in bytes.
+  file_size_bytes Int
+  
+  /// Signed URL to access the stored file in AWS S3 with expiration.
+  s3_url String
+  
+  /// Timestamp when the file record was created.
+  created_at DateTime
+  
+  /// Timestamp when the file record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if file is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  downloadJob telegram_file_downloader_download_jobs @relation(fields: [download_job_id], references: [id], onDelete: Cascade)
+  
+  @@index([download_job_id, created_at])
+}
+
+/// Tracking of storage usage by users to enforce quota limits on downloaded
+/// files and storage allocation.
+///
+/// @namespace FileManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_storage_usages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged end user's {@link telegram_file_downloader_endusers.id}.
+  enduser_id String
+  
+  /// Belonged developer's {@link telegram_file_downloader_developers.id}.
+  developer_id String?
+  
+  /// Amount of storage used in bytes by the user.
+  storage_bytes_used Int
+  
+  /// Number of files stored by the user.
+  file_count Int
+  
+  /// Maximum storage quota in bytes allowed by the user's subscription plan.
+  quota_max_bytes Int
+  
+  /// Timestamp when the usage record was created.
+  created_at DateTime
+  
+  /// Timestamp when the usage record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  enduser telegram_file_downloader_endusers @relation(fields: [enduser_id], references: [id], onDelete: Cascade)
+  developer telegram_file_downloader_developers? @relation(fields: [developer_id], references: [id], onDelete: Cascade)
+  
+  @@index([enduser_id, created_at], map: "telegram_file_downloader_storage_usages_enduser_id_cre_47395896")
+  @@index([developer_id, created_at], map: "telegram_file_downloader_storage_usages_developer_id_c_82edbc05")
+}
+
+/// Master list of possible status codes for download jobs, used for
+/// reference and validation.
+///
+/// @namespace FileManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_download_job_statuses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique status code string (e.g., pending, in_progress, completed, failed).
+  status_code String
+  
+  /// Human-readable description of the status code.
+  description String
+  
+  /// Timestamp when the status record was created.
+  created_at DateTime
+  
+  /// Timestamp when the status record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([status_code])
+}

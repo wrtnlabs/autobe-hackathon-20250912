@@ -1,0 +1,165 @@
+/// Core entity representing a student study task managed independently,
+/// linked to a student, study phase, and subject category. Tracks title,
+/// optional description, and soft deletion. Supports creation and update
+/// timestamps for audit trail.
+///
+/// @namespace Study
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_study_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged student's {@link study_planner_students.id}
+  student_id String
+  
+  /// Associated study phase {@link study_planner_study_phases.id}
+  study_phase_id String
+  
+  /// Linked subject category {@link study_planner_subject_categories.id}
+  subject_category_id String
+  
+  /// Title of the study task capturing the user's learning goal.
+  title String
+  
+  /// Detailed description or notes about the study task.
+  description String?
+  
+  /// Timestamp when the study task was created.
+  created_at DateTime
+  
+  /// Timestamp when the study task was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the study task was soft deleted; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  student study_planner_students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  studyPhase study_planner_study_phases @relation(fields: [study_phase_id], references: [id], onDelete: Cascade)
+  subjectCategory study_planner_subject_categories @relation(fields: [subject_category_id], references: [id], onDelete: Cascade)
+  
+  study_planner_study_task_progress study_planner_study_task_progress[]
+  study_planner_attachments study_planner_attachments[]
+  study_planner_memos study_planner_memos[]
+  study_planner_task_alarms study_planner_task_alarms[]
+  
+  @@index([study_phase_id])
+  @@index([subject_category_id])
+  
+  @@unique([student_id, title])
+  @@index([student_id, study_phase_id])
+}
+
+/// Stores progress information per study phase for each study task. Includes
+/// completion timestamps for tracking phase completion states to support
+/// study lifecycle management and analytics. References the main study task
+/// and the study phase.
+///
+/// @namespace Study
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_study_task_progress {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated study task {@link study_planner_study_tasks.id}
+  study_task_id String
+  
+  /// Tracked study phase {@link study_planner_study_phases.id}
+  study_phase_id String
+  
+  /// Timestamp when the study phase was completed for this task; null if
+  /// incomplete.
+  completed_at DateTime?
+  
+  /// Record creation timestamp for progress entry.
+  created_at DateTime
+  
+  /// Last update timestamp for progress entry.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  studyTask study_planner_study_tasks @relation(fields: [study_task_id], references: [id], onDelete: Cascade)
+  studyPhase study_planner_study_phases @relation(fields: [study_phase_id], references: [id], onDelete: Cascade)
+  
+  @@index([study_phase_id])
+  
+  @@unique([study_task_id, study_phase_id], map: "study_planner_study_task_progress_study_task_id_study__55b670c4")
+  @@index([study_task_id, completed_at], map: "study_planner_study_task_progress_study_task_id_comple_051b15d0")
+}
+
+/// Represents attachment files such as images or PDFs linked to study tasks.
+/// Supports multiple files per task with file metadata including type, URL,
+/// and creation timestamp for content management.
+///
+/// @namespace Study
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_attachments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged study task {@link study_planner_study_tasks.id}
+  study_task_id String
+  
+  /// Type of the attachment file, e.g., image/jpeg, application/pdf.
+  file_type String
+  
+  /// URI of the stored attachment file for retrieval.
+  file_url String
+  
+  /// Timestamp when the attachment was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  studyTask study_planner_study_tasks @relation(fields: [study_task_id], references: [id], onDelete: Cascade)
+  
+  @@index([study_task_id, file_type])
+}
+
+/// Stores memo texts attached to study tasks as notes to support users in
+/// capturing additional information related to their learning activities.
+/// Each memo is associated with a single study task with timestamps for
+/// creation and updates.
+///
+/// @namespace Study
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_memos {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged study task {@link study_planner_study_tasks.id}
+  study_task_id String
+  
+  /// Text content of the memo providing additional details or notes.
+  memo_text String
+  
+  /// Timestamp when the memo was created.
+  created_at DateTime
+  
+  /// Timestamp when the memo was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  studyTask study_planner_study_tasks @relation(fields: [study_task_id], references: [id], onDelete: Cascade)
+  
+  @@index([study_task_id])
+}

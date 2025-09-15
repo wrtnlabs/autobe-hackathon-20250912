@@ -1,0 +1,148 @@
+/// Stores administrative notifications for OAuth server admins. This
+/// includes alert titles, messages, and read status, linked to the admin
+/// user. Records creation, update, and soft deletion timestamps for audit
+/// and operational purposes.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_admin_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the administrator user {@link oauth_server_admins.id} who
+  /// receives or is associated with the notification.
+  admin_id String
+  
+  /// Title of the notification message.
+  title String
+  
+  /// Detailed notification content providing context to the admin.
+  message String
+  
+  /// Indicates whether the notification has been read by the admin.
+  is_read Boolean
+  
+  /// Timestamp when the notification was initially created.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the notification.
+  updated_at DateTime
+  
+  /// Timestamp when the notification was soft deleted; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  admin oauth_server_admins @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  
+  @@unique([admin_id, title, created_at])
+  @@index([created_at, is_read])
+}
+
+/// Records monitoring logs for OAuth access token events such as validation,
+/// expiration, and revocation. Captures details about event type,
+/// timestamps, client IP, user agent, linked access token, and associated
+/// OAuth client for audit and security tracking purposes.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_token_monitors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Links to OAuth access token {@link oauth_server_access_tokens.id} related
+  /// to the event.
+  access_token_id String
+  
+  /// References the OAuth client {@link oauth_server_oauth_clients.id}
+  /// involved with the token event.
+  oauth_client_id String
+  
+  /// Type of token event such as 'validation', 'expiration', or 'revocation'.
+  event_type String
+  
+  /// Exact timestamp when the token event occurred.
+  event_timestamp DateTime
+  
+  /// IP address from which the token event originated.
+  ip_address String
+  
+  /// User agent string of the client environment; nullable if not available.
+  user_agent String?
+  
+  /// Timestamp for log record creation.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the log record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  accessToken oauth_server_access_tokens @relation(fields: [access_token_id], references: [id], onDelete: Cascade)
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  
+  @@index([oauth_client_id])
+  
+  @@unique([access_token_id, event_timestamp])
+  @@index([event_timestamp, ip_address])
+}
+
+/// Historical record of client secret regeneration events for OAuth clients.
+/// Tracks time of regeneration, reason for change, and references to admin
+/// user and OAuth client. Includes audit timestamps and supports soft
+/// deletion for compliance and operational transparency.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_client_secret_regenerations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the OAuth client {@link oauth_server_oauth_clients.id} whose
+  /// secret was regenerated.
+  oauth_client_id String
+  
+  /// References the administrator {@link oauth_server_admins.id} who performed
+  /// the secret regeneration.
+  admin_id String
+  
+  /// Timestamp when the client secret regeneration occurred.
+  regenerated_at DateTime
+  
+  /// Optional reason or notes explaining the secret regeneration.
+  reason String?
+  
+  /// Timestamp when the record was created for audit.
+  created_at DateTime
+  
+  /// Timestamp of last update to the record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null indicates active record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  admin oauth_server_admins @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  
+  @@index([admin_id])
+  
+  @@unique([oauth_client_id, regenerated_at], map: "oauth_server_client_secret_regenerations_oauth_client__7197c79b")
+  @@index([regenerated_at])
+}

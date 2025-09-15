@@ -1,0 +1,143 @@
+/// System-wide configuration settings for community AI platform. Stores
+/// key-value based settings for general platform behavior and feature
+/// toggles. This table holds critical system parameters that control
+/// site-wide operational modes. Uniqueness is enforced on setting keys.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_system_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique key identifying the system setting.
+  setting_key String
+  
+  /// Value of the system setting as string.
+  setting_value String
+  
+  /// Optional human-readable description of the setting purpose and usage.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  community_ai_audit_logs community_ai_audit_logs[]
+  
+  @@unique([setting_key])
+  @@index([created_at, updated_at])
+}
+
+/// Defines user roles within the community AI platform. Represents role
+/// names and their descriptions for access control and permission
+/// assignment. Roles govern authorization scopes and are referenced
+/// throughout the system.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_roles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the user role.
+  role_name String
+  
+  /// Detailed description of the role and its purpose in the system.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([role_name])
+  @@index([created_at, updated_at])
+}
+
+/// Permission definitions that govern access rights within the community AI
+/// platform. Permissions link to roles and specify authorization actions.
+/// This table contains discrete permission entries which can be assigned to
+/// roles.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifier name for the permission.
+  permission_name String
+  
+  /// Detailed explanation of what actions the permission allows.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([permission_name])
+  @@index([created_at, updated_at])
+}
+
+/// Configuration and metadata for external AI and system integration
+/// services used by Community AI platform. Includes service names, API
+/// endpoints, authentication credentials, and operational status. Supports
+/// multiple external service types for extensibility.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_external_services {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the external service.
+  service_name String
+  
+  /// URI endpoint for API access to the external service.
+  api_endpoint String
+  
+  /// Authentication token or key for service API calls, may be null if not
+  /// needed.
+  auth_token String?
+  
+  /// Flag indicating if the service is currently active and enabled.
+  is_active Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([service_name])
+  @@index([is_active, created_at])
+}

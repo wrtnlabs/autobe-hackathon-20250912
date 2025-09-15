@@ -1,0 +1,280 @@
+/// Applicant (candidate) account representing a job seeker. Contains
+/// personal profile data, contact, unique authentication information (email,
+/// password_hash), and timestamps for audit. Linked to applications and
+/// resumes in other tables. Core business subject with fully independent
+/// lifecycle management.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_applicants {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique authentication email address for login. Must be business-usable
+  /// and never shared between accounts. Used for contact and notifications.
+  email String
+  
+  /// Secure, one-way hash of applicant's password for authentication. The
+  /// actual plaintext password must never be stored. Used by the login system.
+  password_hash String
+  
+  /// Full name of the applicant as parsed from resume or entered directly.
+  /// Used for identification and search.
+  name String
+  
+  /// Phone number for applicant contact and notifications.
+  phone String?
+  
+  /// Whether the account is currently active and able to access services. Used
+  /// for deactivation instead of hard deletion.
+  is_active Boolean
+  
+  /// Timestamp when the applicant profile was created.
+  created_at DateTime
+  
+  /// Timestamp when applicant profile was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp. Null if not deleted; marks recovery or GDPR
+  /// erasure.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_actor_login_histories ats_recruitment_actor_login_histories[]
+  ats_recruitment_applications ats_recruitment_applications[]
+  ats_recruitment_resumes ats_recruitment_resumes[]
+  ats_recruitment_resume_upload_histories ats_recruitment_resume_upload_histories[]
+  ats_recruitment_coding_tests ats_recruitment_coding_tests[]
+  ats_recruitment_coding_test_submissions ats_recruitment_coding_test_submissions[]
+  ats_recruitment_interview_participants ats_recruitment_interview_participants[]
+  ats_recruitment_notifications ats_recruitment_notifications[]
+  ats_recruitment_export_job_details ats_recruitment_export_job_details[]
+  
+  @@unique([email])
+  @@index([created_at])
+  @@index([is_active])
+}
+
+/// HR recruiter/staff account for managing job postings, interviewing,
+/// notifications, and applicant statuses. Full authentication required. Can
+/// view, control, and update business data. Maintains privileged separation
+/// from applicants and technical reviewers.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_hrrecruiters {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email for login and notifications. Used as primary authentication
+  /// field.
+  email String
+  
+  /// Hash of the HR recruiter's password. Never store the plain text password.
+  password_hash String
+  
+  /// HR recruiter's real name for business use and addressability (email,
+  /// notifications).
+  name String
+  
+  /// Department name/identifier the HR recruiter belongs to. Useful for
+  /// segmenting privilege and reporting lines.
+  department String?
+  
+  /// Account status: enabled (true) or deactivated (false). Deactivated users
+  /// cannot perform HR system actions.
+  is_active Boolean
+  
+  /// Timestamp when the HR account was created. For audit trail.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for GDPR or separation from service. Null if not
+  /// deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_job_postings ats_recruitment_job_postings[]
+  ats_recruitment_application_status_histories ats_recruitment_application_status_histories[]
+  ats_recruitment_application_feedback ats_recruitment_application_feedback[]
+  ats_recruitment_coding_tests ats_recruitment_coding_tests[]
+  ats_recruitment_interview_participants ats_recruitment_interview_participants[]
+  ats_recruitment_notifications ats_recruitment_notifications[]
+  ats_recruitment_export_jobs ats_recruitment_export_jobs[]
+  
+  @@unique([email])
+  @@index([created_at])
+  @@index([is_active])
+}
+
+/// Technical reviewer (engineer/evaluator) account. Used to log into ATS and
+/// perform code review, skill assessments, and technical interviews. Has
+/// distinct access from HR and applicants. Auditable lifecycle and
+/// authentication.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_techreviewers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Login email for the technical reviewer. Unique identifier. Also used for
+  /// notification and delegation.
+  email String
+  
+  /// Password hash for technical reviewer authentication (never store as plain
+  /// text).
+  password_hash String
+  
+  /// Reviewer full name for notifications, audit, and addressing by HR.
+  name String
+  
+  /// Key technology or specialty (e.g. Backend, Frontend, Cloud, Security) for
+  /// reviewer assignment. Used by HR to auto-match reviewers based on skill.
+  specialization String?
+  
+  /// Whether the account is enabled and can perform reviews or is deactivated.
+  /// Used to lock reviewer out without erasing records.
+  is_active Boolean
+  
+  /// Timestamp when the technical reviewer account was created.
+  created_at DateTime
+  
+  /// Timestamp of last update to the technical reviewer profile.
+  updated_at DateTime
+  
+  /// Timestamp when reviewer was soft-deleted for GDPR or privilege
+  /// separation. Null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_coding_test_review_comments ats_recruitment_coding_test_review_comments[]
+  ats_recruitment_interview_participants ats_recruitment_interview_participants[]
+  ats_recruitment_notifications ats_recruitment_notifications[]
+  
+  @@unique([email])
+  @@index([created_at])
+  @@index([is_active])
+}
+
+/// System administrator account for full privileged access to all ATS
+/// settings, users, audit logs, and integration. Highest privilege for
+/// managing other accounts, environment settings, and external API
+/// credentials. Enables separation of duties and audit compliance.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_systemadmins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator login (unique) and key notification address. Must be
+  /// distinct from all other account types.
+  email String
+  
+  /// Secure password hash for administrator authentication. Never store raw
+  /// passwords.
+  password_hash String
+  
+  /// Full name of administrator. Used in audit logs and action records.
+  name String
+  
+  /// Indicates whether this admin account is a super administrator (can manage
+  /// other admins, system-wide settings). Only true for highest level admin
+  /// accounts.
+  super_admin Boolean
+  
+  /// Whether this admin account is enabled. False disables logins and all
+  /// privileged actions.
+  is_active Boolean
+  
+  /// Date/time at which the admin account was created.
+  created_at DateTime
+  
+  /// Date/time of last modifications to the admin profile/account details.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for compliance and audit. Null when account is
+  /// active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_notifications ats_recruitment_notifications[]
+  
+  @@unique([email])
+  @@index([created_at])
+  @@index([is_active])
+}
+
+/// Audit table that records all successful and failed login attempts for
+/// every actor account in the system (applicants, HR recruiters, tech
+/// reviewers, system admins). Enables historical tracking, security audits,
+/// incident investigations, and compliance reporting. Subsidiary table: not
+/// managed directly by users.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_actor_login_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The unique identifier of the actor (applicant, HR, tech reviewer, or
+  /// admin) performing a login attempt. Polymorphic UUID referencing an actor;
+  /// for schema-vaild relation, mapped to ats_recruitment_applicants by
+  /// default.
+  actor_id String
+  
+  /// Role type of the actor performing the login (applicant, hr_recruiter,
+  /// tech_reviewer, system_admin). Used for polymorphic attribution. String
+  /// enum in application.
+  actor_type String
+  
+  /// Whether the login attempt was successful (true) or a failure (false). Key
+  /// metric for security and audit analysis.
+  login_succeeded Boolean
+  
+  /// IP address from where the login was attempted. Used for security analysis
+  /// and possible incident response.
+  origin_ip String?
+  
+  /// Raw HTTP user-agent string from login attempt. For device profiling and
+  /// fraud detection.
+  user_agent String?
+  
+  /// Exact timestamp when the login was attempted (not when user was created).
+  login_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  actor ats_recruitment_applicants @relation(fields: [actor_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_id, login_at])
+  @@index([login_succeeded])
+  @@index([login_at])
+}

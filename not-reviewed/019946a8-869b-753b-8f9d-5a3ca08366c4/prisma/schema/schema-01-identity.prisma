@@ -1,0 +1,113 @@
+/// Guest users of the TravelRecord system, representing unauthenticated or
+/// minimal access users. Guests may browse public content but cannot create
+/// travel records or interact socially. This table maintains guest user
+/// identification and creation and update timestamps for tracking purposes.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_guest {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([created_at])
+}
+
+/// Authenticated members of travel_record system who can record places
+/// visited, upload photos, write reviews and ratings, manage friendships,
+/// and control privacy. Includes authentication information for login via
+/// Google OAuth, identification details, and timestamps.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_member {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member's verified email address used as login ID.
+  email String
+  
+  /// Member's display name for social interactions.
+  display_name String
+  
+  /// Unique Google OAuth identifier for authentication.
+  google_oauth_id String
+  
+  /// Hashed password for authentication, if applicable (not stored plaintext).
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for account recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  travel_record_places travel_record_places[]
+  travel_record_reviews travel_record_reviews[]
+  travel_record_friends_of_member_id travel_record_friends[] @relation("travel_record_friends_of_member_id")
+  travel_record_friends_of_friend_member_id travel_record_friends[] @relation("travel_record_friends_of_friend_member_id")
+  travel_record_privacy_settings travel_record_privacy_settings[]
+  
+  @@unique([email])
+  @@unique([google_oauth_id])
+  @@index([created_at])
+}
+
+/// Administrator users of the TravelRecord system with privileges to manage
+/// users, content, and system settings. Admins have login credentials and
+/// identification information stored securely, along with timestamps for
+/// auditing.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_admin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's official email address for login.
+  email String
+  
+  /// Administrator's display name used in system logs and interfaces.
+  display_name String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for account deactivation and recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}

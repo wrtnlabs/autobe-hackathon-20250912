@@ -1,0 +1,117 @@
+/// Guest user identities allowing limited view-only access without login
+/// credentials; primarily tracked by email and nickname. Includes timestamps
+/// for creation and soft deletion enabling audit and recovery.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_guests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Guest user's email address for identification and notifications. Unique
+  /// to ensure no duplicate guest records.
+  email String
+  
+  /// Guest display nickname visible on platform chats and leaderboards.
+  nickname String?
+  
+  /// Record creation timestamp for auditing purposes.
+  created_at DateTime
+  
+  /// Timestamp for the latest update of the guest record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// Registered members (team leaders) authorized to bid in auctions. Stores
+/// authentication data including password hash and unique email. Maintains
+/// point of contact and display nickname. Includes timestamps and soft
+/// deletion to enable auditing and account lifecycle management.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member's unique email address used for login and notifications.
+  email String
+  
+  /// Hashed password for secure authentication processes. Not stored in
+  /// plaintext.
+  password_hash String
+  
+  /// Member's display nickname on platform and auction chats.
+  nickname String?
+  
+  /// Account creation timestamp for audit trail.
+  created_at DateTime
+  
+  /// Last update timestamp for account data.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp indicating account deactivation; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auction_platform_audit_logs auction_platform_audit_logs[]
+  auction_platform_team_leaders auction_platform_team_leaders?
+  auction_platform_sponsorship_events auction_platform_sponsorship_events[]
+  auction_platform_icon_purchases auction_platform_icon_purchases[]
+  auction_platform_schedule_audit_logs auction_platform_schedule_audit_logs[]
+  
+  @@unique([email])
+}
+
+/// Administrative user identities responsible for managing the auction
+/// platform. Secure authentication with password hash and unique email
+/// enforced. Includes audit timestamps and soft deletion for lifecycle and
+/// compliance.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Admin's unique email address used for authentication and notifications.
+  email String
+  
+  /// Secure hashed password for administrator login.
+  password_hash String
+  
+  /// Admin display nickname for identification in admin tools and logs.
+  nickname String?
+  
+  /// Timestamp when the admin record was created for auditing.
+  created_at DateTime
+  
+  /// Timestamp of last update on the admin record for audit tracking.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp indicating admin deactivation; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}

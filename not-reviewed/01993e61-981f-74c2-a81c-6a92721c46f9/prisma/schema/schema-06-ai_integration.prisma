@@ -1,0 +1,212 @@
+/// AI contexts representing persistent conversational and development state
+/// for projects and tasks within FlowSphere. Enables long-term memory and
+/// context sharing to overcome AI IDE token limits and statelessness. Linked
+/// to project contexts and tasks for unified state management.
+///
+/// @namespace AIIntegration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_ai_contexts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged project context's {@link flow_sphere_project_contexts.id}
+  project_context_id String?
+  
+  /// Belonged epic task's {@link flow_sphere_task_epics.id}
+  task_epic_id String?
+  
+  /// Belonged task's {@link flow_sphere_task_tasks.id}
+  task_task_id String?
+  
+  /// Belonged mini-task's {@link flow_sphere_task_mini_tasks.id}
+  task_mini_task_id String?
+  
+  /// Belonged micro-task's {@link flow_sphere_task_micro_tasks.id}
+  task_micro_task_id String?
+  
+  /// Belonged atomic task's {@link flow_sphere_task_atomic_tasks.id}
+  task_atomic_task_id String?
+  
+  /// Serialized JSON data storing the AI conversational and state context for
+  /// the project/task.
+  context_data String
+  
+  /// Record creation timestamp for audit purposes.
+  created_at DateTime
+  
+  /// Record last update timestamp for audit purposes.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; marks record as logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  projectContext flow_sphere_project_contexts? @relation(fields: [project_context_id], references: [id], onDelete: Cascade)
+  taskEpic flow_sphere_task_epics? @relation(fields: [task_epic_id], references: [id], onDelete: Cascade)
+  taskTask flow_sphere_task_tasks? @relation(fields: [task_task_id], references: [id], onDelete: Cascade)
+  taskMiniTask flow_sphere_task_mini_tasks? @relation(fields: [task_mini_task_id], references: [id], onDelete: Cascade)
+  taskMicroTask flow_sphere_task_micro_tasks? @relation(fields: [task_micro_task_id], references: [id], onDelete: Cascade)
+  taskAtomicTask flow_sphere_task_atomic_tasks? @relation(fields: [task_atomic_task_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_ai_prompts flow_sphere_ai_prompts[]
+  
+  @@unique([project_context_id])
+  @@unique([task_epic_id])
+  @@unique([task_task_id])
+  @@unique([task_mini_task_id])
+  @@unique([task_micro_task_id])
+  @@unique([task_atomic_task_id])
+  @@index([created_at, updated_at])
+}
+
+/// Represents AI IDE client states and synchronization information for each
+/// user session connected to the FlowSphere platform. Maintains continuous
+/// IDE context syncing and state tracking for efficient collaboration.
+///
+/// @namespace AIIntegration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_ai_ides {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged registered user's {@link flow_sphere_registered_user.id}
+  registered_user_id String
+  
+  /// Name of the AI IDE client, e.g., 'Cursor AI', 'Codeium'.
+  ide_name String
+  
+  /// Version string of the AI IDE client software.
+  ide_version String
+  
+  /// Timestamp of the last successful synchronization with the AI IDE.
+  last_synced_at DateTime
+  
+  /// Record creation timestamp for audit purposes.
+  created_at DateTime
+  
+  /// Record last update timestamp for audit purposes.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; marks record as logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  registeredUser flow_sphere_registered_user @relation(fields: [registered_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([registered_user_id, last_synced_at])
+}
+
+/// Captures history of AI prompt data sent to AI models for project and task
+/// development. Enables auditing and analysis of AI interactions, tracking
+/// prompt creation and usage over time.
+///
+/// @namespace AIIntegration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_ai_prompts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged AI context's {@link flow_sphere_ai_contexts.id}
+  ai_context_id String
+  
+  /// Belonged project's {@link flow_sphere_projects.id}
+  project_id String
+  
+  /// Belonged task's {@link flow_sphere_task_tasks.id}
+  task_id String?
+  
+  /// The text content of the AI prompt sent to the AI model.
+  prompt_text String
+  
+  /// The text content of the AI model's response to the prompt.
+  prompt_response String?
+  
+  /// Record creation timestamp for audit purposes.
+  created_at DateTime
+  
+  /// Record last update timestamp for audit purposes.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; marks record as logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  aiContext flow_sphere_ai_contexts @relation(fields: [ai_context_id], references: [id], onDelete: Cascade)
+  project flow_sphere_projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  task flow_sphere_task_tasks? @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  
+  @@index([project_id])
+  @@index([task_id])
+  
+  @@index([ai_context_id, project_id, task_id, created_at], map: "flow_sphere_ai_prompts_ai_context_id_project_id_task_i_968368c1")
+}
+
+/// Represents MCP protocol sessions for managing real-time AI IDE
+/// connections, user sessions, and synchronization states. Critical for
+/// maintaining collaborative state consistency across distributed AI
+/// development environments.
+///
+/// @namespace AIIntegration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_mcp_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged MCP server's {@link flow_sphere_mcp_servers.id}
+  mcp_server_id String
+  
+  /// Belonged MCP connection's {@link flow_sphere_mcp_connections.id}
+  mcp_connection_id String
+  
+  /// Belonged registered user {@link flow_sphere_registered_user.id}
+  registered_user_id String
+  
+  /// Unique session token string for MCP session authentication and
+  /// identification.
+  session_token String
+  
+  /// Timestamp when the session was established.
+  connected_at DateTime
+  
+  /// Timestamp when the session was closed.
+  disconnected_at DateTime?
+  
+  /// Record creation timestamp for audit purposes.
+  created_at DateTime
+  
+  /// Record last update timestamp for audit purposes.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; marks record as logically deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  mcpServer flow_sphere_mcp_servers @relation(fields: [mcp_server_id], references: [id], onDelete: Cascade)
+  mcpConnection flow_sphere_mcp_connections @relation(fields: [mcp_connection_id], references: [id], onDelete: Cascade)
+  registeredUser flow_sphere_registered_user @relation(fields: [registered_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([mcp_connection_id])
+  @@index([registered_user_id])
+  
+  @@index([mcp_server_id, mcp_connection_id, registered_user_id, connected_at], map: "flow_sphere_mcp_sessions_mcp_server_id_mcp_connection__d11bc566")
+}

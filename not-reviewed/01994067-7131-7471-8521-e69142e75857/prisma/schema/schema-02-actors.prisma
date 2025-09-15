@@ -1,0 +1,143 @@
+/// Guest user entity representing unauthenticated or anonymous users who can
+/// initiate authentication processes or browse limited services. Contains
+/// only auditing timestamps and soft delete support but no authentication
+/// fields.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_guests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last modification timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null when active.
+  deleted_at DateTime?
+}
+
+/// Member user entity for registered users supporting local email/password
+/// authentication and social authentication. Includes unique email, verified
+/// flag, hashed password, and auditing timestamps with soft delete enabled.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address for user authentication and communication; unique per user.
+  email String
+  
+  /// Flag indicating if the user's email address is verified.
+  email_verified Boolean
+  
+  /// Hashed password for authentication; plain passwords are never stored.
+  password_hash String
+  
+  /// Timestamp of record creation.
+  created_at DateTime
+  
+  /// Timestamp of last record update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauth_server_social_user_links oauth_server_social_user_links[]
+  oauth_server_user_profiles oauth_server_user_profiles?
+  oauth_server_user_points oauth_server_user_points?
+  oauth_server_user_point_coupons oauth_server_user_point_coupons[]
+  
+  @@unique([email])
+}
+
+/// Administrator user entity with elevated privileges for system management.
+/// Stores unique email, verified flag, hashed password, with auditing and
+/// soft delete timestamps.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator email address; unique for login and communication.
+  email String
+  
+  /// Indicates whether the administrator's email has been verified.
+  email_verified Boolean
+  
+  /// Hashed password for administrator authentication.
+  password_hash String
+  
+  /// Timestamp of account creation.
+  created_at DateTime
+  
+  /// Timestamp of last account update.
+  updated_at DateTime
+  
+  /// Timestamp representing soft deletion status.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauth_server_admin_notifications oauth_server_admin_notifications[]
+  oauth_server_client_secret_regenerations oauth_server_client_secret_regenerations[]
+  
+  @@unique([email])
+}
+
+/// Developer user entity representing OAuth client developers with
+/// permissions to manage clients and SDKs. Includes unique email, email
+/// verification flag, password hash, with auditing and soft delete
+/// timestamps.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_developers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Developer email address; unique for identification and communication.
+  email String
+  
+  /// Email verification status for developer accounts.
+  email_verified Boolean
+  
+  /// Hashed password for developer authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion of the developer record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}

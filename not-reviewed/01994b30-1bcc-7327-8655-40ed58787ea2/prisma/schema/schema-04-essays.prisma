@@ -1,0 +1,161 @@
+/// Contains essay submissions representing individual essays submitted by
+/// students within tenants and classes. Links to tenant, student, and
+/// optionally class. Tracks essay language, status, and related metadata to
+/// support grading workflows. Contains created_at, updated_at and optional
+/// deleted_at timestamps for audit and soft delete support. Acts as a
+/// primary business entity for independent CRUD operations.
+///
+/// @namespace Essays
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_essays {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant to which this essay belongs. {@link creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Student who submitted the essay. {@link creverse_ai_essay_student.id}
+  student_id String
+  
+  /// Class associated with this essay, optional. {@link
+  /// creverse_ai_essay_classes.id}
+  class_id String?
+  
+  /// Current status of the essay submission, e.g., 'received', 'processing',
+  /// or 'graded'.
+  status String
+  
+  /// Language code of the essay, following BCP 47 standard, e.g., 'en-US'.
+  language String
+  
+  /// Optional title of the essay, provided by student or system.
+  title String?
+  
+  /// Timestamp when the essay was created.
+  created_at DateTime
+  
+  /// Timestamp when the essay was last updated.
+  updated_at DateTime
+  
+  /// Optional timestamp when the essay was soft deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  student creverse_ai_essay_student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  class creverse_ai_essay_classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_essay_versions creverse_ai_essay_essay_versions[]
+  creverse_ai_essay_essay_blobs creverse_ai_essay_essay_blobs[]
+  
+  @@index([student_id])
+  @@index([class_id])
+  
+  @@unique([tenant_id, student_id, id])
+  @@index([tenant_id, student_id, created_at])
+  @@index([status, created_at])
+}
+
+/// Represents different versions of essays including original, normalized,
+/// and OCR processed texts. Each version links to a parent essay, tracks
+/// language, normalized flags, and text length. Supports audit trail via
+/// created_at and updated_at timestamps. Primary entity for versioned
+/// textual content supporting grading and analysis.
+///
+/// @namespace Essays
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_essay_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent essay to which this version belongs. {@link
+  /// creverse_ai_essay_essays.id}
+  essay_id String
+  
+  /// Language code for this essay version, BCP 47 format, e.g., 'en-US'.
+  language String
+  
+  /// Indicates whether this text version is normalized for consistent grading.
+  normalized Boolean
+  
+  /// True if this version was created via OCR processing of original file.
+  ocr Boolean
+  
+  /// Length of the essay text in tokens or characters.
+  text_length Int
+  
+  /// Timestamp of version creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to this version, typically immutable after
+  /// creation.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  essay creverse_ai_essay_essays @relation(fields: [essay_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_grading_jobs creverse_ai_essay_grading_jobs[]
+  creverse_ai_essay_plagiarism_scans creverse_ai_essay_plagiarism_scans[]
+  creverse_ai_essay_ocr_results creverse_ai_essay_ocr_results[]
+  
+  @@unique([essay_id, id])
+  @@index([essay_id, created_at])
+}
+
+/// Stores references to file artifacts related to essays such as original
+/// uploads, OCR source files, or normalized text files. Linked to essays by
+/// foreign keys. Supports audit timestamps and soft deletion. Subsidiary
+/// entity supporting storage and retrieval of essay-related binary blobs.
+///
+/// @namespace Essays
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_essay_blobs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Essay related to this blob. {@link creverse_ai_essay_essays.id}
+  essay_id String
+  
+  /// URI referencing the location of the stored blob artifact, typically Azure
+  /// Blob Storage SAS URL.
+  blob_uri String
+  
+  /// Type of the blob artifact, e.g., 'original', 'normalized', 'ocr'.
+  blob_type String
+  
+  /// MIME content type of the stored blob, e.g., 'application/pdf',
+  /// 'text/plain'.
+  content_type String
+  
+  /// Timestamp when the blob entry was created.
+  created_at DateTime
+  
+  /// Timestamp when the blob entry was last updated.
+  updated_at DateTime
+  
+  /// Optional timestamp for soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  essay creverse_ai_essay_essays @relation(fields: [essay_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_ocr_jobs creverse_ai_essay_ocr_jobs[]
+  
+  @@unique([essay_id, blob_uri])
+  @@index([blob_type, content_type])
+}

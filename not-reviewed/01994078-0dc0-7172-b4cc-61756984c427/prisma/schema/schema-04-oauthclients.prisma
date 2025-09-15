@@ -1,0 +1,192 @@
+/// OAuth client registration information representing third-party
+/// applications authorized to interact with the social login service.
+/// Contains client identification, secret, redirect URIs, scope definitions,
+/// and management metadata for life cycle control. Supports registration,
+/// update, and status management for OAuth clients.
+///
+/// @namespace OAuthClients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_oauth_clients {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique client identifier (client_id) issued to third-party OAuth clients.
+  client_id String
+  
+  /// Confidential client secret used for authenticating the OAuth client.
+  client_secret String
+  
+  /// Human-readable name of the OAuth client.
+  client_name String
+  
+  /// Comma-separated list of authorized redirect URIs for OAuth client
+  /// callbacks.
+  redirect_uris String
+  
+  /// Allowed OAuth 2.0 grant types for this client (authorization_code,
+  /// refresh_token, etc.).
+  grant_types String
+  
+  /// Supported OAuth 2.0 response types (code, token, id_token).
+  response_types String
+  
+  /// Space-separated list of scopes this client is allowed to request.
+  scope String
+  
+  /// Client authentication method for token endpoint (client_secret_basic,
+  /// none, private_key_jwt).
+  token_endpoint_auth_method String
+  
+  /// Timestamp when the OAuth client registration was created.
+  created_at DateTime
+  
+  /// Timestamp when the OAuth client registration was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to mark the client as deleted without hard
+  /// removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  social_login_access_tokens social_login_access_tokens[]
+  social_login_refresh_tokens social_login_refresh_tokens[]
+  social_login_oauth_authorizations social_login_oauth_authorizations[]
+  social_login_authorization_codes social_login_authorization_codes[]
+  
+  @@unique([client_id])
+  @@index([client_name, created_at])
+}
+
+/// Represents consents and authorizations granted by users or admins to
+/// OAuth clients for access scopes. This entity tracks which user authorized
+/// which client with which scopes and maintains revocation status and
+/// timestamps.
+///
+/// @namespace OAuthClients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_oauth_authorizations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Authorized OAuth client's {@link social_login_oauth_clients.id}
+  oauth_client_id String
+  
+  /// User who granted authorization {@link social_login_users.id}
+  user_id String
+  
+  /// Space-separated list of scopes authorized by the user for the client.
+  scope String
+  
+  /// Authorization status (active, revoked, expired).
+  status String
+  
+  /// Timestamp when the authorization was granted.
+  created_at DateTime
+  
+  /// Timestamp when the authorization was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the authorization was revoked, if applicable.
+  revoked_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient social_login_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  user social_login_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([oauth_client_id, user_id])
+  @@index([user_id, status])
+}
+
+/// Defines OAuth scopes available in the social login system, specifying the
+/// scope name and description to control permissions that clients can
+/// request.
+///
+/// @namespace OAuthClients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_oauth_scopes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the OAuth scope (e.g., openid, email, profile).
+  scope_name String
+  
+  /// Detailed description of the scope purpose and usage.
+  description String
+  
+  /// Timestamp when the scope was created.
+  created_at DateTime
+  
+  /// Timestamp when the scope description was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to mark scope as deleted without removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([scope_name])
+}
+
+/// Authorization codes issued during the OAuth authorization code flow,
+/// uniquely linked to OAuth clients and users, with expiration and usage
+/// status tracking. These codes are exchanged for access tokens.
+///
+/// @namespace OAuthClients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_authorization_codes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// OAuth client associated with this authorization code {@link
+  /// social_login_oauth_clients.id}
+  oauth_client_id String
+  
+  /// User who requested authorization {@link social_login_users.id}
+  user_id String
+  
+  /// Authorization code string issued during authorization flow.
+  code String
+  
+  /// Redirect URI used during authorization request.
+  redirect_uri String
+  
+  /// Expiration timestamp after which the code is invalid.
+  expires_at DateTime
+  
+  /// Flag indicating whether the authorization code has been used.
+  used Boolean
+  
+  /// Timestamp when the authorization code was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient social_login_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  user social_login_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  social_login_access_tokens social_login_access_tokens?
+  social_login_refresh_tokens social_login_refresh_tokens?
+  
+  @@index([user_id])
+  
+  @@unique([code])
+  @@index([oauth_client_id, expires_at])
+}

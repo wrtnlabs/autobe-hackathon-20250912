@@ -1,0 +1,198 @@
+/// OAuth providers registered in the system for user authentication. This
+/// table stores configuration details for third-party OAuth providers such
+/// as Google, GitHub, and others. It supports client_id, client_secret
+/// storage, redirect URIs, scopes, and authorization URLs. It enables
+/// modular OAuth provider management and integration with user
+/// authentication flow. References to OAuth tokens are made from {@link
+/// flow_sphere_oauth_tokens}.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_oauth_providers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the OAuth provider (e.g., 'google', 'github').
+  name String
+  
+  /// Client ID obtained from the OAuth provider.
+  client_id String
+  
+  /// Client secret key obtained from the OAuth provider, stored securely.
+  client_secret String
+  
+  /// URL for initiating OAuth authorization flow.
+  authorization_url String
+  
+  /// URL for OAuth token exchange.
+  token_url String
+  
+  /// Comma-separated list of valid redirect URIs for OAuth callbacks.
+  redirect_uris String
+  
+  /// Space-separated list of OAuth scopes requested from the provider.
+  scopes String
+  
+  /// Timestamp when the OAuth provider configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the OAuth provider configuration was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null means active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_oauth_tokens flow_sphere_oauth_tokens[]
+  
+  @@unique([name])
+}
+
+/// OAuth tokens issued to users for various providers. This table links
+/// individual user OAuth tokens to providers, storing access tokens, refresh
+/// tokens, and expiration times. It enforces referential integrity with the
+/// OAuth providers table {@link flow_sphere_oauth_providers} and user
+/// entities in the system.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_oauth_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked OAuth provider. {@link flow_sphere_oauth_providers.id}
+  flow_sphere_oauth_provider_id String
+  
+  /// Linked user identifier from registered users or other user tables in the
+  /// system. {@link flow_sphere_registered_user.id}
+  user_id String
+  
+  /// The OAuth access token for API access.
+  access_token String
+  
+  /// Refresh token used to obtain new access tokens, if applicable.
+  refresh_token String?
+  
+  /// Timestamp indicating when the access token expires.
+  expires_at DateTime?
+  
+  /// Creation timestamp of this token record.
+  created_at DateTime
+  
+  /// Last update timestamp of this token record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null when active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthProvider flow_sphere_oauth_providers @relation(fields: [flow_sphere_oauth_provider_id], references: [id], onDelete: Cascade)
+  user flow_sphere_registered_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@index([flow_sphere_oauth_provider_id, user_id], map: "flow_sphere_oauth_tokens_flow_sphere_oauth_provider_id_ba79ea87")
+  @@index([created_at, updated_at])
+}
+
+/// Notification services registered in FlowSphere. Stores configuration and
+/// authentication details for external notification platforms like email,
+/// Slack, SMS, or other channels. Supports API keys, webhook URLs, and
+/// status tracking. Connected with notification dispatching subsystems.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_notification_services {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the notification service (e.g., 'slack', 'email').
+  name String
+  
+  /// Type/category of the notification service.
+  service_type String
+  
+  /// API key or token required to authenticate with the notification service.
+  api_key String
+  
+  /// Webhook URL for receiving event callbacks, if applicable.
+  webhook_url String?
+  
+  /// Current operational status of the service (e.g., 'active', 'inactive').
+  status String
+  
+  /// Timestamp when the notification service was registered.
+  created_at DateTime
+  
+  /// Last update timestamp of the notification service configuration.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null indicates active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([name])
+}
+
+/// Storage configuration details for external storage providers. This
+/// includes cloud storage credentials, connection endpoints, bucket names,
+/// and security settings. Supports modular and secure management of storage
+/// backends separate from system core.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_storage_configs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the storage provider (e.g., 'aws_s3', 'gcp_storage').
+  provider_name String
+  
+  /// Access key or ID for the storage provider.
+  access_key String
+  
+  /// Secret key or password for the storage provider.
+  secret_key String
+  
+  /// Optional endpoint URL for storage service.
+  endpoint_url String?
+  
+  /// Bucket or container name.
+  bucket_name String
+  
+  /// Region where the storage bucket is located.
+  region String?
+  
+  /// Timestamp when the storage configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the storage configuration was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if configuration is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([provider_name, bucket_name])
+  @@index([region])
+}

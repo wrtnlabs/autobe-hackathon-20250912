@@ -1,0 +1,149 @@
+/// Represents political news crawling sources configuration. Contains source
+/// URLs, status, and metadata for controlling crawl initiation and
+/// processing. Used to manage diverse data feed points for
+/// politicalNewsCrawler.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_sources {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifier code for the crawl source.
+  source_code String
+  
+  /// The base URL of the crawl source website or API.
+  source_url String
+  
+  /// Flag indicating whether the crawl source is active and enabled for
+  /// crawling.
+  is_active Boolean
+  
+  /// Optional description of the crawl source.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, if record is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  political_news_crawler_crawl_schedules political_news_crawler_crawl_schedules[]
+  political_news_crawler_crawl_jobs political_news_crawler_crawl_jobs[]
+  political_news_crawler_raw_data_storage political_news_crawler_raw_data_storage[]
+  political_news_crawler_llm_jobs political_news_crawler_llm_jobs[]
+  political_news_crawler_crawl_alerts political_news_crawler_crawl_alerts[]
+  
+  @@unique([source_code])
+  @@unique([source_url])
+  @@index([is_active, created_at])
+}
+
+/// Configuration for crawl policies governing crawling frequency, retry, and
+/// error handling for political news sources. Ensures adaptive and
+/// respectful crawling behavior according to source limits and bans.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_policies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name identifier for the crawl policy.
+  policy_name String
+  
+  /// Maximum allowed crawl frequency in minutes.
+  max_crawl_frequency_minutes Int
+  
+  /// Maximum number of retry attempts after failures.
+  max_retry_attempts Int
+  
+  /// Multiplier factor for exponential backoff on retries.
+  backoff_multiplier Float
+  
+  /// Flag to enable detection and handling of bans during crawling.
+  ban_detection_enabled Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, if record is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  political_news_crawler_crawl_schedules political_news_crawler_crawl_schedules[]
+  
+  @@unique([policy_name])
+  @@index([max_crawl_frequency_minutes, ban_detection_enabled], map: "political_news_crawler_crawl_policies_max_crawl_freque_a5d20f2f")
+}
+
+/// Schedules defining when and how often crawling runs for each political
+/// news source. References the crawl source and policy to enable adaptive
+/// scheduling and coordination.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_schedules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to Crawling Source. {@link
+  /// political_news_crawler_crawl_sources.id}
+  crawl_source_id String
+  
+  /// Reference to Crawl Policy. {@link
+  /// political_news_crawler_crawl_policies.id}
+  crawl_policy_id String
+  
+  /// Cron expression defining the crawl schedule timing.
+  schedule_expression String
+  
+  /// Timestamp when the crawl last occurred.
+  last_crawled_at DateTime?
+  
+  /// Timestamp for the next scheduled crawl.
+  next_crawl_at DateTime?
+  
+  /// Flag indicating if this schedule is enabled.
+  is_enabled Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, if record is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  crawlSource political_news_crawler_crawl_sources @relation(fields: [crawl_source_id], references: [id], onDelete: Cascade)
+  crawlPolicy political_news_crawler_crawl_policies @relation(fields: [crawl_policy_id], references: [id], onDelete: Cascade)
+  
+  political_news_crawler_crawl_jobs political_news_crawler_crawl_jobs[]
+  
+  @@index([crawl_source_id, is_enabled, next_crawl_at], map: "political_news_crawler_crawl_schedules_crawl_source_id_bb22a9cd")
+  @@index([crawl_policy_id])
+}

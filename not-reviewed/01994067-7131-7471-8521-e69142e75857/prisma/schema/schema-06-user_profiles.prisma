@@ -1,0 +1,90 @@
+/// Stores volatile user profile information such as nicknames, profile
+/// pictures, and biographies that frequently change, decoupled from core
+/// user identity data to optimize update operations and API performance.
+///
+/// @namespace UserProfiles
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_user_profiles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key referencing the primary user in the oauth_server_members
+  /// table.
+  user_id String
+  
+  /// User's display nickname which can be updated frequently.
+  nickname String?
+  
+  /// URL to the user's profile picture, which can be changed often.
+  profile_picture_url String?
+  
+  /// A short personal biography or description.
+  biography String?
+  
+  /// Timestamp when this record was created.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating logical deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user oauth_server_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  oauth_server_game_profiles oauth_server_game_profiles[]
+  
+  @@unique([user_id])
+  @@index([updated_at])
+}
+
+/// Contains player names and identifiers for external games such as PUBG and
+/// League of Legends, linked to user profiles for integration with official
+/// game APIs.
+///
+/// @namespace UserProfiles
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_game_profiles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key referencing the user profile in oauth_server_user_profiles.
+  user_profile_id String
+  
+  /// Game platform identifier such as 'pubg', 'kakao_pubg', or
+  /// 'league_of_legends'.
+  platform String
+  
+  /// Player's in-game name or identifier.
+  player_name String
+  
+  /// Season identifier to track season-specific stats.
+  season String?
+  
+  /// Timestamp when this record was created.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for logical deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  userProfile oauth_server_user_profiles @relation(fields: [user_profile_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_profile_id])
+  
+  @@index([platform, player_name])
+}

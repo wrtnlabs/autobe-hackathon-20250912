@@ -1,0 +1,205 @@
+/// Primary table for storing user-created UI pages, with lifecycle status
+/// and soft delete support. Contains references to themes and supports
+/// versioning via separate snapshot table. Enables independent page
+/// management and editing in the UI/Page Builder.
+///
+/// @namespace UiPages
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_pages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated page theme referencing flex_office_page_themes.id.
+  flex_office_page_theme_id String?
+  
+  /// The display name or title of the page.
+  name String
+  
+  /// Optional detailed description of the page.
+  description String?
+  
+  /// Current lifecycle status of the page, e.g., draft, published, archived.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  pageTheme flex_office_page_themes? @relation(fields: [flex_office_page_theme_id], references: [id], onDelete: Cascade)
+  
+  flex_office_widgets flex_office_widgets[]
+  flex_office_page_versions flex_office_page_versions[]
+  flex_office_page_editors flex_office_page_editors[]
+  flex_office_page_comments flex_office_page_comments[]
+  flex_office_edit_conflicts flex_office_edit_conflicts[]
+  flex_office_widget_installations flex_office_widget_installations[]
+  
+  @@index([flex_office_page_theme_id])
+  
+  @@unique([name])
+  @@index([status, created_at])
+}
+
+/// Stores individual UI widgets that users can place on pages. Independent
+/// management allowed with soft delete and audit timestamps. Widgets link to
+/// pages and support attribute definition and display configurations.
+///
+/// @namespace UiPages
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_widgets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The page this widget belongs to, referencing flex_office_pages.id.
+  flex_office_page_id String
+  
+  /// Type of the widget, e.g., table, chart, filter, button, form.
+  widget_type String
+  
+  /// Name or label of the widget.
+  name String
+  
+  /// JSON string storing widget-specific configuration details.
+  configuration String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  page flex_office_pages @relation(fields: [flex_office_page_id], references: [id], onDelete: Cascade)
+  
+  flex_office_widget_scripts flex_office_widget_scripts[]
+  flex_office_charts flex_office_charts[]
+  flex_office_kpi_widgets flex_office_kpi_widgets[]
+  flex_office_filter_conditions flex_office_filter_conditions[]
+  
+  @@unique([flex_office_page_id, name])
+  @@index([widget_type])
+}
+
+/// Historical snapshots of UI pages capturing their state at version points
+/// for rollback and auditing. Each version links to a page and stores full
+/// serialized data.
+///
+/// @namespace UiPages
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_page_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced UI page for this version snapshot, referencing
+  /// flex_office_pages.id.
+  flex_office_page_id String
+  
+  /// Sequential version number for the snapshot.
+  version_number Int
+  
+  /// Serialized JSON data of the page state at snapshot time.
+  page_data String
+  
+  /// Version creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  page flex_office_pages @relation(fields: [flex_office_page_id], references: [id], onDelete: Cascade)
+  
+  @@unique([flex_office_page_id, version_number], map: "flex_office_page_versions_flex_office_page_id_version__cc3367be")
+  @@index([created_at])
+}
+
+/// Scripts associated with widgets that define custom logic in JavaScript or
+/// Python. Linked to widgets for extensibility and custom behavior.
+///
+/// @namespace UiPages
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_widget_scripts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated widget referencing flex_office_widgets.id.
+  flex_office_widget_id String
+  
+  /// Type of scripting language, e.g., javascript, python.
+  script_type String
+  
+  /// The actual script content as text.
+  script_content String
+  
+  /// Script creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp of the script.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  widget flex_office_widgets @relation(fields: [flex_office_widget_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_widget_id])
+  
+  @@index([script_type])
+}
+
+/// Themes that define visual styles for UI pages. Allows users to select and
+/// manage themes for consistent appearance.
+///
+/// @namespace UiPages
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_page_themes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Theme name to identify and select for pages.
+  name String
+  
+  /// Optional detailed theme description.
+  description String?
+  
+  /// Theme creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp of the theme.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_pages flex_office_pages[]
+  
+  @@unique([name])
+  @@index([created_at])
+}

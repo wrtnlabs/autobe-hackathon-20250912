@@ -1,0 +1,224 @@
+/// Core entity for resumes/CVs uploaded and registered by applicants for job
+/// applications. Stores structured resume data, parsed/normalized fields,
+/// agnostic to file storage. Each resume belongs to an applicant
+/// (referencing ats_recruitment_applicants.id), and survives
+/// replacement/re-upload (history kept in upload history table). Supports
+/// GDPR-compliant deletion, includes fields for original parsing meta and
+/// audit trail.
+///
+/// @namespace Resumes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_resumes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced applicant's {@link ats_recruitment_applicants.id}. Uniquely
+  /// identifies owner of this resume.
+  ats_recruitment_applicant_id String
+  
+  /// Resume title (user defined or system default), e.g., '2023 Software CV'.
+  title String
+  
+  /// Parsed or entered full name from resume content, for quick
+  /// query/filtering.
+  parsed_name String?
+  
+  /// Parsed or entered email from resume; for structured search.
+  parsed_email String?
+  
+  /// Parsed or entered phone/mobile number from resume.
+  parsed_mobile String?
+  
+  /// Parsed or entered birthdate or DoB from uploaded resume. String form to
+  /// allow flexible date parsing.
+  parsed_birthdate String?
+  
+  /// Summary/short education info parsed from resume (school/major/latest
+  /// degree).
+  parsed_education_summary String?
+  
+  /// Summary/short experience info parsed from resume (last job/experience
+  /// string).
+  parsed_experience_summary String?
+  
+  /// JSON array (stringified) of normalized technical/hard skills parsed from
+  /// this resume. Used for tech stack matching.
+  skills_json String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last modification timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null if active, date if deleted (GDPR/trace).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  applicant ats_recruitment_applicants @relation(fields: [ats_recruitment_applicant_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_applications ats_recruitment_applications?
+  ats_recruitment_resume_files ats_recruitment_resume_files?
+  ats_recruitment_resume_ai_analyses ats_recruitment_resume_ai_analyses[]
+  
+  @@unique([ats_recruitment_applicant_id, title])
+  @@index([created_at])
+  @@index([deleted_at])
+}
+
+/// Subsidiary table with file storage references and metadata for applicant
+/// resumes. Each record links to a parent resume and stores original file
+/// name, storage URI, file type and size. Soft deletion is synchronized with
+/// the resume entity. No independent CRUD management; files are replaced on
+/// resume re-upload.
+///
+/// @namespace Resumes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_resume_files {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked resume's {@link ats_recruitment_resumes.id}. The parent structured
+  /// resume that this file is attached to.
+  ats_recruitment_resume_id String
+  
+  /// Original uploaded file name. Used for display and audit.
+  original_filename String
+  
+  /// Permanent URI/location of file in object/blob storage.
+  file_storage_uri String
+  
+  /// File extension (e.g., pdf, docx).
+  file_ext String
+  
+  /// File size in bytes.
+  file_size Int
+  
+  /// Timestamp of file upload for audit trail.
+  uploaded_at DateTime
+  
+  /// Soft delete timestamp (null if not deleted).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  resume ats_recruitment_resumes @relation(fields: [ats_recruitment_resume_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ats_recruitment_resume_id])
+  @@index([uploaded_at])
+}
+
+/// Stores the output/result logs of AI-based resume analysis and parsing
+/// jobs. Each record ties to one resume, and may be linked to an applicant
+/// or HR/reviewer trigger. Contains analysis type, input meta, result
+/// payload as JSON string, confidence scores if available, job status, and
+/// full audit trail. Multiple analyses per resume are allowed.
+///
+/// @namespace Resumes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_resume_ai_analyses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Target resume's {@link ats_recruitment_resumes.id}. The structured resume
+  /// this analysis belongs to.
+  ats_recruitment_resume_id String
+  
+  /// Type of analysis or vendor job, e.g., 'basic_ocr', 'ai_skill_match',
+  /// 'ner_parse'.
+  analysis_type String
+  
+  /// Status of analysis: e.g., 'pending', 'completed', 'failed'.
+  analysis_status String
+  
+  /// JSON string of request/input sent to AI/analysis API.
+  input_payload_json String?
+  
+  /// JSON string with result/response from AI (structured fields, tags,
+  /// comments).
+  result_payload_json String?
+  
+  /// Optional confidence score/result assigned by analysis result. Null if not
+  /// provided.
+  confidence_score Float?
+  
+  /// Timestamp when analysis started.
+  started_at DateTime
+  
+  /// Timestamp when analysis job finished (success or fail). Null if never
+  /// completed.
+  completed_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  resume ats_recruitment_resumes @relation(fields: [ats_recruitment_resume_id], references: [id], onDelete: Cascade)
+  
+  @@index([ats_recruitment_resume_id], map: "ats_recruitment_resume_ai_analyses_ats_recruitment_res_d401bb62")
+  
+  @@index([started_at])
+  @@index([analysis_type])
+}
+
+/// Snapshot table for recording the full history of applicant resume uploads
+/// (including replacements and repeated uploads). Serves as an immutable
+/// audit log for all uploads, storing all relevant context at the time of
+/// upload (file meta, parse summary, upload actor). Used for data forensics
+/// and recovery. Never deleted or updated after insert.
+///
+/// @namespace Resumes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_resume_upload_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Applicant ID from {@link ats_recruitment_applicants.id}. The user who
+  /// performed this upload.
+  ats_recruitment_applicant_id String
+  
+  /// Resume title (at time of upload) for recovery/display.
+  resume_title String
+  
+  /// Uploaded file name/upload snapshot. Used for audit and trace recovery.
+  file_name String
+  
+  /// Size of uploaded file in bytes (snapshot at time of upload).
+  file_size Int
+  
+  /// File extension/format at time of upload.
+  file_ext String
+  
+  /// Full text or JSON snapshot of parsed resume at upload. Archival purpose
+  /// for audit/forensics.
+  resume_json_snapshot String?
+  
+  /// Timestamp of upload event. Immutable record.
+  upload_timestamp DateTime
+  
+  /// IP address (when known) of actor uploading. Security/audit context.
+  source_ip String?
+  
+  //----
+  // RELATIONS
+  //----
+  applicant ats_recruitment_applicants @relation(fields: [ats_recruitment_applicant_id], references: [id], onDelete: Cascade)
+  
+  @@index([ats_recruitment_applicant_id], map: "ats_recruitment_resume_upload_histories_ats_recruitmen_1fbe518d")
+  
+  @@index([upload_timestamp])
+}

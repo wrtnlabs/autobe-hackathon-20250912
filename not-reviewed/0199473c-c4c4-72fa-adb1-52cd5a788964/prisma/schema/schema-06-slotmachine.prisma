@@ -1,0 +1,42 @@
+/// Slot machine gameplay records capturing individual spin details including
+/// user reference, bet amount, slot results, payout, and timestamps. Enables
+/// audit and analysis of minigame activity separated from user and point
+/// domains to improve modularity and maintainability.
+///
+/// @namespace SlotMachine
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_slotmachine_plays {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced member who played the slot machine. {@link chatbot_members.id}.
+  chatbot_member_id String
+  
+  /// Number of points the user bet on this spin.
+  bet_points Int
+  
+  /// Result of first slot digit (0-9).
+  slot1 Int
+  
+  /// Result of second slot digit (0-9).
+  slot2 Int
+  
+  /// Result of third slot digit (0-9).
+  slot3 Int
+  
+  /// Points won from this spin, zero if none.
+  payout_points Int
+  
+  /// Timestamp when the play was recorded.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  
+  @@index([chatbot_member_id, created_at])
+}

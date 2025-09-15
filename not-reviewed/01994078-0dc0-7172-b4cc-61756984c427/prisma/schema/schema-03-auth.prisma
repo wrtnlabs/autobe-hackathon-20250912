@@ -1,0 +1,216 @@
+/// Access tokens represent opaque credentials issued to users upon
+/// authentication as part of OAuth 2.0/OpenID Connect flows. Each token is
+/// linked to a user, OAuth client, and optionally an authorization code.
+/// Tokens have expiry and revocation status. This table is crucial for
+/// managing user sessions and API access authorization.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_access_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link social_login_users.id}.
+  social_login_user_id String
+  
+  /// OAuth client that requested this token {@link
+  /// social_login_oauth_clients.id}.
+  social_login_oauth_client_id String
+  
+  /// Authorization code linked to this access token {@link
+  /// social_login_authorization_codes.id}.
+  social_login_authorization_code_id String?
+  
+  /// Opaque access token string issued to the client for authentication.
+  token String
+  
+  /// Expiration date and time of the access token in ISO 8601 format.
+  expires_at DateTime
+  
+  /// Flag indicating whether this access token has been revoked.
+  revoked Boolean
+  
+  /// Timestamp when this access token was created.
+  created_at DateTime
+  
+  /// Timestamp when this access token was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user social_login_users @relation(fields: [social_login_user_id], references: [id], onDelete: Cascade)
+  oauthClient social_login_oauth_clients @relation(fields: [social_login_oauth_client_id], references: [id], onDelete: Cascade)
+  authorizationCode social_login_authorization_codes? @relation(fields: [social_login_authorization_code_id], references: [id], onDelete: Cascade)
+  
+  social_login_token_introspection social_login_token_introspection[]
+  social_login_token_revocation social_login_token_revocation?
+  
+  @@index([social_login_oauth_client_id])
+  @@unique([social_login_authorization_code_id], map: "social_login_access_tokens_social_login_authorization__0b97e95b")
+  
+  @@unique([token])
+  @@index([social_login_user_id, expires_at])
+}
+
+/// Refresh tokens allow renewing access tokens without re-authenticating the
+/// user. Each refresh token is linked to a user, OAuth client, and
+/// optionally an authorization code. Includes token string, expiration,
+/// revocation status, and timestamps. Supports secure OAuth 2.0 session
+/// extension.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_refresh_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link social_login_users.id}.
+  social_login_user_id String
+  
+  /// OAuth client that owns this refresh token {@link
+  /// social_login_oauth_clients.id}.
+  social_login_oauth_client_id String
+  
+  /// Authorization code linked to this refresh token {@link
+  /// social_login_authorization_codes.id}.
+  social_login_authorization_code_id String?
+  
+  /// Opaque refresh token string issued to the client.
+  token String
+  
+  /// Expiration datetime of the refresh token in ISO 8601 format.
+  expires_at DateTime
+  
+  /// Flag indicating whether this refresh token is revoked.
+  revoked Boolean
+  
+  /// Timestamp when this refresh token was created.
+  created_at DateTime
+  
+  /// Timestamp when this refresh token was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user social_login_users @relation(fields: [social_login_user_id], references: [id], onDelete: Cascade)
+  oauthClient social_login_oauth_clients @relation(fields: [social_login_oauth_client_id], references: [id], onDelete: Cascade)
+  authorizationCode social_login_authorization_codes? @relation(fields: [social_login_authorization_code_id], references: [id], onDelete: Cascade)
+  
+  social_login_token_introspection social_login_token_introspection[]
+  social_login_token_revocation social_login_token_revocation?
+  
+  @@index([social_login_oauth_client_id])
+  @@unique([social_login_authorization_code_id], map: "social_login_refresh_tokens_social_login_authorization_86f4f59d")
+  
+  @@unique([token])
+  @@index([social_login_user_id, expires_at])
+}
+
+/// Records each request to introspect access or refresh tokens for
+/// validation and auditing per OAuth 2.0 token introspection RFC. Tracks
+/// token active status, metadata, scope, and associated client and user
+/// identifiers to support operational monitoring and security audits.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_token_introspection {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced access token {@link social_login_access_tokens.id}.
+  social_login_access_token_id String
+  
+  /// Referenced refresh token {@link social_login_refresh_tokens.id}.
+  social_login_refresh_token_id String?
+  
+  /// Indicates if the token is currently active according to introspection.
+  active Boolean
+  
+  /// Denotes whether token is access_token or refresh_token.
+  token_type String
+  
+  /// Identifier of the client requesting introspection.
+  client_id String?
+  
+  /// Scope string of token.
+  scope String?
+  
+  /// User identifier associated with token.
+  user_id String?
+  
+  /// Issued at timestamp claim in the token.
+  iat DateTime?
+  
+  /// Expiry timestamp claim in the token.
+  exp DateTime?
+  
+  /// Creation time of this introspection record.
+  created_at DateTime
+  
+  /// Last update time of this introspection record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  accessToken social_login_access_tokens @relation(fields: [social_login_access_token_id], references: [id], onDelete: Cascade)
+  refreshToken social_login_refresh_tokens? @relation(fields: [social_login_refresh_token_id], references: [id], onDelete: Cascade)
+  
+  @@index([social_login_refresh_token_id], map: "social_login_token_introspection_social_login_refresh__3e8974b3")
+  
+  @@index([social_login_access_token_id], map: "social_login_token_introspection_social_login_access_t_ea6ee7bb")
+}
+
+/// Tracks revocation events for access and refresh tokens marking them as
+/// invalidated due to logout, user action, or security issues. Maintains
+/// token blacklist for enforcing immediate access denial.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_token_revocation {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Revoked access token reference {@link social_login_access_tokens.id}.
+  social_login_access_token_id String
+  
+  /// Revoked refresh token reference {@link social_login_refresh_tokens.id}.
+  social_login_refresh_token_id String?
+  
+  /// Datetime when revocation occurred.
+  revoked_at DateTime
+  
+  /// Textual reason for token revocation, if provided.
+  reason String?
+  
+  /// Timestamp when this revocation record was created.
+  created_at DateTime
+  
+  /// Timestamp when this revocation record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  accessToken social_login_access_tokens @relation(fields: [social_login_access_token_id], references: [id], onDelete: Cascade)
+  refreshToken social_login_refresh_tokens? @relation(fields: [social_login_refresh_token_id], references: [id], onDelete: Cascade)
+  
+  @@unique([social_login_access_token_id])
+  @@unique([social_login_refresh_token_id], map: "social_login_token_revocation_social_login_refresh_tok_3287b585")
+  
+  @@index([revoked_at])
+}

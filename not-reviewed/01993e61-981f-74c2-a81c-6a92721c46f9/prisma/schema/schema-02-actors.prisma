@@ -1,0 +1,350 @@
+/// Guest users with read-only access to public content, no authentication
+/// credentials required. Maintains minimal identity for visit tracking.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_guest {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+}
+
+/// Registered users who can create and manage personal projects, participate
+/// in ideation and tasks. Require authentication credentials.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_registered_user {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User's unique email address for login and notifications.
+  email String
+  
+  /// Hashed password for user authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_projects flow_sphere_projects[]
+  flow_sphere_ai_ides flow_sphere_ai_ides[]
+  flow_sphere_mcp_sessions flow_sphere_mcp_sessions[]
+  flow_sphere_team_assignments flow_sphere_team_assignments[]
+  flow_sphere_workload_balances flow_sphere_workload_balances?
+  flow_sphere_standup_reports flow_sphere_standup_reports[]
+  flow_sphere_notifications flow_sphere_notifications[]
+  flow_sphere_auth_credentials flow_sphere_auth_credentials?
+  flow_sphere_auth_sessions flow_sphere_auth_sessions[]
+  flow_sphere_oauth_tokens flow_sphere_oauth_tokens[]
+  
+  @@unique([email])
+}
+
+/// Project managers with full control over projects and team assignments.
+/// Have authentication credentials and permissions for project and task
+/// management.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_project_manager {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Project manager's unique email address.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  
+  @@unique([email])
+}
+
+/// Frontend developers responsible for UI-related tasks and code
+/// submissions. Authenticated users with unique email.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_frontend_developer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Frontend developer's unique email address.
+  email String
+  
+  /// Password hash for authentication.
+  password_hash String
+  
+  /// Creation time of the record.
+  created_at DateTime
+  
+  /// Last update time of the record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating if the record is active or deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  
+  @@unique([email])
+}
+
+/// Backend developers handling server-side logic and API contracts. Require
+/// authentication and unique email addresses.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_backend_developer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Backend developer's unique email.
+  email String
+  
+  /// Password hash for authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  
+  @@unique([email])
+}
+
+/// DevOps engineers responsible for deployments, infrastructure, and
+/// monitoring. Authenticated users with unique emails.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_devops_engineer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// DevOps engineer's unique email.
+  email String
+  
+  /// Password hash for login authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// QA engineers planning and executing tests, submitting reports and bug
+/// findings. Require authenticated identity with unique email.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_qa_engineer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// QA engineer's unique email address.
+  email String
+  
+  /// Authentication password hash.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// UI/UX designers creating design mockups and style guides. Authenticated
+/// with unique email identifier.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_ui_ux_designer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// UI/UX designer's unique email address.
+  email String
+  
+  /// Password hash for login authentication.
+  password_hash String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// AI specialists managing AI IDE integration, prompt engineering, and token
+/// usage. Authenticated users with unique email identifiers.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_ai_specialist {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// AI specialist's unique email address.
+  email String
+  
+  /// Authentication hash for password.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  
+  @@unique([email])
+}
+
+/// Administrators with full system control, including user and role
+/// management. Authenticated identity with unique email.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_admin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's unique email address.
+  email String
+  
+  /// Password hash for authentication.
+  password_hash String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}

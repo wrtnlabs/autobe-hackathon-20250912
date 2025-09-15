@@ -1,0 +1,189 @@
+/// Logs of all sensitive data access events, capturing which user/actor
+/// accessed what ATS recruitment data, when, from where, for audit and
+/// regulatory compliance. Used in GDPR/PII audit reports. Includes
+/// references to business actors via actor_id, target data type, and
+/// target_id fields, plus IP/device information. Independent log entity,
+/// queryable by compliance officers for security forensics.
+///
+/// @namespace SecurityLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_access_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// ID of the user or system component that performed access (references
+  /// recruitment actors; not a foreign key to support access by deleted users
+  /// and external systems).
+  actor_id String
+  
+  /// Type of actor: applicant, hrRecruiter, techReviewer, systemAdmin, or
+  /// system component.
+  actor_type String
+  
+  /// The type/class of data accessed (e.g., resume, application, interview,
+  /// notification, API credentials).
+  target_type String
+  
+  /// Identifying UUID of the record that was accessed. Retained as raw for
+  /// forensics; may point to deleted records.
+  target_id String
+  
+  /// Timestamp when access event occurred (UTC).
+  accessed_at DateTime
+  
+  /// IP address of the actor accessing the data (for compliance and threat
+  /// analysis).
+  ip_address String?
+  
+  /// Free-form description or user-agent of the device/browser used for access.
+  device_info String?
+  
+  /// Stated business or system reason for access (e.g., normal HR processing,
+  /// compliance review, support event, background job, etc.).
+  access_reason String?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([actor_id, accessed_at])
+  @@index([target_type, target_id])
+}
+
+/// Logs of explicit data deletions for ATS recruitment system, including
+/// requests under GDPR 'right to be forgotten', admin-initiated deletions,
+/// and automated purges. Tracks requestor, subject data, reason, and
+/// retention outcome for audit compliance. Full data lineage must be
+/// preserved to meet regulatory rules. Queryable for regulatory and
+/// compliance reports. Independent log table.
+///
+/// @namespace SecurityLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_data_deletion_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp when deletion was executed.
+  deleted_at DateTime
+  
+  /// User or actor requesting deletion (retained even for deleted accounts;
+  /// not a foreign key for audit resilience).
+  requestor_id String
+  
+  /// Type of requestor: applicant, hrRecruiter, techReviewer, systemAdmin, or
+  /// system component.
+  requestor_type String
+  
+  /// Data type/class that was deleted (e.g., resume, application, interview,
+  /// notification).
+  target_type String
+  
+  /// UUID of record deleted (even if later purged).
+  target_id String
+  
+  /// Stated reason (user GDPR request, admin removal, scheduled expiry, legal
+  /// compliance, etc.).
+  deletion_reason String
+  
+  /// Optional note on retention/anonymization (e.g. 'data anonymized', 'full
+  /// deletion', 'archived by policy', etc.).
+  outcome_note String?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([deleted_at, target_type])
+}
+
+/// Masking/anonymization log table for privacy compliance. Captures history
+/// of when, by whom, and why specific data was masked: e.g., personal info
+/// fields replaced/obfuscated for privacy, in response to requests or
+/// automated policy. Supports auditing masking policies, user requests, or
+/// system actions. Separate from data deletion logs to distinguish
+/// obfuscation from deletion. Standalone log record.
+///
+/// @namespace SecurityLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_masking_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp when masking occurred.
+  masked_at DateTime
+  
+  /// UUID of actor (user/system) who masked the data. Not a strict foreign key
+  /// to allow for deleted or obfuscated accounts.
+  masked_by_id String
+  
+  /// Type of actor: applicant, hrRecruiter, techReviewer, systemAdmin,
+  /// automated, compliance, etc.
+  masked_by_type String
+  
+  /// Type/class of data that was masked (resume, application, contact info,
+  /// etc.).
+  target_type String
+  
+  /// UUID of the masked record.
+  target_id String
+  
+  /// Stated reason for masking (user request, automated policy, privacy
+  /// complaint, scheduled expiry, etc.).
+  masking_reason String
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([masked_at, target_type])
+}
+
+/// Authentication failure log for the ATS system. Records every failed login
+/// or system authentication attempt, capturing context for security incident
+/// analysis and compliance. Logs include which login was attempted, from
+/// which IP/device, attempted user identity (may be a deleted or
+/// non-existent account), failure reason, and timestamp. Purpose: immediate
+/// forensics, brute force or abuse detection, account lockout policy
+/// compliance, and incident resolution.
+///
+/// @namespace SecurityLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_authentication_failures {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp of the failed authentication event.
+  attempted_at DateTime
+  
+  /// The username, email, or unique identifier used for authentication attempt
+  /// (even if user account never existed or was deleted).
+  attempted_user_identifier String
+  
+  /// The IP address/source of the authentication attempt.
+  ip_address String?
+  
+  /// Browser/user-agent or system info from which attempt was made.
+  device_info String?
+  
+  /// Technical or business-level reason for failure (e.g., 'wrong password',
+  /// 'locked account', 'user not found', 'expired token', etc.).
+  failure_reason String
+  
+  /// Whether this failure contributed to or triggered an account lockout (for
+  /// compliance tracking).
+  lockout_triggered Boolean
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([attempted_at, attempted_user_identifier], map: "ats_recruitment_authentication_failures_attempted_at_a_abd31e78")
+}

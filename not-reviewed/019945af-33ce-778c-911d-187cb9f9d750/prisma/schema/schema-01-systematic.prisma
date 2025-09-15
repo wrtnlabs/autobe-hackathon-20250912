@@ -1,0 +1,70 @@
+/// System configuration settings for FlexOffice platform. This table stores
+/// global system parameters and feature toggles that influence overall
+/// system behavior. It is foundational for all modules and must be managed
+/// by administrators. No foreign key dependencies. Includes standard created
+/// and updated timestamps for audit trail.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_system_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique configuration key identifier.
+  key String
+  
+  /// Value associated with the configuration key.
+  value String?
+  
+  /// Detailed description of the configuration setting.
+  description String?
+  
+  /// Timestamp when the configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the configuration was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([key])
+  @@index([created_at, updated_at])
+}
+
+/// Theme information used in FlexOffice for UI/Page Builder customization.
+/// Each theme defines a set of visual styles and CSS that can be applied
+/// globally or per page. Managed independently to allow multiple themes and
+/// customization options. Tracks creation and update timestamps for
+/// versioning.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_themes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the theme.
+  name String
+  
+  /// CSS content defining the theme styles.
+  css String?
+  
+  /// Timestamp when the theme was created.
+  created_at DateTime
+  
+  /// Timestamp when the theme was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([name])
+  @@index([created_at, updated_at])
+}

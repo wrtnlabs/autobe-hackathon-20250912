@@ -1,0 +1,67 @@
+/// Stores user subscriptions with details about vendor, plan, billing cycle,
+/// financials, status, and renewal scheduling. This model represents primary
+/// user-managed subscriptions with lifecycle status transitions: ACTIVE,
+/// PAUSED, and CANCELED. It references users and vendors, enabling tracking
+/// and notification of upcoming renewals.
+///
+/// @namespace Subscriptions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_subscriptions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link subscription_renewal_guardian_user.id}.
+  user_id String
+  
+  /// Subscribed vendor's {@link subscription_renewal_guardian_vendors.id}.
+  vendor_id String
+  
+  /// Name of the subscription plan. Unique per user and vendor.
+  plan_name String
+  
+  /// Billing cycle interval. Allowed values: DAILY, WEEKLY, MONTHLY, YEARLY.
+  billing_cycle String
+  
+  /// Subscription amount, must be >= 0.
+  amount Float
+  
+  /// Currency code following ISO 4217 3-letter uppercase format.
+  currency String
+  
+  /// Subscription start date in UTC ISO 8601 format.
+  started_at DateTime
+  
+  /// Next scheduled renewal date in UTC ISO 8601 format. Calculated by
+  /// advancing started_at by billing cycle intervals until strictly greater
+  /// than current time.
+  next_renewal_at DateTime
+  
+  /// Subscription status. Allowed values: ACTIVE, PAUSED, CANCELED.
+  status String
+  
+  /// Optional notes about the subscription.
+  notes String?
+  
+  /// Record creation timestamp in UTC ISO 8601 format.
+  created_at DateTime
+  
+  /// Record last update timestamp in UTC ISO 8601 format.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user subscription_renewal_guardian_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vendor subscription_renewal_guardian_vendors @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  
+  subscription_renewal_guardian_reminder_settings subscription_renewal_guardian_reminder_settings[]
+  
+  @@index([vendor_id])
+  
+  @@unique([user_id, vendor_id, plan_name], map: "subscription_renewal_guardian_subscriptions_user_id_ve_bd41ad61")
+  @@index([status, next_renewal_at], map: "subscription_renewal_guardian_subscriptions_status_nex_adbbff6c")
+  @@index([user_id, next_renewal_at], map: "subscription_renewal_guardian_subscriptions_user_id_ne_c4f5c37d")
+}

@@ -1,0 +1,80 @@
+/// System configuration settings for the OAuth server including general
+/// parameters and environment-specific options. This primary table holds
+/// key-value pairs that control system behavior. It includes timestamps for
+/// audit and a soft delete field.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_configs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique configuration key identifying a system setting.
+  key String
+  
+  /// Value of the configuration setting, stored as string.
+  value String?
+  
+  /// Detailed explanation of the configuration setting's purpose and usage.
+  description String?
+  
+  /// Timestamp when the record was created.
+  created_at DateTime
+  
+  /// Timestamp when the record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the record was soft deleted; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([key])
+  @@index([created_at])
+}
+
+/// Caching metadata and configuration for Redis caches used by the OAuth
+/// server, including cache type, TTL, and keys managed. This subsidiary
+/// model supports performance optimization by managing Redis cache
+/// configurations.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_redis_caches {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the Redis cache configuration.
+  cache_name String
+  
+  /// Key prefix used for Redis keys in this cache.
+  prefix String?
+  
+  /// Time to live for cache entries, in seconds.
+  ttl_seconds Int
+  
+  /// Description of the cache purpose and usage.
+  description String?
+  
+  /// Timestamp when the cache configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the cache configuration was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the cache configuration was soft deleted; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([cache_name])
+  @@index([cache_name, ttl_seconds])
+}

@@ -1,0 +1,426 @@
+/// Project epics representing major functional modules or large features in
+/// a project. Linked to flow_sphere_projects for project association.
+/// Supports independent management of epics with lifecycle states. Provides
+/// audit timestamps and soft delete support.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_epics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged project's {@link flow_sphere_projects.id}.
+  flow_sphere_project_id String
+  
+  /// Unique business identifier code for the epic.
+  code String
+  
+  /// Epic title describing the major feature/module.
+  title String
+  
+  /// Detailed description of the epic.
+  description String?
+  
+  /// Priority level of the epic for scheduling.
+  priority Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project flow_sphere_projects @relation(fields: [flow_sphere_project_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  
+  @@unique([flow_sphere_project_id, code])
+  @@index([flow_sphere_project_id, priority])
+}
+
+/// Tasks within epics, representing features and functional units. Linked to
+/// epics and assigned users in multiple roles. Tracks status, priority, and
+/// audit timestamps.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged epic's {@link flow_sphere_task_epics.id}.
+  flow_sphere_task_epic_id String
+  
+  /// Assigned Frontend Developer {@link flow_sphere_frontend_developer.id}.
+  assigned_frontend_developer_id String?
+  
+  /// Assigned Backend Developer {@link flow_sphere_backend_developer.id}.
+  assigned_backend_developer_id String?
+  
+  /// Assigned Project Manager {@link flow_sphere_project_manager.id}.
+  assigned_project_manager_id String?
+  
+  /// Assigned AI Specialist {@link flow_sphere_ai_specialist.id}.
+  assigned_ai_specialist_id String?
+  
+  /// Current status {@link flow_sphere_task_statuses.id}.
+  status_id String
+  
+  /// Unique business code identifying the task.
+  code String
+  
+  /// Title describing the task content.
+  title String
+  
+  /// Detailed explanation of the task.
+  description String?
+  
+  /// Scheduling priority of the task.
+  priority Int
+  
+  /// Timestamp when task was created.
+  created_at DateTime
+  
+  /// Timestamp when task was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  epic flow_sphere_task_epics @relation(fields: [flow_sphere_task_epic_id], references: [id], onDelete: Cascade)
+  assignedFrontendDeveloper flow_sphere_frontend_developer? @relation(fields: [assigned_frontend_developer_id], references: [id], onDelete: Cascade)
+  assignedBackendDeveloper flow_sphere_backend_developer? @relation(fields: [assigned_backend_developer_id], references: [id], onDelete: Cascade)
+  assignedProjectManager flow_sphere_project_manager? @relation(fields: [assigned_project_manager_id], references: [id], onDelete: Cascade)
+  assignedAiSpecialist flow_sphere_ai_specialist? @relation(fields: [assigned_ai_specialist_id], references: [id], onDelete: Cascade)
+  status flow_sphere_task_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_dependencies_of_blocker_task_id flow_sphere_task_dependencies[] @relation("flow_sphere_task_dependencies_of_blocker_task_id")
+  flow_sphere_task_dependencies_of_dependent_task_id flow_sphere_task_dependencies[] @relation("flow_sphere_task_dependencies_of_dependent_task_id")
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  flow_sphere_ai_prompts flow_sphere_ai_prompts[]
+  flow_sphere_task_blockers_of_blocking_task_id flow_sphere_task_blockers[] @relation("flow_sphere_task_blockers_of_blocking_task_id")
+  flow_sphere_task_blockers_of_blocked_task_id flow_sphere_task_blockers[] @relation("flow_sphere_task_blockers_of_blocked_task_id")
+  
+  @@index([assigned_frontend_developer_id])
+  @@index([assigned_backend_developer_id])
+  @@index([assigned_project_manager_id])
+  @@index([assigned_ai_specialist_id])
+  @@index([status_id])
+  
+  @@unique([flow_sphere_task_epic_id, code])
+  @@index([flow_sphere_task_epic_id, priority])
+}
+
+/// Mini-tasks as component-level work units under tasks. Linked to tasks,
+/// assigned roles, status, and audit timestamps.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_mini_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged task {@link flow_sphere_task_tasks.id}.
+  flow_sphere_task_task_id String
+  
+  /// Assigned Frontend Developer {@link flow_sphere_frontend_developer.id}.
+  assigned_frontend_developer_id String?
+  
+  /// Assigned Backend Developer {@link flow_sphere_backend_developer.id}.
+  assigned_backend_developer_id String?
+  
+  /// Assigned Project Manager {@link flow_sphere_project_manager.id}.
+  assigned_project_manager_id String?
+  
+  /// Assigned AI Specialist {@link flow_sphere_ai_specialist.id}.
+  assigned_ai_specialist_id String?
+  
+  /// Current status {@link flow_sphere_task_statuses.id}.
+  status_id String
+  
+  /// Unique code for the mini-task within the parent task.
+  code String
+  
+  /// Title for the mini-task.
+  title String
+  
+  /// Elaborate description of mini-task.
+  description String?
+  
+  /// Priority for scheduling mini-task.
+  priority Int
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last updated timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  task flow_sphere_task_tasks @relation(fields: [flow_sphere_task_task_id], references: [id], onDelete: Cascade)
+  assignedFrontendDeveloper flow_sphere_frontend_developer? @relation(fields: [assigned_frontend_developer_id], references: [id], onDelete: Cascade)
+  assignedBackendDeveloper flow_sphere_backend_developer? @relation(fields: [assigned_backend_developer_id], references: [id], onDelete: Cascade)
+  assignedProjectManager flow_sphere_project_manager? @relation(fields: [assigned_project_manager_id], references: [id], onDelete: Cascade)
+  assignedAiSpecialist flow_sphere_ai_specialist? @relation(fields: [assigned_ai_specialist_id], references: [id], onDelete: Cascade)
+  status flow_sphere_task_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  
+  @@index([assigned_frontend_developer_id])
+  @@index([assigned_backend_developer_id])
+  @@index([assigned_project_manager_id])
+  @@index([assigned_ai_specialist_id])
+  @@index([status_id])
+  
+  @@unique([flow_sphere_task_task_id, code])
+  @@index([flow_sphere_task_task_id, priority], map: "flow_sphere_task_mini_tasks_flow_sphere_task_task_id_p_b4b27a68")
+}
+
+/// Micro-tasks as granular functional units under mini-tasks. Track
+/// assignment, status, and audit timestamps. Designed for AI IDE integration
+/// with task prompts.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_micro_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged mini-task {@link flow_sphere_task_mini_tasks.id}.
+  flow_sphere_task_mini_task_id String
+  
+  /// Assigned Frontend Developer {@link flow_sphere_frontend_developer.id}.
+  assigned_frontend_developer_id String?
+  
+  /// Assigned Backend Developer {@link flow_sphere_backend_developer.id}.
+  assigned_backend_developer_id String?
+  
+  /// Assigned Project Manager {@link flow_sphere_project_manager.id}.
+  assigned_project_manager_id String?
+  
+  /// Assigned AI Specialist {@link flow_sphere_ai_specialist.id}.
+  assigned_ai_specialist_id String?
+  
+  /// Current status {@link flow_sphere_task_statuses.id}.
+  status_id String
+  
+  /// Unique code identifying the micro-task.
+  code String
+  
+  /// Title describing the micro-task.
+  title String
+  
+  /// Detailed micro-task description.
+  description String?
+  
+  /// Priority of the micro-task.
+  priority Int
+  
+  /// Timestamp when created.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  miniTask flow_sphere_task_mini_tasks @relation(fields: [flow_sphere_task_mini_task_id], references: [id], onDelete: Cascade)
+  assignedFrontendDeveloper flow_sphere_frontend_developer? @relation(fields: [assigned_frontend_developer_id], references: [id], onDelete: Cascade)
+  assignedBackendDeveloper flow_sphere_backend_developer? @relation(fields: [assigned_backend_developer_id], references: [id], onDelete: Cascade)
+  assignedProjectManager flow_sphere_project_manager? @relation(fields: [assigned_project_manager_id], references: [id], onDelete: Cascade)
+  assignedAiSpecialist flow_sphere_ai_specialist? @relation(fields: [assigned_ai_specialist_id], references: [id], onDelete: Cascade)
+  status flow_sphere_task_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  
+  @@index([assigned_frontend_developer_id], map: "flow_sphere_task_micro_tasks_assigned_frontend_develop_1916e020")
+  @@index([assigned_backend_developer_id])
+  @@index([assigned_project_manager_id])
+  @@index([assigned_ai_specialist_id])
+  @@index([status_id])
+  
+  @@unique([flow_sphere_task_mini_task_id, code], map: "flow_sphere_task_micro_tasks_flow_sphere_task_mini_tas_1ac5cced")
+  @@index([flow_sphere_task_mini_task_id, priority], map: "flow_sphere_task_micro_tasks_flow_sphere_task_mini_tas_b38984af")
+}
+
+/// Atomic tasks representing minimal code change units under micro-tasks.
+/// Includes assignment to roles, status, detail fields, and audit timestamps
+/// for tracking.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_atomic_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent micro-task {@link flow_sphere_task_micro_tasks.id}.
+  flow_sphere_task_micro_task_id String
+  
+  /// Assigned Frontend Developer {@link flow_sphere_frontend_developer.id}.
+  assigned_frontend_developer_id String?
+  
+  /// Assigned Backend Developer {@link flow_sphere_backend_developer.id}.
+  assigned_backend_developer_id String?
+  
+  /// Assigned Project Manager {@link flow_sphere_project_manager.id}.
+  assigned_project_manager_id String?
+  
+  /// Assigned AI Specialist {@link flow_sphere_ai_specialist.id}.
+  assigned_ai_specialist_id String?
+  
+  /// Current status {@link flow_sphere_task_statuses.id}.
+  status_id String
+  
+  /// Unique identifier code for atomic task.
+  code String
+  
+  /// Title of the atomic task.
+  title String
+  
+  /// Detailed description.
+  description String?
+  
+  /// Priority level for execution.
+  priority Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update time.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  microTask flow_sphere_task_micro_tasks @relation(fields: [flow_sphere_task_micro_task_id], references: [id], onDelete: Cascade)
+  assignedFrontendDeveloper flow_sphere_frontend_developer? @relation(fields: [assigned_frontend_developer_id], references: [id], onDelete: Cascade)
+  assignedBackendDeveloper flow_sphere_backend_developer? @relation(fields: [assigned_backend_developer_id], references: [id], onDelete: Cascade)
+  assignedProjectManager flow_sphere_project_manager? @relation(fields: [assigned_project_manager_id], references: [id], onDelete: Cascade)
+  assignedAiSpecialist flow_sphere_ai_specialist? @relation(fields: [assigned_ai_specialist_id], references: [id], onDelete: Cascade)
+  status flow_sphere_task_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  
+  @@index([assigned_frontend_developer_id], map: "flow_sphere_task_atomic_tasks_assigned_frontend_develo_c5118a50")
+  @@index([assigned_backend_developer_id], map: "flow_sphere_task_atomic_tasks_assigned_backend_develop_aa825a25")
+  @@index([assigned_project_manager_id])
+  @@index([assigned_ai_specialist_id])
+  @@index([status_id])
+  
+  @@unique([flow_sphere_task_micro_task_id, code], map: "flow_sphere_task_atomic_tasks_flow_sphere_task_micro_t_c04d77cd")
+  @@index([flow_sphere_task_micro_task_id, priority], map: "flow_sphere_task_atomic_tasks_flow_sphere_task_micro_t_64ab5e8c")
+}
+
+/// Defines all possible statuses for tasks across all decomposition levels.
+/// Statuses control lifecycle and workflow states for tasks. Used for
+/// restricting and filtering task views.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_statuses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier for the status.
+  code String
+  
+  /// Human readable label for the status.
+  label String
+  
+  /// Detailed explanation of the status meaning.
+  description String?
+  
+  /// Timestamp when status record created.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_task_tasks flow_sphere_task_tasks[]
+  flow_sphere_task_mini_tasks flow_sphere_task_mini_tasks[]
+  flow_sphere_task_micro_tasks flow_sphere_task_micro_tasks[]
+  flow_sphere_task_atomic_tasks flow_sphere_task_atomic_tasks[]
+  
+  @@unique([code])
+  @@index([label])
+}
+
+/// Task dependencies mapping indicating blocking and dependent relationships
+/// among tasks across all levels. Supports representing task ordering and
+/// prerequisite structures. Enables blocking task tracking and scheduling
+/// management.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_dependencies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Blocking task {@link flow_sphere_task_tasks.id} or other task level IDs.
+  blocker_task_id String
+  
+  /// Dependent task {@link flow_sphere_task_tasks.id} or other task level IDs.
+  dependent_task_id String
+  
+  /// Dependency creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  blockerTask flow_sphere_task_tasks @relation("flow_sphere_task_dependencies_of_blocker_task_id", fields: [blocker_task_id], references: [id], onDelete: Cascade)
+  dependentTask flow_sphere_task_tasks @relation("flow_sphere_task_dependencies_of_dependent_task_id", fields: [dependent_task_id], references: [id], onDelete: Cascade)
+  
+  @@index([dependent_task_id])
+  
+  @@index([blocker_task_id, dependent_task_id], map: "flow_sphere_task_dependencies_blocker_task_id_dependen_f69d9943")
+}

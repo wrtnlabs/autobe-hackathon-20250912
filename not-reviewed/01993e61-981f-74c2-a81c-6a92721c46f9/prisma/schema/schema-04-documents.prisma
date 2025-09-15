@@ -1,0 +1,128 @@
+/// Primary business entity storing metadata for generated documents
+/// associated with projects. Each document is linked to one project and
+/// maintains unique codes for identification. It tracks creation, updates,
+/// and soft deletion for audit purposes.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_documents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked project's flow_sphere_projects.id.
+  flow_sphere_project_id String
+  
+  /// Unique code identifier for the document within the system.
+  code String
+  
+  /// Human-readable title of the document.
+  title String
+  
+  /// Detailed description providing context about the document's purpose and
+  /// contents.
+  description String?
+  
+  /// Timestamp when the document record was created.
+  created_at DateTime
+  
+  /// Timestamp when the document record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; if set, the document is considered deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project flow_sphere_projects @relation(fields: [flow_sphere_project_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_document_versions flow_sphere_document_versions[]
+  
+  @@unique([code])
+  @@index([flow_sphere_project_id, created_at])
+}
+
+/// Snapshot entity capturing historical versions of documents. Each version
+/// links back to the main document to provide a precise audit trail and
+/// enable rollback to prior states.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_document_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent document's flow_sphere_documents.id.
+  flow_sphere_document_id String
+  
+  /// Sequential version number of the document starting from 1 and
+  /// incrementing by 1 for each new version.
+  version_number Int
+  
+  /// Full content of the document version, stored as a serialized string
+  /// (e.g., markdown or JSON).
+  content String
+  
+  /// Timestamp when this document version was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  document flow_sphere_documents @relation(fields: [flow_sphere_document_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_document_exports flow_sphere_document_exports[]
+  
+  @@unique([flow_sphere_document_id, version_number], map: "flow_sphere_document_versions_flow_sphere_document_id__cc5172ad")
+  @@index([created_at])
+}
+
+/// Subsidiary entity tracking export operations performed on documents or
+/// their versions. Records export format, destination, status, and
+/// timestamps associated with export events.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_document_exports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked document version's flow_sphere_document_versions.id.
+  flow_sphere_document_version_id String
+  
+  /// Format of the exported document such as PDF, Markdown, Notion, or
+  /// Confluence.
+  export_format String
+  
+  /// URI where the exported document was saved or sent.
+  destination_uri String?
+  
+  /// Current status of the export operation such as 'pending', 'completed', or
+  /// 'failed'.
+  status String
+  
+  /// Timestamp when the export was initiated.
+  initiated_at DateTime
+  
+  /// Timestamp when the export completed successfully, or null if not
+  /// completed or failed.
+  completed_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  documentVersion flow_sphere_document_versions @relation(fields: [flow_sphere_document_version_id], references: [id], onDelete: Cascade)
+  
+  @@index([flow_sphere_document_version_id], map: "flow_sphere_document_exports_flow_sphere_document_vers_027aefb1")
+  
+  @@index([status, initiated_at])
+}

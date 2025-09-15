@@ -1,0 +1,144 @@
+/// Workflow manager users responsible for creating, updating, activating,
+/// and managing notification workflows. Stores identity and authentication
+/// data required for access control. Includes standard audit fields for
+/// record management.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_workflowmanagers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address of the workflow manager used for login and
+  /// notifications.
+  email String
+  
+  /// Hashed password for authentication; never store plain passwords.
+  password_hash String
+  
+  /// Timestamp when the user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if the record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  notification_workflow_audit_logs notification_workflow_audit_logs[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Trigger operator users who create and manage trigger instances for
+/// workflows. Stores identity and authentication information with audit
+/// timestamps for access control enforcement.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_triggeroperators {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address of the trigger operator, used for user
+  /// identification and login.
+  email String
+  
+  /// Hashed password securely stored for authentication.
+  password_hash String
+  
+  /// Record creation timestamp for audit trail.
+  created_at DateTime
+  
+  /// Last update timestamp reflecting modifications.
+  updated_at DateTime
+  
+  /// Soft delete timestamp marking inactive users; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// System administrator users with full permissions to manage users,
+/// workflows, and system settings. Includes authentication credentials and
+/// audit timestamps for secure management.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_systemadmins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address used by the system administrator for authentication.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Timestamp when the admin record was created.
+  created_at DateTime
+  
+  /// Timestamp of last modification.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null indicates active record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Automated worker service users responsible for processing triggers
+/// concurrently. Authentication and audit fields included to track service
+/// identity and activity.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_workerservices {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email identifying the worker service account.
+  email String
+  
+  /// Hashed password for worker service authentication.
+  password_hash String
+  
+  /// Timestamp when the worker service account was created.
+  created_at DateTime
+  
+  /// Timestamp when the worker service account was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null for active records.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}

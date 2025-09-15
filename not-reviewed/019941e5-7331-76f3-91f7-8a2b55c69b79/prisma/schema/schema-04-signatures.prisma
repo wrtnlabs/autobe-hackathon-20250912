@@ -1,0 +1,149 @@
+/// Represents requests for electronic signatures on documents. Manages
+/// lifecycle states such as drafted, sent, signed, declined, or expired.
+/// Links to the document being signed and records sender and message
+/// details. Primary entity for signature workflows.
+///
+/// @namespace Signatures
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_sign_requests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced document's {@link easy_sign_documents.id}.
+  document_id String
+  
+  /// Email of the user who created the signature request. Used for
+  /// notification and audit.
+  requester_email String
+  
+  /// Optional message attached to the signature request for signatories.
+  message String?
+  
+  /// Current status of the signature request. Typical values: DRAFT, SENT,
+  /// COMPLETED, DECLINED, EXPIRED.
+  status String
+  
+  /// Timestamp when the signature request was created.
+  created_at DateTime
+  
+  /// Timestamp when the signature request was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the signature request was deleted (soft delete). Null if
+  /// not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  document easy_sign_documents @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  
+  easy_sign_signatories easy_sign_signatories[]
+  
+  @@unique([document_id, requester_email])
+  @@index([status, created_at])
+}
+
+/// Represents individuals who must provide signatures for a signature
+/// request. Supports detailed tracking of signature status, order, and
+/// authentication info. Links to sign request, user, and captures signature
+/// timestamps and IPs.
+///
+/// @namespace Signatures
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_signatories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged signature request's {@link easy_sign_sign_requests.id}.
+  sign_request_id String
+  
+  /// Referencing the signing user's {@link easy_sign_freelancerusers.id},
+  /// {@link easy_sign_corporateusers.id}, or system user if applicable.
+  user_id String?
+  
+  /// Ordering of this signatory in the signature sequence.
+  order Int
+  
+  /// Status of this signatory's signature. Values include PENDING, SIGNED,
+  /// DECLINED, EXPIRED.
+  status String
+  
+  /// Timestamp when the signatory completed their signature. Null if not
+  /// signed yet.
+  signed_at DateTime?
+  
+  /// IP address from which the signature was performed.
+  ip_address String?
+  
+  /// User agent string during signature interaction.
+  user_agent String?
+  
+  /// Timestamp when this signatory record was created.
+  created_at DateTime
+  
+  /// Timestamp when this signatory record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when this signatory record was deleted (soft delete). Null if
+  /// not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  signRequest easy_sign_sign_requests @relation(fields: [sign_request_id], references: [id], onDelete: Cascade)
+  user easy_sign_freelancerusers? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  easy_sign_signature_images easy_sign_signature_images[]
+  
+  @@index([user_id])
+  
+  @@unique([sign_request_id, order])
+  @@index([status, signed_at])
+}
+
+/// Stores images related to signatures, such as drawn signatures, scanned
+/// signatures, or stamps. Linked to signatories and stores data necessary
+/// for display and verification. This subsidiary table supports rich
+/// signature representations.
+///
+/// @namespace Signatures
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_signature_images {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked signatory's {@link easy_sign_signatories.id}.
+  signatory_id String
+  
+  /// URI pointing to storage location of the signature image file.
+  image_url String
+  
+  /// Type of the signature image (e.g., DRAWING, SCAN, STAMP).
+  image_type String
+  
+  /// Timestamp when the signature image was created.
+  created_at DateTime
+  
+  /// Timestamp when the signature image was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  signatory easy_sign_signatories @relation(fields: [signatory_id], references: [id], onDelete: Cascade)
+  
+  @@index([signatory_id])
+  
+  @@index([image_type])
+}

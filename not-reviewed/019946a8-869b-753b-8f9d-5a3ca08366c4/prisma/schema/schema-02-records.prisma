@@ -1,0 +1,97 @@
+/// Travel record place information stores the details of visited locations
+/// by members including geographical coordinates, visit date, and Google
+/// place identifier. This table is the primary entity for travel records,
+/// supporting independent user interactions and CRUD operations.
+///
+/// @namespace Records
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_places {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged member's {@link travel_record_member.id}. This represents the
+  /// owner of the travel record place.
+  travel_record_member_id String
+  
+  /// Latitude of the place in decimal degrees.
+  latitude Float
+  
+  /// Longitude of the place in decimal degrees.
+  longitude Float
+  
+  /// Visit date in ISO 8601 date format.
+  visit_date DateTime
+  
+  /// Name or description of the visited place.
+  place_name String
+  
+  /// Google Maps unique place ID identifying the place.
+  google_place_id String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member travel_record_member @relation(fields: [travel_record_member_id], references: [id], onDelete: Cascade)
+  
+  travel_record_photos travel_record_photos[]
+  travel_record_reviews travel_record_reviews[]
+  
+  @@unique([travel_record_member_id, latitude, longitude, visit_date], map: "travel_record_places_travel_record_member_id_latitude__2c7543af")
+  @@index([visit_date, latitude, longitude])
+}
+
+/// Photos associated with travel record places. Each photo belongs to a
+/// single travel record place and stores basic file metadata like URI,
+/// upload timestamp, and file size. Managed as a subsidiary entity dependent
+/// on travel_record_places.
+///
+/// @namespace Records
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_photos {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged travel record place's {@link travel_record_places.id}. Indicates
+  /// which place this photo belongs to.
+  travel_record_place_id String
+  
+  /// URI of the uploaded photo file.
+  file_uri String
+  
+  /// Size of the photo file in bytes.
+  file_size Int
+  
+  /// Timestamp of when the photo was uploaded.
+  uploaded_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  travelRecordPlace travel_record_places @relation(fields: [travel_record_place_id], references: [id], onDelete: Cascade)
+  
+  @@index([travel_record_place_id, uploaded_at])
+}

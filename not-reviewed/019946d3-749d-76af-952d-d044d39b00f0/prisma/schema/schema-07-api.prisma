@@ -1,0 +1,139 @@
+/// Records detailed log entries for every API access to track client
+/// requests, including request method, path, response status, client IP
+/// address, user agent, request duration in milliseconds, and timestamp.
+/// Supports comprehensive API usage analytics and operational monitoring.
+///
+/// @namespace API
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_api_access_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// HTTP request method used in the API call, e.g., GET, POST, PUT.
+  http_method String
+  
+  /// API endpoint path being accessed, e.g., /api/v1/popular_topics.
+  path String
+  
+  /// HTTP response status code returned to the client.
+  status_code Int
+  
+  /// IP address of the client making the API request.
+  client_ip String
+  
+  /// User agent string of the client or application making the request.
+  user_agent String
+  
+  /// Duration of the API request processing in milliseconds.
+  duration_ms Int
+  
+  /// Timestamp when the log entry was created.
+  created_at DateTime
+  
+  /// Timestamp when the log entry was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([http_method, path, status_code, created_at], map: "political_news_crawler_api_access_logs_http_method_pat_90ce5ccb")
+  @@index([client_ip, created_at])
+  @@index([user_agent, created_at], map: "political_news_crawler_api_access_logs_user_agent_crea_1a375cdb")
+  @@index([created_at])
+}
+
+/// Captures detailed records of API errors, including the API path, error
+/// code, error message, client IP, user agent, occurrence timestamp, and
+/// update timestamp. Enables error analysis and system troubleshooting for
+/// API endpoints.
+///
+/// @namespace API
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_api_error_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// API endpoint path where the error occurred.
+  path String
+  
+  /// Error code identifying the type of API error.
+  error_code String
+  
+  /// Descriptive error message to assist debugging.
+  error_message String
+  
+  /// IP address of the client causing the error.
+  client_ip String
+  
+  /// User agent string of the client application.
+  user_agent String
+  
+  /// Timestamp when the error log was created.
+  created_at DateTime
+  
+  /// Timestamp when the error log was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([path, error_code, created_at], map: "political_news_crawler_api_error_logs_path_error_code__086a81a1")
+  @@index([client_ip, created_at])
+  @@index([user_agent, created_at])
+  @@index([created_at])
+}
+
+/// Aggregated API usage metrics capturing total counts of API calls by
+/// method and path over specific time periods, including maximum response
+/// times and average durations. Supports performance monitoring and traffic
+/// analysis for API endpoints.
+///
+/// @namespace API
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_api_usage_metrics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// HTTP method for which metrics are aggregated.
+  http_method String
+  
+  /// API endpoint path for which metrics are aggregated.
+  path String
+  
+  /// Start timestamp of the aggregation period.
+  period_start DateTime
+  
+  /// End timestamp of the aggregation period.
+  period_end DateTime
+  
+  /// Total number of API calls observed in the aggregation period.
+  total_calls Int
+  
+  /// Maximum response time in milliseconds recorded during the period.
+  max_response_ms Int
+  
+  /// Average response time in milliseconds over the period.
+  avg_response_ms Int
+  
+  /// Timestamp when this aggregated record was created.
+  created_at DateTime
+  
+  /// Timestamp when this aggregated record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([http_method, path, period_start], map: "political_news_crawler_api_usage_metrics_http_method_p_5151a9d6")
+  @@index([http_method, path, period_start, period_end], map: "political_news_crawler_api_usage_metrics_http_method_p_bb640350")
+  @@index([created_at])
+}

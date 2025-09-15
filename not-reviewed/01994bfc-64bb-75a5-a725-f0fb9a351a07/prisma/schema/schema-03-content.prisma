@@ -1,0 +1,187 @@
+/// Primary content entity representing posts created by community members.
+/// Houses main post data including title, content, status, author
+/// association, and timestamps. Supports content lifecycle with soft
+/// deletion and workflow status. Related snapshots capture historical
+/// states.
+///
+/// @namespace Content
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_posts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged author's community_ai_members.id.
+  author_id String
+  
+  /// Post title, up to 100 characters, non-empty.
+  title String
+  
+  /// Unique slug for post URL identification.
+  slug String
+  
+  /// Main content body of the post.
+  body String
+  
+  /// Current workflow status of the post (e.g., draft, published, archived).
+  status String
+  
+  /// Business specific state for the post workflow.
+  business_status String
+  
+  /// Timestamp when the post was created.
+  created_at DateTime
+  
+  /// Timestamp when the post was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  author community_ai_members @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  
+  community_ai_post_snapshots community_ai_post_snapshots[]
+  community_ai_comments community_ai_comments[]
+  community_ai_ai_generated_replies community_ai_ai_generated_replies[]
+  community_ai_factcheck_claims community_ai_factcheck_claims[]
+  community_ai_factcheck_flags community_ai_factcheck_flags[]
+  community_ai_content_flags community_ai_content_flags[]
+  community_ai_user_reports community_ai_user_reports[]
+  community_ai_notifications community_ai_notifications[]
+  community_ai_content_access_logs community_ai_content_access_logs[]
+  community_ai_edit_histories community_ai_edit_histories[]
+  
+  @@unique([slug])
+  @@index([author_id, created_at])
+}
+
+/// Snapshot entity capturing historical states of posts for audit trails and
+/// version control. Stores denormalized data of the post at the moment of
+/// snapshot creation for historical reference.
+///
+/// @namespace Content
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_post_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged post's community_ai_posts.id.
+  community_ai_post_id String
+  
+  /// Snapshot of post title.
+  title String
+  
+  /// Snapshot of post slug.
+  slug String
+  
+  /// Snapshot of post body content.
+  body String
+  
+  /// Snapshot of current post status.
+  status String
+  
+  /// Snapshot of business workflow status.
+  business_status String
+  
+  /// Timestamp when the snapshot was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  post community_ai_posts @relation(fields: [community_ai_post_id], references: [id], onDelete: Cascade)
+  
+  @@index([community_ai_post_id, created_at])
+}
+
+/// Primary entity representing comments made by community members on posts.
+/// Contains comment content, author association, linked post, timestamps,
+/// and soft deletion support. Comments support independent management and AI
+/// moderation features.
+///
+/// @namespace Content
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged post's community_ai_posts.id.
+  community_ai_post_id String
+  
+  /// Belonged author's community_ai_members.id.
+  author_id String
+  
+  /// Comment content, non-empty and up to 1000 characters.
+  body String
+  
+  /// Timestamp when the comment was created.
+  created_at DateTime
+  
+  /// Timestamp when the comment was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  post community_ai_posts @relation(fields: [community_ai_post_id], references: [id], onDelete: Cascade)
+  author community_ai_members @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  
+  community_ai_comment_snapshots community_ai_comment_snapshots[]
+  community_ai_ai_comment_suggestions community_ai_ai_comment_suggestions[]
+  community_ai_comment_sentiment_analyses community_ai_comment_sentiment_analyses[]
+  community_ai_ai_generated_replies community_ai_ai_generated_replies[]
+  community_ai_factcheck_claims community_ai_factcheck_claims[]
+  community_ai_factcheck_flags community_ai_factcheck_flags[]
+  community_ai_content_flags community_ai_content_flags[]
+  community_ai_user_reports community_ai_user_reports[]
+  community_ai_content_access_logs community_ai_content_access_logs[]
+  community_ai_edit_histories community_ai_edit_histories[]
+  
+  @@index([author_id])
+  
+  @@index([community_ai_post_id, author_id, created_at], map: "community_ai_comments_community_ai_post_id_author_id_c_2bf132f8")
+}
+
+/// Snapshot entity capturing historical states of comments for audit trails
+/// and version control. Stores comment data corresponding to a specific
+/// previous state for history analysis and moderation tracking.
+///
+/// @namespace Content
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_comment_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged comment's community_ai_comments.id.
+  community_ai_comment_id String
+  
+  /// Snapshot of comment content.
+  body String
+  
+  /// Timestamp when the snapshot was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  comment community_ai_comments @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  
+  @@index([community_ai_comment_id, created_at], map: "community_ai_comment_snapshots_community_ai_comment_id_8b48549c")
+}

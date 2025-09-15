@@ -1,0 +1,138 @@
+/// Primary entity representing projects within FlowSphere. Captures
+/// essential information about each project ideation and execution. Linked
+/// with project contexts and states for comprehensive lifecycle management.
+/// Supports statuses and soft deletion to enable business workflows and
+/// recovery.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_projects {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged registered user's {@link flow_sphere_registered_user.id} who
+  /// owns the project.
+  owner_user_id String
+  
+  /// Unique business identifier code for the project.
+  code String
+  
+  /// Title or name of the project.
+  title String
+  
+  /// Detailed project description and scope.
+  description String?
+  
+  /// Current lifecycle status of the project indicating progress phase.
+  status String
+  
+  /// Business process state for workflow purposes.
+  business_status String?
+  
+  /// Timestamp when the project was created.
+  created_at DateTime
+  
+  /// Timestamp when the project was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp allowing recovery of the project.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ownerUser flow_sphere_registered_user @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_project_contexts flow_sphere_project_contexts[]
+  flow_sphere_project_states flow_sphere_project_states[]
+  flow_sphere_documents flow_sphere_documents[]
+  flow_sphere_task_epics flow_sphere_task_epics[]
+  flow_sphere_ai_prompts flow_sphere_ai_prompts[]
+  flow_sphere_team_assignments flow_sphere_team_assignments[]
+  flow_sphere_standup_reports flow_sphere_standup_reports[]
+  flow_sphere_notifications flow_sphere_notifications[]
+  
+  @@unique([code])
+  @@index([owner_user_id, created_at])
+}
+
+/// Supporting entity storing persistent context and conversation history for
+/// projects. Managed indirectly through the parent project entity. Ensures
+/// project ideation context is preserved for audit and AI assistance.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_project_contexts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged project's {@link flow_sphere_projects.id} context reference.
+  flow_sphere_project_id String
+  
+  /// Serialized JSON or other format storing conversation and ideation context.
+  context_data String
+  
+  /// Timestamp when this context record was created.
+  created_at DateTime
+  
+  /// Timestamp when this context record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp allowing recovery of context records.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project flow_sphere_projects @relation(fields: [flow_sphere_project_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_ai_contexts flow_sphere_ai_contexts[]
+  
+  @@index([flow_sphere_project_id, created_at], map: "flow_sphere_project_contexts_flow_sphere_project_id_cr_08cb0016")
+}
+
+/// Subsidiary entity tracking project states across the lifecycle for audit
+/// and status management. Supports capturing various state transitions and
+/// history reference. Managed through its parent project.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_project_states {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged project's {@link flow_sphere_projects.id} reference for state
+  /// auditing.
+  flow_sphere_project_id String
+  
+  /// Code representing specific state in project lifecycle.
+  state_code String
+  
+  /// Description of the project state for audit purposes.
+  description String?
+  
+  /// Timestamp when this project state was recorded.
+  created_at DateTime
+  
+  /// Timestamp when this state record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to allow recovery of state records.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project flow_sphere_projects @relation(fields: [flow_sphere_project_id], references: [id], onDelete: Cascade)
+  
+  @@index([flow_sphere_project_id, created_at], map: "flow_sphere_project_states_flow_sphere_project_id_crea_4307c247")
+}

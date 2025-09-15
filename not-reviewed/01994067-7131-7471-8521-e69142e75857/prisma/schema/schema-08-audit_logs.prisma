@@ -1,0 +1,47 @@
+/// Audit logs capturing critical security and operational events including
+/// authentication attempts, token issuance, client operations, and system
+/// activities for compliance and traceability. This table is append-only
+/// capturing immutable event data with timestamps to support audit trails.
+/// Does not store sensitive data but records success and failure status with
+/// context for monitoring and forensic analysis.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type of the audited event such as 'authentication_success',
+  /// 'authentication_failure', 'token_issued', 'client_registered', etc.
+  event_type String
+  
+  /// Timestamp when the event occurred, stored in ISO 8601 format.
+  event_timestamp DateTime
+  
+  /// Optional UUID identifying the user or client who triggered the event.
+  /// Nullable if event is system-generated.
+  actor_id String?
+  
+  /// Optional type of the actor triggering the event, e.g., 'user', 'client',
+  /// 'system'. Nullable when not applicable.
+  actor_type String?
+  
+  /// Detailed description providing context or metadata about the event.
+  event_description String
+  
+  /// Record creation timestamp for audit logs.
+  created_at DateTime
+  
+  /// Record last update timestamp. Usually same as creation time since logs
+  /// are immutable.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([event_type, event_timestamp])
+  @@index([actor_id, event_timestamp])
+}

@@ -1,0 +1,130 @@
+/// Stores authentication tokens for users, supporting JWT-like access and
+/// refresh tokens with expiration and revocation tracking. Tokens link to
+/// users for session management and enable secure stateless authentication.
+///
+/// @namespace Security
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_auth_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced user's {@link easy_sign_freelancerusers.id}.
+  user_id String
+  
+  /// Access token string for authentication sessions.
+  access_token String
+  
+  /// Refresh token string used to obtain new access tokens.
+  refresh_token String
+  
+  /// Expiration datetime of the access token.
+  expires_at DateTime
+  
+  /// Whether the token has been revoked.
+  revoked Boolean
+  
+  /// Creation timestamp of the token.
+  created_at DateTime
+  
+  /// Last update timestamp of the token.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to support token revocation audit.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_freelancerusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([access_token])
+  @@unique([refresh_token])
+  @@index([user_id, created_at])
+}
+
+/// Stores two-factor authentication configurations and secret data for
+/// users, enabling multi-factor authentication for enhanced security.
+/// Supports multiple methods like TOTP, SMS, or email.
+///
+/// @namespace Security
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_two_factor_auths {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced user's {@link easy_sign_freelancerusers.id}.
+  user_id String
+  
+  /// Two-factor authentication method (e.g., TOTP, SMS, EMAIL).
+  method String
+  
+  /// Secret key or shared secret used for generating the 2FA tokens.
+  secret_key String
+  
+  /// Flag indicating if 2FA is currently enabled for the user.
+  enabled Boolean
+  
+  /// Creation timestamp of the 2FA record.
+  created_at DateTime
+  
+  /// Last updated timestamp of the 2FA record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to mark deactivated 2FA entries.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_freelancerusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+}
+
+/// Manages user role assignments within the system, linking users to roles
+/// that define their permissions and access levels. Essential for role-based
+/// access control (RBAC).
+///
+/// @namespace Security
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_role_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced user's {@link easy_sign_freelancerusers.id}.
+  user_id String
+  
+  /// Referenced role's id.
+  role_id String
+  
+  /// Timestamp when the role was assigned to the user.
+  assigned_at DateTime
+  
+  /// Creation timestamp of the record.
+  created_at DateTime
+  
+  /// Last update timestamp of the record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for role assignment record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_freelancerusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role easy_sign_role @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, role_id])
+  @@index([user_id])
+  @@index([role_id])
+}

@@ -1,0 +1,82 @@
+/// Member user of the chatbot system who interacts in normal rooms. Holds
+/// internal sender id, nickname, and timestamps. Independent entity for user
+/// identity management in the system. Connected to points, titles, and
+/// sessions managed elsewhere.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Internal unique identifier for the member, mapped from external sender
+  /// ID, used for internal system logic and privacy.
+  internal_sender_id String
+  
+  /// Nickname displayed for the member in chat rooms, mutable by user or
+  /// system.
+  nickname String
+  
+  /// Timestamp when the member record was created.
+  created_at DateTime
+  
+  /// Timestamp when the member record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the member record was soft-deleted (nullable).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chatbot_points chatbot_points?
+  chatbot_point_cooldowns chatbot_point_cooldowns?
+  chatbot_user_titles chatbot_user_titles?
+  chatbot_stock_holdings chatbot_stock_holdings[]
+  chatbot_stock_transactions chatbot_stock_transactions[]
+  chatbot_slotmachine_plays chatbot_slotmachine_plays[]
+  chatbot_command_logs chatbot_command_logs[]
+  chatbot_audit_logs chatbot_audit_logs[]
+  
+  @@unique([internal_sender_id])
+}
+
+/// Admin user of the chatbot system operating via admin rooms. Holds
+/// internal sender id and nickname. Responsible for elevated permissions and
+/// management tasks within the system.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Internal unique identifier for the admin, mapped from external sender ID,
+  /// used for internal system logic and privacy.
+  internal_sender_id String
+  
+  /// Nickname displayed for the admin in admin rooms, mutable by system.
+  nickname String
+  
+  /// Timestamp when the admin record was created.
+  created_at DateTime
+  
+  /// Timestamp when the admin record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the admin record was soft-deleted (nullable).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chatbot_stock_price_updates chatbot_stock_price_updates[]
+  
+  @@unique([internal_sender_id])
+}

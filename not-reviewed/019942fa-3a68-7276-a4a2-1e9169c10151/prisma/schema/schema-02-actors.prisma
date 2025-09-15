@@ -1,0 +1,151 @@
+/// Guest user identities who can browse cafes and search but cannot log in
+/// or manage personal logs. Contains basic identification details and soft
+/// deletion for data management.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_guests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// IP address of the guest user for session tracking and identification.
+  ip_address String
+  
+  /// User agent string from the guest's device, providing metadata about the
+  /// browser or app.
+  user_agent String?
+  
+  /// Timestamp when the guest record was created.
+  created_at DateTime
+  
+  /// Timestamp when the guest record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to allow guest data recovery or logical deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([ip_address])
+  @@index([created_at])
+}
+
+/// Authenticated members who can create coffee logs, manage profiles, add
+/// cafes, and suggest edits. Stores login credentials and personal data with
+/// audit timestamps and soft deletion support.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address used for member login and communication.
+  email String
+  
+  /// Hashed password for secure authentication; plain passwords are never
+  /// stored.
+  password_hash String
+  
+  /// Timestamp when the member record was created.
+  created_at DateTime
+  
+  /// Timestamp when the member record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to allow member deactivation and data recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  specialty_coffee_log_cafe_suggestions specialty_coffee_log_cafe_suggestions[]
+  specialty_coffee_log_sessions specialty_coffee_log_sessions[]
+  specialty_coffee_log_refresh_tokens specialty_coffee_log_refresh_tokens[]
+  specialty_coffee_log_coffee_logs specialty_coffee_log_coffee_logs[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Session information for authenticated members. Tracks active login
+/// sessions with expiration and IP metadata, linked to members for ownership
+/// and validation.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked authenticated member's {@link specialty_coffee_log_members.id}.
+  specialty_coffee_log_member_id String
+  
+  /// Unique session token identifying the user session securely.
+  session_token String
+  
+  /// IP address from which the session was initiated.
+  ip_address String
+  
+  /// User agent string describing client device and browser.
+  user_agent String?
+  
+  /// Timestamp when the session was created.
+  created_at DateTime
+  
+  /// Expiration timestamp at which the session becomes invalid.
+  expires_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member specialty_coffee_log_members @relation(fields: [specialty_coffee_log_member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([session_token])
+  @@index([specialty_coffee_log_member_id, created_at], map: "specialty_coffee_log_sessions_specialty_coffee_log_mem_50ed903f")
+}
+
+/// Refresh tokens for authenticated members to obtain new access tokens
+/// securely. Each token is unique and associated with a member, with
+/// timestamps for issuing and revocation.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_refresh_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated member for this refresh token. {@link
+  /// specialty_coffee_log_members.id}.
+  specialty_coffee_log_member_id String
+  
+  /// Unique refresh token string used to request new access tokens.
+  refresh_token String
+  
+  /// Timestamp when the refresh token was issued.
+  issued_at DateTime
+  
+  /// Timestamp when this refresh token was revoked or invalidated.
+  revoked_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member specialty_coffee_log_members @relation(fields: [specialty_coffee_log_member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([refresh_token])
+  @@index([specialty_coffee_log_member_id, issued_at], map: "specialty_coffee_log_refresh_tokens_specialty_coffee_l_280cfe0e")
+}

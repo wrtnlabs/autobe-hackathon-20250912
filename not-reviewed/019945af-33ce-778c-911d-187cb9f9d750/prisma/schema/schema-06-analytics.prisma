@@ -1,0 +1,174 @@
+/// Store metadata and configuration details of various chart types used in
+/// analytics dashboards. This includes chart identifiers, chart type
+/// specifications, titles, descriptions, and widget associations. Supports
+/// multiple widgets referencing charts for reuse. Stance is primary due to
+/// direct management and CRUD operations by users defining analytics.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_charts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated widget's {@link flex_office_widgets.id} that renders this
+  /// chart.
+  flex_office_widget_id String
+  
+  /// Type of chart, e.g., bar, line, pie, histogram etc., defining
+  /// visualization style.
+  chart_type String
+  
+  /// Descriptive title for the chart shown to users.
+  title String
+  
+  /// Detailed description or purpose of the chart for business context.
+  description String?
+  
+  /// Timestamp when this chart was created.
+  created_at DateTime
+  
+  /// Timestamp when this chart was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; indicates if the chart is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  widget flex_office_widgets @relation(fields: [flex_office_widget_id], references: [id], onDelete: Cascade)
+  
+  flex_office_filter_conditions flex_office_filter_conditions[]
+  
+  @@unique([flex_office_widget_id, title])
+  @@index([chart_type, created_at])
+}
+
+/// Represents KPI widgets used in dashboards to show key performance
+/// indicators. Each widget associates with a UI widget, holds configuration
+/// JSON describing data sources, aggregates and display formats. KPI widgets
+/// enable users to quickly grasp business metrics and are managed
+/// independently, supporting CRUD operations.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_kpi_widgets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked UI widget {@link flex_office_widgets.id} presenting the KPI data.
+  flex_office_widget_id String
+  
+  /// JSON string specifying data queries, aggregation methods, and display
+  /// options for the KPI widget.
+  config_json String
+  
+  /// When the KPI widget was created.
+  created_at DateTime
+  
+  /// When the KPI widget was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; presence means widget is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  widget flex_office_widgets @relation(fields: [flex_office_widget_id], references: [id], onDelete: Cascade)
+  
+  @@unique([flex_office_widget_id])
+  @@index([created_at])
+}
+
+/// Houses filter condition definitions applied to charts and widgets for
+/// dynamic data querying. Conditions include identifiers, filter
+/// expressions, linked chart/widget references, and enablement flags. This
+/// table supports filtering functionality essential to analytics
+/// personalisation and user-driven data exploration.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_filter_conditions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The chart this filter condition belongs to {@link flex_office_charts.id}.
+  flex_office_chart_id String
+  
+  /// Optional reference to the widget {@link flex_office_widgets.id} this
+  /// condition may be attached to.
+  flex_office_widget_id String?
+  
+  /// Expression defining the filter logic in a domain-specific language or
+  /// query format.
+  filter_expression String
+  
+  /// Indicates if the filter condition is currently active and should be
+  /// applied.
+  enabled Boolean
+  
+  /// Timestamp of filter condition creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to the filter condition.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  chart flex_office_charts @relation(fields: [flex_office_chart_id], references: [id], onDelete: Cascade)
+  widget flex_office_widgets? @relation(fields: [flex_office_widget_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_chart_id])
+  @@index([flex_office_widget_id])
+  
+  @@index([enabled, created_at])
+}
+
+/// Tracks export operations performed by users including details such as
+/// export type, target data, timestamps and success/failure status. Supports
+/// auditing and monitoring of data sharing activities in analytics reports.
+/// Subsidiary stance as a usage log without user direct modification.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_export_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type/format of the export such as CSV, Excel, PDF.
+  export_type String
+  
+  /// Identifier of the exported data or report, e.g., chart or dashboard ID.
+  target_object String
+  
+  /// Result of the export operation, e.g., success, failure.
+  status String
+  
+  /// User ID who performed the export operation.
+  executed_by_user_id String
+  
+  /// Timestamp when the export was executed.
+  executed_at DateTime
+  
+  /// Record creation time for audit purposes.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([executed_by_user_id, executed_at])
+}

@@ -1,0 +1,238 @@
+/// Stores configuration and metadata for external data sources in
+/// FlexOffice, including connection details, type classification, and
+/// activation status. Serves as the central registry enabling unified access
+/// and management of diverse external databases and spreadsheets.
+///
+/// @namespace DataSources
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_data_sources {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Human-readable unique name for the data source.
+  name String
+  
+  /// Type category of the data source, such as 'mysql', 'postgresql',
+  /// 'google_sheet', or 'excel'.
+  type String
+  
+  /// Structured connection details or credentials reference stored securely
+  /// for accessing the data source.
+  connection_info String
+  
+  /// Flag indicating whether the data source is active and available for
+  /// synchronization.
+  is_active Boolean
+  
+  /// Timestamp when this data source record was created.
+  created_at DateTime
+  
+  /// Timestamp when this data source record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating when this data source was soft deleted, if
+  /// applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_data_source_syncs flex_office_data_source_syncs[]
+  flex_office_data_source_credentials flex_office_data_source_credentials[]
+  flex_office_external_sheets flex_office_external_sheets[]
+  flex_office_data_source_logs flex_office_data_source_logs[]
+  
+  @@unique([name])
+  @@index([is_active, created_at])
+  @@index([updated_at])
+}
+
+/// Records scheduled and executed synchronization operations for external
+/// data sources. Tracks timestamps, status, success, and error details
+/// enabling monitoring and retry mechanisms for data refresh workflows.
+///
+/// @namespace DataSources
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_data_source_syncs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key referencing the associated {@link
+  /// flex_office_data_sources.id} data source.
+  flex_office_data_source_id String
+  
+  /// Scheduled execution time for the sync operation.
+  scheduled_at DateTime
+  
+  /// Timestamp when the actual synchronization started.
+  started_at DateTime?
+  
+  /// Timestamp when the synchronization finished.
+  completed_at DateTime?
+  
+  /// Current status of the sync operation, with allowed values such as
+  /// 'pending', 'running', 'success', 'failed'.
+  status String
+  
+  /// Error message details if the sync operation failed.
+  error_message String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last record update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  dataSource flex_office_data_sources @relation(fields: [flex_office_data_source_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_data_source_id, scheduled_at], map: "flex_office_data_source_syncs_flex_office_data_source__6d4c4928")
+  @@index([status, scheduled_at])
+}
+
+/// Securely stores credentials used to authenticate access to data sources,
+/// supporting multiple types including OAuth2 tokens and API keys.
+/// Credentials include expiration and soft deletion for secure lifecycle
+/// management.
+///
+/// @namespace DataSources
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_data_source_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key referencing the related {@link flex_office_data_sources.id}
+  /// data source.
+  flex_office_data_source_id String
+  
+  /// The type of credential, e.g., 'oauth2', 'api_key'.
+  credential_type String
+  
+  /// The credential token or key value, stored securely.
+  credential_value String
+  
+  /// Expiration timestamp for the credential if applicable.
+  expires_at DateTime?
+  
+  /// Credential record creation timestamp.
+  created_at DateTime
+  
+  /// Last credential update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to mark credential revocation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  dataSource flex_office_data_sources @relation(fields: [flex_office_data_source_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_data_source_id, credential_type], map: "flex_office_data_source_credentials_flex_office_data_s_531a0ebf")
+}
+
+/// Stores metadata for externally uploaded spreadsheet files, including
+/// Google Sheets and Excel, linked to data sources. Captures file
+/// identification, access URLs, sheet counts, synchronization timestamps,
+/// and soft deletion data.
+///
+/// @namespace DataSources
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_external_sheets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key referencing the linked {@link flex_office_data_sources.id}
+  /// data source.
+  flex_office_data_source_id String
+  
+  /// Original name of the uploaded spreadsheet file.
+  file_name String
+  
+  /// URL location to access the spreadsheet remotely.
+  file_url String
+  
+  /// Count of individual sheets contained within the spreadsheet.
+  sheet_count Int
+  
+  /// Timestamp of the last successful synchronization of the sheet.
+  last_synced_at DateTime?
+  
+  /// Timestamp when the metadata record was created.
+  created_at DateTime
+  
+  /// Timestamp when this metadata record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for this spreadsheet metadata.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  dataSource flex_office_data_sources @relation(fields: [flex_office_data_source_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_data_source_id])
+  
+  @@unique([file_url])
+  @@index([last_synced_at])
+}
+
+/// Contains audit and operational log entries related to data sources,
+/// supporting troubleshooting and security auditing. Logs include event
+/// timestamps, severity levels, user attribution, and descriptive messages.
+///
+/// @namespace DataSources
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_data_source_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key linking to the associated {@link flex_office_data_sources.id}
+  /// data source.
+  flex_office_data_source_id String
+  
+  /// Severity level of the log entry, e.g., 'info', 'warning', 'error'.
+  log_level String
+  
+  /// Detailed message describing the log event.
+  message String
+  
+  /// Event occurrence timestamp.
+  timestamp DateTime
+  
+  /// User ID if the event is user-triggered; null for system-generated logs.
+  user_id String?
+  
+  /// Log record creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp when the log record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  dataSource flex_office_data_sources @relation(fields: [flex_office_data_source_id], references: [id], onDelete: Cascade)
+  
+  @@index([flex_office_data_source_id])
+  
+  @@index([log_level, timestamp])
+}

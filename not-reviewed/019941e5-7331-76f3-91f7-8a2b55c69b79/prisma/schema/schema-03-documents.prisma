@@ -1,0 +1,178 @@
+/// This table records all contract documents managed by EasySign. It
+/// contains metadata about each document, including its unique code, title,
+/// status (DRAFT, IN_PROGRESS, COMPLETED, etc.), original filename, file
+/// storage path, and related data such as creator reference. It supports
+/// soft deletes and timestamp audit fields. It is a primary entity for
+/// contract document lifecycle management. It references creators from user
+/// tables but does not own their details directly.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_documents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the document creator user's id. {@link
+  /// easy_sign_freelancerusers.id} or other user tables.
+  creator_id String
+  
+  /// Unique business code or identifier for the document.
+  code String
+  
+  /// Document title or subject for display and search.
+  title String
+  
+  /// Current status of the document (e.g., DRAFT, IN_PROGRESS, COMPLETED,
+  /// CANCELED, EXPIRED, DECLINED).
+  status String
+  
+  /// Original filename as uploaded.
+  original_filename String
+  
+  /// Storage path or URI of the document file.
+  file_path String
+  
+  /// SHA-256 hash of the original document for integrity verification.
+  hash_sha256 String
+  
+  /// Time when the document was created.
+  created_at DateTime
+  
+  /// Time when the document was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null means not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  creator easy_sign_freelancerusers @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  
+  easy_sign_document_fields easy_sign_document_fields[]
+  easy_sign_sign_requests easy_sign_sign_requests[]
+  easy_sign_audit_events easy_sign_audit_events[]
+  easy_sign_legal_certificates easy_sign_legal_certificates[]
+  
+  @@index([creator_id])
+  
+  @@unique([code])
+  @@index([status, created_at])
+}
+
+/// Templates for reusable document field layouts. Each template belongs to a
+/// creator user and contains metadata such as name, description, and usage
+/// count. Templates facilitate quick document assembly by saving field
+/// placements and settings. This table is a primary entity for managing
+/// document templates independently.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_templates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the template creator user id. {@link
+  /// easy_sign_freelancerusers.id} or other user tables.
+  creator_id String
+  
+  /// Template name for user display and selection.
+  name String
+  
+  /// Detailed description of the template purpose and contents.
+  description String?
+  
+  /// Count of how many times this template has been used.
+  usage_count Int
+  
+  /// Time when the template was created.
+  created_at DateTime
+  
+  /// Time when the template was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null means not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  creator easy_sign_freelancerusers @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  
+  easy_sign_document_fields easy_sign_document_fields[]
+  
+  @@index([creator_id])
+  
+  @@unique([name, creator_id])
+  @@index([usage_count, created_at])
+}
+
+/// This supporting table stores metadata about individual fields placed on
+/// documents or templates. It captures field type, size, position, order,
+/// required flags, and the associated parent template or document. This
+/// table is considered subsidiary because it cannot stand independently and
+/// is always managed through its parent templates or documents.
+///
+/// @namespace Documents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_document_fields {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the associated template. {@link easy_sign_templates.id}
+  template_id String?
+  
+  /// Reference to the associated document. {@link easy_sign_documents.id}
+  document_id String?
+  
+  /// Name or label of the field.
+  field_name String
+  
+  /// Type of the field (e.g., signature, text, checkbox, date).
+  field_type String
+  
+  /// Top coordinate for field placement, in pixels or mm.
+  position_top Float
+  
+  /// Left coordinate for field placement, in pixels or mm.
+  position_left Float
+  
+  /// Width of the field, in pixels or mm.
+  width Float
+  
+  /// Height of the field, in pixels or mm.
+  height Float
+  
+  /// Whether this field must be filled or signed.
+  required Boolean
+  
+  /// Order in which the field should be completed relative to others.
+  order_number Int
+  
+  /// Time when the field record was created.
+  created_at DateTime
+  
+  /// Time when the field record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null means active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  template easy_sign_templates? @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  document easy_sign_documents? @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  
+  @@index([template_id, order_number])
+  @@index([document_id, order_number])
+}

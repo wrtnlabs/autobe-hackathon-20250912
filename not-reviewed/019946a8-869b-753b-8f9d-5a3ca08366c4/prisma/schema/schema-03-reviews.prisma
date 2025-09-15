@@ -1,0 +1,49 @@
+/// Stores member reviews with textual content and star ratings (1-5) for
+/// places recorded by members. Supports privacy settings 'public' or
+/// 'private' per review. Linked to travel_record_places and
+/// travel_record_member for relational integrity and querying. Includes
+/// timestamps for auditing and optional soft deletion support.
+///
+/// @namespace Reviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the place being reviewed (travel_record_places.id).
+  travel_record_place_id String
+  
+  /// Reference to the member who wrote the review (travel_record_member.id).
+  travel_record_member_id String
+  
+  /// Textual review content up to 1000 characters.
+  review String
+  
+  /// Star rating from 1 to 5 inclusive.
+  star_rating Int
+  
+  /// Privacy setting for review: 'public' or 'private'. Default is 'public'.
+  privacy String
+  
+  /// Timestamp when the review was created for auditing.
+  created_at DateTime
+  
+  /// Timestamp when the review was last updated for auditing.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  travelRecordPlace travel_record_places @relation(fields: [travel_record_place_id], references: [id], onDelete: Cascade)
+  travelRecordMember travel_record_member @relation(fields: [travel_record_member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([travel_record_place_id, travel_record_member_id], map: "travel_record_reviews_travel_record_place_id_travel_re_a24456e3")
+  @@index([travel_record_place_id])
+  @@index([travel_record_member_id])
+}

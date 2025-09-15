@@ -1,0 +1,41 @@
+/// Chatbot command logs record all executed commands by users and admins
+/// with timestamps, user references, command content, and parameters. This
+/// table serves as an append-only historical record for auditing command
+/// usage and admin actions. It references the chatbot_members table's id to
+/// associate each log entry with the executing user. The model supports
+/// comprehensive auditing and tracking of all commands processed in chatbot
+/// rooms.
+///
+/// @namespace Commands
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_command_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referencing the chatbot member who executed the command. {@link
+  /// chatbot_members.id}.
+  chatbot_member_id String
+  
+  /// The exact command string issued by the user or admin, including
+  /// parameters.
+  command String
+  
+  /// Parameters passed with the command, stored as a JSON string or plain text
+  /// representation.
+  command_parameters String?
+  
+  /// Timestamp when the command was executed, stored in UTC.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  
+  @@index([chatbot_member_id])
+  
+  @@index([created_at])
+}

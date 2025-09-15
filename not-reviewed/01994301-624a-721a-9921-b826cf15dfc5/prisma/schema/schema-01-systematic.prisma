@@ -1,0 +1,218 @@
+/// Global system configuration settings for the ATS platform. Used to
+/// control system-wide technical options, enable/disable features, set
+/// thresholds, and maintain platform-level parameters managed by system
+/// administrators. Key-value style, with support for type annotation and
+/// descriptions. CRUD operations are logged in audit trails.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_system_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the system setting. Must be unique and refer to a platform-wide
+  /// configuration field.
+  setting_name String
+  
+  /// Current value of the setting in string format. Interpreted based on its
+  /// type (e.g., number, JSON, boolean as string).
+  setting_value String
+  
+  /// Data type of the setting (e.g., string, int, boolean, json). Used to cast
+  /// the value appropriately in application logic.
+  setting_type String
+  
+  /// Detailed human-readable description of the setting for documentation and
+  /// maintenance use.
+  description String?
+  
+  /// Timestamp of creation for this configuration record.
+  created_at DateTime
+  
+  /// Timestamp of last update for this configuration record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active. Used for recovery and audit trace.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([setting_name])
+  @@index([created_at])
+}
+
+/// Secure storage for external API credentials required by the ATS platform
+/// to integrate with third-party services (e.g., Email, SMS, Coding Test,
+/// Google Calendar, AI APIs). Each credential can be referenced by
+/// application code, and is encrypted in storage. Managed independently from
+/// business data. Access and modification are strictly audited.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_external_api_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique logical key for this external credential (e.g.,
+  /// 'google_calendar_main', 'sendgrid_email_default').
+  credential_key String
+  
+  /// Name of third-party service (e.g., Google Calendar, SendGrid,
+  /// Programmers, CodeSignal).
+  service_name String
+  
+  /// Serialized credential object (typically JSON-encoded, supports secret
+  /// keys, OAuth tokens/refresh secrets, etc).
+  credential_json String
+  
+  /// Expiration timestamp for this credential, or null if persistent.
+  expires_at DateTime?
+  
+  /// Business/contextual description for what this credential is used for.
+  description String?
+  
+  /// Timestamp of creation for this credential entry.
+  created_at DateTime
+  
+  /// Timestamp of last update to this credential entry.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active, for credential rotation and
+  /// recovery reference.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([credential_key])
+  @@index([service_name])
+}
+
+/// Global enumeration registry for values referenced throughout the ATS
+/// system (e.g., job types, employment types, notification channels,
+/// standardized status codes). Used for central management and lookup of
+/// platform enum codes and labels, including optional metadata for reference
+/// tables. Maintains code uniqueness and documentation.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_enums {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Namespace/group/type for this enum set (e.g., 'application_status',
+  /// 'notification_channel', 'employment_type').
+  enum_type String
+  
+  /// Business code representing a value in the enum type (e.g., 'APPLIED',
+  /// 'INTERVIEWED', 'EMAIL'). Unique within (enum_type).
+  enum_code String
+  
+  /// Human-friendly label for the enumeration value (localized/translated
+  /// where applicable).
+  label String
+  
+  /// Optional JSON string with additional attributes for the enum (e.g., icon,
+  /// color code, sort order, or other business metadata).
+  extended_data String?
+  
+  /// Documentation for usage context and guidance on this enum value.
+  description String?
+  
+  /// Timestamp of creation for this enum value.
+  created_at DateTime
+  
+  /// Timestamp of last update for this enum value.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active (enables undo/error recovery for
+  /// data dictionary).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([enum_type, enum_code])
+  @@index([enum_type])
+  @@index([created_at])
+}
+
+/// Central audit log for all sensitive changes and access events on system
+/// settings, credentials, and administrative actions. Records actor,
+/// operation type, event details and context for compliance and forensic
+/// investigation. Supports tracing of CRUD, access, system incidents, and
+/// security events. Readable/searchable for compliance review and incident
+/// response.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_audit_trails {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp when the audit event occurred.
+  event_timestamp DateTime
+  
+  /// ID of the actor (user/admin/system process) performing the event.
+  /// References actor tables in other modules.
+  actor_id String
+  
+  /// Role of the actor at the time of event (e.g., 'systemAdmin',
+  /// 'hrRecruiter', 'service_process').
+  actor_role String
+  
+  /// Nature of operation (e.g., 'CREATE', 'UPDATE', 'DELETE', 'ACCESS',
+  /// 'AUTH_FAILURE', 'EXPORT').
+  operation_type String
+  
+  /// Category of object/entity affected (e.g., 'system_setting',
+  /// 'api_credential', 'enum', 'user', 'audit_policy').
+  target_type String
+  
+  /// ID of the object/entity affected by this event. Can point to any primary
+  /// business table (may use a system-wide UUID registry for generalization).
+  target_id String?
+  
+  /// Plain text or serialized JSON containing the details of the event (e.g.,
+  /// before/after, error details, request metadata).
+  event_detail String
+  
+  /// IP address of the event originator, for security tracking and incident
+  /// investigation.
+  ip_address String?
+  
+  /// User agent or process context string, if applicable (for human vs
+  /// system/integration traceability).
+  user_agent String?
+  
+  /// Record create timestamp for the audit entry (supports compliance
+  /// traceability).
+  created_at DateTime
+  
+  /// Record update timestamp for the audit entry.
+  updated_at DateTime
+  
+  /// Soft delete timestamp (enable recovery/error suppression for audit
+  /// records).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([event_timestamp])
+  @@index([actor_id])
+  @@index([target_type, target_id])
+}

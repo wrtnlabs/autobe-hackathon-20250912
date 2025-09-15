@@ -1,0 +1,13 @@
+Prisma schema validation - (mergeSchemas wasm)
+Error code: P1012
+error: Type "easy_sign_role" is neither a built-in type, nor refers to another model, composite type, or enum.
+  -->  schema-07-security.prisma:125
+   | 
+124 |   user easy_sign_freelancerusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+125 |   role easy_sign_role            @relation(fields: [role_id], references: [id], onDelete: Cascade)
+   | 
+
+Validation Error Count: 1
+[Context: mergeSchemas]
+
+Prisma CLI Version : 6.15.0

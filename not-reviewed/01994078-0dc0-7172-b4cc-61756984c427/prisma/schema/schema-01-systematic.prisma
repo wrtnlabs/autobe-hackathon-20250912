@@ -1,0 +1,125 @@
+/// System-wide configuration parameters for the SocialLogin service. This
+/// table stores key-value pairs representing configurable options that
+/// govern system behavior. These parameters are essential for operations and
+/// can be updated by administrators. It includes audit timestamps and
+/// supports soft deletion for safe cleanup.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_system_parameters {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifier for the system parameter.
+  key String
+  
+  /// Value associated with the system parameter key.
+  value String
+  
+  /// Detailed explanation of the system parameter's purpose and usage.
+  description String?
+  
+  /// Timestamp when this system parameter was created.
+  created_at DateTime
+  
+  /// Timestamp when this system parameter was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion of this system parameter, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([key])
+  @@index([created_at, updated_at])
+}
+
+/// Storage of JOSE (JSON Object Signing and Encryption) cryptographic keys
+/// used for securing tokens and communications in the SocialLogin service.
+/// Each key record includes metadata, public and private key material, key
+/// status, and usage contexts. This table is critical for token signing and
+/// verification workflows.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_jose_keys {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Key ID - a unique identifier for the JOSE key.
+  kid String
+  
+  /// Intended usage of the key (e.g., 'sig' for signature, 'enc' for
+  /// encryption).
+  use String?
+  
+  /// Key type (e.g., RSA, EC).
+  kty String?
+  
+  /// Algorithm associated with the key (e.g., RS256, ES256).
+  alg String?
+  
+  /// Key operations this key can perform, e.g., sign, verify.
+  key_ops String?
+  
+  /// X.509 certificate chain associated with the key in base64 encoding.
+  x5c String?
+  
+  /// RSA public modulus.
+  n String?
+  
+  /// RSA public exponent.
+  e String?
+  
+  /// RSA private exponent.
+  d String?
+  
+  /// RSA private prime p.
+  p String?
+  
+  /// RSA private prime q.
+  q String?
+  
+  /// RSA exponent 1.
+  dp String?
+  
+  /// RSA exponent 2.
+  dq String?
+  
+  /// RSA coefficient.
+  qi String?
+  
+  /// Elliptic curve used.
+  crv String?
+  
+  /// Elliptic curve x coordinate.
+  x String?
+  
+  /// Elliptic curve y coordinate.
+  y String?
+  
+  /// Private key material if stored separately.
+  private_key String?
+  
+  /// Timestamp when this JOSE key record was created.
+  created_at DateTime
+  
+  /// Timestamp when this JOSE key record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, marks when the key was logically removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([kid])
+  @@index([created_at, updated_at])
+}

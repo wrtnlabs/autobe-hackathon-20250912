@@ -1,0 +1,135 @@
+/// Table representing admin users with full system control including user
+/// management, content moderation, and AI feature configuration. Each admin
+/// has unique identity attributes and audit timestamps. Part of the Identity
+/// component enabling role-specific user management and access control.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address of the admin user for login and contact.
+  email String
+  
+  /// Hash of the admin's password for authentication purposes.
+  password_hash String
+  
+  /// Admin user's display name or nickname.
+  display_name String
+  
+  /// Timestamp when the admin user was created.
+  created_at DateTime
+  
+  /// Timestamp when the admin user was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the admin user was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  community_ai_admin_actions community_ai_admin_actions[]
+  community_ai_audit_logs community_ai_audit_logs[]
+  
+  @@unique([email])
+  @@index([created_at, updated_at])
+}
+
+/// Table representing moderator users with permissions to review and flag
+/// content, manage user-generated posts and comments. Supports role-based
+/// access control distinct from admins and members with separate identity
+/// fields and audit trails.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_moderators {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address of the moderator user for login and contact.
+  email String
+  
+  /// Hash of the moderator's password for authentication purposes.
+  password_hash String
+  
+  /// Moderator user's display name or nickname.
+  display_name String
+  
+  /// Timestamp when the moderator user was created.
+  created_at DateTime
+  
+  /// Timestamp when the moderator user was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the moderator user was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  community_ai_moderator_reviews community_ai_moderator_reviews[]
+  community_ai_audit_logs community_ai_audit_logs[]
+  
+  @@unique([email])
+  @@index([created_at, updated_at])
+}
+
+/// Table representing member users, the main community participants who can
+/// create posts, comments, and use AI-assisted features. Holds identity
+/// data, credentials, and audit timestamps. Supports separation of normal
+/// users from admins and moderators.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address of the member user for login and contact.
+  email String
+  
+  /// Hash of the member's password for authentication purposes.
+  password_hash String
+  
+  /// Member user's display name or nickname.
+  display_name String
+  
+  /// Timestamp when the member user was created.
+  created_at DateTime
+  
+  /// Timestamp when the member user was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the member user was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  community_ai_posts community_ai_posts[]
+  community_ai_comments community_ai_comments[]
+  community_ai_ai_comment_suggestions community_ai_ai_comment_suggestions[]
+  community_ai_factcheck_flags community_ai_factcheck_flags[]
+  community_ai_content_flags community_ai_content_flags[]
+  community_ai_user_reports community_ai_user_reports[]
+  community_ai_notifications community_ai_notifications[]
+  community_ai_user_notification_preferences community_ai_user_notification_preferences?
+  community_ai_user_sessions community_ai_user_sessions[]
+  community_ai_audit_logs community_ai_audit_logs[]
+  community_ai_content_access_logs community_ai_content_access_logs[]
+  community_ai_edit_histories community_ai_edit_histories[]
+  
+  @@unique([email])
+  @@index([created_at, updated_at])
+}

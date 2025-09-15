@@ -1,0 +1,119 @@
+/// Guest users for temporary session identification and minimal tracking
+/// within the social login system. Guests do not have permanent credentials
+/// or authentication but are distinguished by unique nicknames for ephemeral
+/// identification.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_guests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Guest user's temporary nickname used for display and identification.
+  nickname String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([nickname])
+  @@index([created_at])
+}
+
+/// Registered users authenticated via social login, requiring unique email
+/// and nickname. Users have password hash for authentication, status
+/// indicating lifecycle, and support soft deletion.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_users {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address for user login and communication.
+  email String
+  
+  /// Unique display nickname for the user.
+  nickname String
+  
+  /// Hashed password for user authentication.
+  password_hash String
+  
+  /// Account lifecycle status, e.g., active, suspended, withdrawn.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for logical deletion without physical removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  social_login_access_tokens social_login_access_tokens[]
+  social_login_refresh_tokens social_login_refresh_tokens[]
+  social_login_oauth_authorizations social_login_oauth_authorizations[]
+  social_login_authorization_codes social_login_authorization_codes[]
+  social_login_management_token_views social_login_management_token_views[]
+  
+  @@unique([email])
+  @@unique([nickname])
+  @@index([status, created_at])
+}
+
+/// Administrator accounts with elevated privileges in the social login
+/// system. Admins have unique email and nickname, password hash for
+/// authentication, status lifecycle, and soft delete capability.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique admin email address for authentication and notifications.
+  email String
+  
+  /// Admin's unique display nickname.
+  nickname String
+  
+  /// Hashed password for admin authentication.
+  password_hash String
+  
+  /// Account lifecycle status such as active, suspended, or disabled.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to mark logical deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@unique([nickname])
+  @@index([status, created_at])
+}

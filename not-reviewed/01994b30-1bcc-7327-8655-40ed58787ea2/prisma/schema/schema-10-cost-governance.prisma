@@ -1,0 +1,107 @@
+/// This table captures cost and usage reports related to essay grading
+/// activities per tenant for specific time intervals. It records metrics
+/// such as token usage, latency, request counts, and cost amounts, enabling
+/// budget tracking and financial reporting within the multi-tenant system.
+/// It references the tenant entity and is indexed by tenant and report
+/// interval for efficient queries.
+///
+/// @namespace CostGovernance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_cost_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the tenant entity. {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Start timestamp of the reporting period in ISO 8601 format, inclusive.
+  period_start DateTime
+  
+  /// End timestamp of the reporting period in ISO 8601 format, exclusive.
+  period_end DateTime
+  
+  /// Total number of AI tokens consumed during this period for essay grading.
+  token_count Int
+  
+  /// Total count of essay grading requests processed during this period.
+  request_count Int
+  
+  /// Average latency in milliseconds for grading requests within this period.
+  average_latency_ms Float
+  
+  /// Total cost in US dollars incurred during the reporting period related to
+  /// grading activities.
+  total_cost_usd Float
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp to indicate if the record has been logically
+  /// deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, period_start])
+  @@index([period_start, period_end, tenant_id], map: "creverse_ai_essay_cost_reports_period_start_period_end_d6f4f9ef")
+}
+
+/// This table defines auto-throttling policies that apply to tenants to
+/// control request rates and prevent budget overruns. It stores policy
+/// types, thresholds, and actions to enforce limits at runtime. Each policy
+/// is uniquely associated with a tenant and a policy type.
+///
+/// @namespace CostGovernance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_auto_throttle_policies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the tenant which this throttle policy applies to. {@link
+  /// creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Type of throttling policy, such as 'budget_limit', 'rate_limit',
+  /// indicating the enforcement scope.
+  policy_type String
+  
+  /// Numeric threshold value for the policy, e.g., maximum allowed tokens per
+  /// time unit or maximum request rate.
+  threshold_value Float
+  
+  /// Action to take when the threshold is exceeded, e.g., 'reject', 'warn', or
+  /// 'throttle'.
+  action String
+  
+  /// Detailed human-readable explanation of the policy purpose and application.
+  description String?
+  
+  /// Timestamp when this policy record was created.
+  created_at DateTime
+  
+  /// Timestamp when this policy record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating logical deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, policy_type], map: "creverse_ai_essay_auto_throttle_policies_tenant_id_pol_6cb9dac2")
+  @@index([policy_type])
+}

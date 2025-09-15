@@ -1,0 +1,235 @@
+/// Authentication credentials storing user's login details such as email and
+/// password hash, with strict uniqueness on email. Relates to registered
+/// users through external user IDs. Supports secure login authentication and
+/// password reset workflows.
+///
+/// @namespace SecurityCompliance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_auth_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to registered user's {@link flow_sphere_registered_user.id}
+  /// associated with these credentials.
+  flow_sphere_registered_user_id String
+  
+  /// User's email address used for login; unique and required for
+  /// authentication.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Timestamp when credentials were created.
+  created_at DateTime
+  
+  /// Timestamp when credentials were last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  registeredUser flow_sphere_registered_user @relation(fields: [flow_sphere_registered_user_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_auth_sessions flow_sphere_auth_sessions[]
+  
+  @@unique([flow_sphere_registered_user_id], map: "flow_sphere_auth_credentials_flow_sphere_registered_us_d8f15116")
+  
+  @@unique([email])
+}
+
+/// Active authentication sessions representing user login states. Each
+/// session links to a registered user and credentials, tracking session
+/// tokens, expiration, device metadata, and status for secure session
+/// management and revocation.
+///
+/// @namespace SecurityCompliance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_auth_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to registered user's {@link flow_sphere_registered_user.id}
+  /// owning this session.
+  flow_sphere_registered_user_id String
+  
+  /// Reference to authentication credentials {@link
+  /// flow_sphere_auth_credentials.id} used to initiate this session.
+  flow_sphere_auth_credentials_id String
+  
+  /// Unique identifier for the session token used for authentication.
+  session_token String
+  
+  /// Token used to refresh the session token; supports secure session renewal.
+  refresh_token String
+  
+  /// Client user agent string of the device used during login.
+  user_agent String?
+  
+  /// IP address from which the session was initiated.
+  ip_address String?
+  
+  /// Expiration timestamp of the session token.
+  expires_at DateTime
+  
+  /// Current status of the session, e.g., "active", "revoked", "expired".
+  status String
+  
+  /// Timestamp when the session was created.
+  created_at DateTime
+  
+  /// Timestamp when the session was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  registeredUser flow_sphere_registered_user @relation(fields: [flow_sphere_registered_user_id], references: [id], onDelete: Cascade)
+  authCredentials flow_sphere_auth_credentials @relation(fields: [flow_sphere_auth_credentials_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_jwt_tokens flow_sphere_jwt_tokens[]
+  
+  @@index([flow_sphere_auth_credentials_id])
+  
+  @@unique([session_token])
+  @@unique([refresh_token])
+  @@index([flow_sphere_registered_user_id, status, expires_at], map: "flow_sphere_auth_sessions_flow_sphere_registered_user__326d0766")
+}
+
+/// JWT tokens issued during authentication, linked to sessions for secure
+/// access control. Tokens include issuance and expiration timestamps and
+/// track revocation status for security compliance and auditing.
+///
+/// @namespace SecurityCompliance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_jwt_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to authentication session {@link flow_sphere_auth_sessions.id}
+  /// associated with this token.
+  flow_sphere_auth_sessions_id String
+  
+  /// JWT token string used for user authentication and authorization.
+  jwt_token String
+  
+  /// Timestamp when the token was issued.
+  issued_at DateTime
+  
+  /// Expiration timestamp of the token.
+  expires_at DateTime
+  
+  /// Flag indicating if the token has been revoked or invalidated.
+  revoked Boolean
+  
+  /// Reason for token revocation, if revoked; null otherwise.
+  revoked_reason String?
+  
+  /// Timestamp when token record was created.
+  created_at DateTime
+  
+  /// Timestamp when token record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  authSession flow_sphere_auth_sessions @relation(fields: [flow_sphere_auth_sessions_id], references: [id], onDelete: Cascade)
+  
+  @@unique([jwt_token])
+  @@index([flow_sphere_auth_sessions_id])
+}
+
+/// Access control rules defining role-based permissions for actions across
+/// resources within FlowSphere. Supports fine-grained authorization
+/// enforcement linked to security policies.
+///
+/// @namespace SecurityCompliance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_access_controls {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Role name defining a set of permissions, e.g., 'Registered User',
+  /// 'Project Manager', 'Admin'.
+  role String
+  
+  /// Target resource or module this access control entry applies to, e.g.,
+  /// 'projects', 'tasks'.
+  resource String
+  
+  /// Specific action permitted or denied, e.g., 'create', 'read', 'update',
+  /// 'delete'.
+  action String
+  
+  /// Whether the action is allowed (true) or denied (false) for the role on
+  /// the resource.
+  allow Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([role, resource, action])
+  @@index([role])
+}
+
+/// Audit log entries recording critical system and security events such as
+/// login attempts, token revocations, and access violations. Append-only
+/// records for forensic and compliance purposes.
+///
+/// @namespace SecurityCompliance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type of event logged, e.g., 'login_success', 'login_failure',
+  /// 'token_revoked'.
+  event_type String
+  
+  /// User associated with the event {@link flow_sphere_registered_user.id}, if
+  /// applicable.
+  user_id String?
+  
+  /// Session associated with the event {@link flow_sphere_auth_sessions.id},
+  /// if applicable.
+  session_id String?
+  
+  /// Detailed description of the event and context.
+  description String
+  
+  /// Timestamp when the event was logged.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([created_at])
+}

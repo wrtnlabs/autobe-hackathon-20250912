@@ -1,0 +1,123 @@
+/// Tracks currently active concurrent editors on pages to enforce limits and
+/// manage collaboration sessions. References a page and an editor user.
+/// Supports soft delete for deactivation when an editor leaves. Temporal
+/// fields included for record-keeping.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_page_editors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced page's {@link flex_office_pages.id}.
+  page_id String
+  
+  /// Referenced editor user's {@link flex_office_editors.id}.
+  editor_id String
+  
+  /// Timestamp when the editor session started.
+  created_at DateTime
+  
+  /// Timestamp when the editor session was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the editor session was closed or removed (soft delete).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  page flex_office_pages @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  editor flex_office_editors @relation(fields: [editor_id], references: [id], onDelete: Cascade)
+  
+  @@index([editor_id])
+  
+  @@unique([page_id, editor_id])
+  @@index([created_at, deleted_at])
+}
+
+/// Stores user comments on pages supporting collaboration and editorial
+/// workflows. Comments belong to a page and an editor user. Supports soft
+/// delete for comment moderation. Allows indexing of comment content for
+/// full-text search.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_page_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged page's {@link flex_office_pages.id}.
+  page_id String
+  
+  /// Belonged editor user's {@link flex_office_editors.id}.
+  editor_id String
+  
+  /// The text content of the comment.
+  content String
+  
+  /// Timestamp when the comment was created.
+  created_at DateTime
+  
+  /// Timestamp when the comment was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the comment was soft deleted or moderated.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  page flex_office_pages @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  editor flex_office_editors @relation(fields: [editor_id], references: [id], onDelete: Cascade)
+  
+  @@index([page_id])
+  @@index([editor_id])
+  
+  @@index([created_at, deleted_at])
+}
+
+/// Captures records of edit conflicts occurring in collaborative editing
+/// sessions. Provides historical tracking and audit trails for conflict
+/// resolution. Links to the affected page, involved editor, and the
+/// conflicting change snapshot. Immutable append-only snapshot table
+/// capturing details and timestamps.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_edit_conflicts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced page's {@link flex_office_pages.id}.
+  page_id String
+  
+  /// Referenced editor who caused the conflict {@link flex_office_editors.id}.
+  editor_id String
+  
+  /// JSON encoded data representing conflicting changes.
+  conflict_data String
+  
+  /// Timestamp when the conflict record was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  page flex_office_pages @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  editor flex_office_editors @relation(fields: [editor_id], references: [id], onDelete: Cascade)
+  
+  @@index([page_id])
+  @@index([editor_id])
+  
+  @@index([created_at])
+}

@@ -1,0 +1,144 @@
+/// Factual claims extracted from posts or comments for AI fact-checking.
+/// Each claim is linked to its source content, supporting accurate
+/// verification workflows and auditability.
+///
+/// @namespace AIFactcheck
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_factcheck_claims {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Source post's {@link community_ai_posts.id}.
+  post_id String?
+  
+  /// Source comment's {@link community_ai_comments.id}.
+  comment_id String?
+  
+  /// Extracted factual claim text to be verified.
+  claim_text String
+  
+  /// Timestamp when the claim was created.
+  created_at DateTime
+  
+  /// Timestamp when the claim was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for claim.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  post community_ai_posts? @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  
+  community_ai_factcheck_results community_ai_factcheck_results[]
+  community_ai_factcheck_flags community_ai_factcheck_flags[]
+  
+  @@unique([post_id, claim_text])
+  @@unique([comment_id, claim_text])
+  @@index([created_at])
+}
+
+/// Verification results from AI fact-check services linked to extracted
+/// claims. Includes verification status, confidence score, source
+/// references, and audit timestamps.
+///
+/// @namespace AIFactcheck
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_factcheck_results {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked factual claim's {@link community_ai_factcheck_claims.id}.
+  factcheck_claim_id String
+  
+  /// Indicates if the claim was verified as true or false.
+  is_verified Boolean
+  
+  /// Confidence level of the verification result provided by the AI.
+  confidence_score Float
+  
+  /// Reference URL to source data backing the verification.
+  source_url String?
+  
+  /// Timestamp when the verification result was created.
+  created_at DateTime
+  
+  /// Timestamp when the verification result was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for verification result.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  factcheckClaim community_ai_factcheck_claims @relation(fields: [factcheck_claim_id], references: [id], onDelete: Cascade)
+  
+  @@unique([factcheck_claim_id])
+  @@index([is_verified])
+}
+
+/// Flags raised by AI fact-checking on content indicating potential
+/// misinformation or issues. Includes references to source claims, content
+/// IDs, flag type, status, and reporting member details for moderation and
+/// traceability.
+///
+/// @namespace AIFactcheck
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_factcheck_flags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked factual claim's {@link community_ai_factcheck_claims.id}.
+  factcheck_claim_id String
+  
+  /// Offending post's {@link community_ai_posts.id}.
+  post_id String?
+  
+  /// Offending comment's {@link community_ai_comments.id}.
+  comment_id String?
+  
+  /// Member who reported the flag's {@link community_ai_members.id}.
+  reported_by_member_id String?
+  
+  /// Type of flag raised, e.g., misinformation, spam, inappropriate content.
+  flag_type String
+  
+  /// Current status of the flag, e.g., pending, reviewed, dismissed.
+  flag_status String
+  
+  /// Timestamp when the flag was created.
+  created_at DateTime
+  
+  /// Timestamp of the last flag update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for the flag record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  factcheckClaim community_ai_factcheck_claims @relation(fields: [factcheck_claim_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  reportedByMember community_ai_members? @relation(fields: [reported_by_member_id], references: [id], onDelete: Cascade)
+  
+  @@index([factcheck_claim_id])
+  @@index([post_id])
+  @@index([comment_id])
+  @@index([reported_by_member_id])
+  
+  @@index([flag_status])
+}

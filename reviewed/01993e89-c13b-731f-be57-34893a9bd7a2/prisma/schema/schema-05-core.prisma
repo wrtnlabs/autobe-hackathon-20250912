@@ -1,0 +1,41 @@
+/// This table stores reusable node templates for notification workflows
+/// including email, sms, and delay templates. Each template is identified by
+/// a unique code and classified by type to facilitate consistent workflow
+/// node creation and management. Templates contain LiquidJS template bodies
+/// defining the content or behavior of each node type. This core entity
+/// enables flexible and centralized management of notification content
+/// templates used by workflow nodes across the system.
+///
+/// @namespace Core
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_node_templates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business identifier code for the node template.
+  code String
+  
+  /// Human-readable name of the node template.
+  name String
+  
+  /// Type of the node template: "email", "sms", or "delay".
+  type String
+  
+  /// LiquidJS template content of the node template.
+  template_body String
+  
+  /// Timestamp when the template was created.
+  created_at DateTime
+  
+  /// Timestamp when the template was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+  @@index([type])
+}

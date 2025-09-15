@@ -1,0 +1,46 @@
+/// This table stores authenticated student user information including login
+/// credentials and audit timestamps. It supports user authentication by
+/// maintaining unique emails and hashed passwords. It includes temporal
+/// fields for creation, update, and potential soft deletion timestamps. As a
+/// primary entity, it allows independent user management and secure
+/// authentication workflows.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_students {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address used for student login and communication.
+  email String
+  
+  /// Secure hashed password for authentication purposes. Plain passwords are
+  /// never stored.
+  password_hash String
+  
+  /// Timestamp when the student record was created.
+  created_at DateTime
+  
+  /// Timestamp when the student record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating when the student record was soft deleted, if
+  /// applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  study_planner_study_tasks study_planner_study_tasks[]
+  study_planner_task_alarms study_planner_task_alarms[]
+  study_planner_general_reminders study_planner_general_reminders[]
+  study_planner_study_progress_analytics study_planner_study_progress_analytics[]
+  study_planner_learning_gap_charts study_planner_learning_gap_charts[]
+  
+  @@unique([email])
+  @@index([created_at])
+  @@index([updated_at])
+}

@@ -1,0 +1,154 @@
+/// Audit logs capturing detailed records of system actions including user,
+/// admin, moderator, and system events for compliance and forensic analysis.
+/// Each log entry is immutable and includes metadata such as IP address and
+/// user agent for traceability.
+///
+/// @namespace Audit
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Acting member user {@link community_ai_members.id}.
+  user_id String?
+  
+  /// Admin user {@link community_ai_admins.id}.
+  admin_id String?
+  
+  /// Moderator user {@link community_ai_moderators.id}.
+  moderator_id String?
+  
+  /// Related system setting {@link community_ai_system_settings.id}.
+  system_setting_id String?
+  
+  /// Type of action performed, e.g., 'login', 'post_create', 'comment_delete'.
+  action_type String
+  
+  /// Detailed description of the action performed.
+  action_description String?
+  
+  /// IP address from which the action originated.
+  ip_address String?
+  
+  /// User agent string of the client performing the action.
+  user_agent String?
+  
+  /// Timestamp when the audit log entry was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user community_ai_members? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  admin community_ai_admins? @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  moderator community_ai_moderators? @relation(fields: [moderator_id], references: [id], onDelete: Cascade)
+  systemSetting community_ai_system_settings? @relation(fields: [system_setting_id], references: [id], onDelete: Cascade)
+  
+  @@index([admin_id])
+  @@index([moderator_id])
+  @@index([system_setting_id])
+  
+  @@index([user_id, created_at])
+  @@index([action_type, created_at])
+}
+
+/// Logs recording access events where members view or interact with posts
+/// and comments. Captures member identity, accessed content references,
+/// access type, device info, IP address, and access timestamp for compliance
+/// monitoring.
+///
+/// @namespace Audit
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_content_access_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Accessing member {@link community_ai_members.id}.
+  member_id String
+  
+  /// Accessed post {@link community_ai_posts.id}.
+  post_id String?
+  
+  /// Accessed comment {@link community_ai_comments.id}.
+  comment_id String?
+  
+  /// Type of access event, e.g., 'view', 'edit', 'share'.
+  access_type String
+  
+  /// Device information from which access was made.
+  device_info String?
+  
+  /// IP address from which access was made.
+  ip_address String?
+  
+  /// Timestamp when the access event occurred.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member community_ai_members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  
+  @@index([post_id])
+  @@index([comment_id])
+  
+  @@index([member_id, created_at])
+  @@index([access_type, created_at])
+}
+
+/// Records of edit history for posts and comments, capturing editor
+/// identity, referenced post or comment, edit type, before and after content
+/// snapshots, and timestamps for auditing changes and supporting content
+/// traceability.
+///
+/// @namespace Audit
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_edit_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member who performed the edit {@link community_ai_members.id}.
+  edited_by_member_id String
+  
+  /// Edited post {@link community_ai_posts.id}.
+  post_id String?
+  
+  /// Edited comment {@link community_ai_comments.id}.
+  comment_id String?
+  
+  /// Type of edit performed, e.g., 'content_update', 'title_change'.
+  edit_type String
+  
+  /// Content before the edit.
+  before_edit String?
+  
+  /// Content after the edit.
+  after_edit String?
+  
+  /// Timestamp when the edit record was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  editedByMember community_ai_members @relation(fields: [edited_by_member_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  
+  @@index([post_id])
+  @@index([comment_id])
+  
+  @@index([edited_by_member_id, created_at])
+  @@index([edit_type, created_at])
+}

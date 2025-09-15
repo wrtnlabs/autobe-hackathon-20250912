@@ -1,0 +1,153 @@
+/// Represents scheduled crawling jobs assigned to specific crawl sources and
+/// schedules, managing operational parameters and state for recurring
+/// political news retrieval tasks.
+///
+/// @namespace Crawling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_jobs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced crawl source identifier. {@link
+  /// political_news_crawler_crawl_sources.id}
+  crawl_source_id String
+  
+  /// Referenced crawl schedule identifier. {@link
+  /// political_news_crawler_crawl_schedules.id}
+  crawl_schedule_id String
+  
+  /// Flag indicating if this crawl job is active and scheduled to run.
+  active Boolean
+  
+  /// Timestamp when the last run of the crawl job started, null if never run.
+  last_run_started_at DateTime?
+  
+  /// Timestamp when the last run of the crawl job completed, null if still
+  /// running or never run.
+  last_run_completed_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if set the job is considered deleted and ignored.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  crawlSource political_news_crawler_crawl_sources @relation(fields: [crawl_source_id], references: [id], onDelete: Cascade)
+  crawlSchedule political_news_crawler_crawl_schedules @relation(fields: [crawl_schedule_id], references: [id], onDelete: Cascade)
+  
+  political_news_crawler_crawl_attempts political_news_crawler_crawl_attempts[]
+  political_news_crawler_raw_data_storage political_news_crawler_raw_data_storage[]
+  
+  @@index([crawl_schedule_id])
+  
+  @@unique([crawl_source_id, crawl_schedule_id], map: "political_news_crawler_crawl_jobs_crawl_source_id_craw_1330ef11")
+  @@index([last_run_started_at, active], map: "political_news_crawler_crawl_jobs_last_run_started_at__a5b9f998")
+  @@index([active, last_run_completed_at], map: "political_news_crawler_crawl_jobs_active_last_run_comp_3d4bd054")
+}
+
+/// Records individual execution attempts of crawl jobs, tracking start and
+/// completion times, success status, errors, and associated raw data
+/// references to enable detailed auditing and failure analysis.
+///
+/// @namespace Crawling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_attempts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated crawl job identifier. {@link
+  /// political_news_crawler_crawl_jobs.id}
+  crawl_job_id String
+  
+  /// Reference to raw data storage entry for the crawl result. {@link
+  /// political_news_crawler_raw_data_storage.id}
+  raw_data_storage_id String?
+  
+  /// Timestamp when this crawl attempt started.
+  started_at DateTime
+  
+  /// Timestamp when this crawl attempt ended; null if still running.
+  completed_at DateTime?
+  
+  /// Indicator whether this crawl attempt was successful.
+  success Boolean
+  
+  /// Error message details if the crawl attempt failed.
+  error_message String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  crawlJob political_news_crawler_crawl_jobs @relation(fields: [crawl_job_id], references: [id], onDelete: Cascade)
+  rawDataStorage political_news_crawler_raw_data_storage? @relation(fields: [raw_data_storage_id], references: [id], onDelete: Cascade)
+  
+  political_news_crawler_crawled_news political_news_crawler_crawled_news[]
+  
+  @@index([raw_data_storage_id])
+  
+  @@index([started_at, success])
+  @@index([crawl_job_id, started_at], map: "political_news_crawler_crawl_attempts_crawl_job_id_sta_a468595a")
+}
+
+/// Contains metadata for crawled political news articles, linking to the
+/// crawl attempt that obtained the raw content and providing key attributes
+/// for management and filtering.
+///
+/// @namespace Crawling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawled_news {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated crawl attempt identifier. {@link
+  /// political_news_crawler_crawl_attempts.id}
+  crawl_attempt_id String
+  
+  /// URL of the crawled news article.
+  url String
+  
+  /// Title of the news article, if available.
+  title String?
+  
+  /// Publish timestamp of the news article, if known.
+  published_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  crawlAttempt political_news_crawler_crawl_attempts @relation(fields: [crawl_attempt_id], references: [id], onDelete: Cascade)
+  
+  political_news_crawler_topic_mentions political_news_crawler_topic_mentions[]
+  
+  @@index([crawl_attempt_id])
+  
+  @@unique([url])
+  @@index([published_at])
+}

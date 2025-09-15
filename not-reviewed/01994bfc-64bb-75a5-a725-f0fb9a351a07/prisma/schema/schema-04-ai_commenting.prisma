@@ -1,0 +1,129 @@
+/// Stores AI-generated suggestions for improving user comments. Each
+/// suggestion links to a specific comment and the user who made the comment.
+/// It captures the suggested text, confidence score, and timestamps for
+/// creation and updates. Supports user interaction with AI comment
+/// improvement features.
+///
+/// @namespace AICommenting
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_ai_comment_suggestions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced comment's {@link community_ai_comments.id}.
+  community_ai_comment_id String
+  
+  /// Member who owns the original comment {@link community_ai_members.id}.
+  member_id String
+  
+  /// AI-generated comment improvement suggestion text.
+  suggestion_text String
+  
+  /// Confidence score for the AI suggestion ranging from 0.0 to 1.0.
+  confidence_score Float
+  
+  /// Timestamp when the AI suggestion was created.
+  created_at DateTime
+  
+  /// Timestamp when the AI suggestion was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  comment community_ai_comments @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  member community_ai_members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  @@index([member_id])
+  
+  @@unique([community_ai_comment_id, member_id, suggestion_text], map: "community_ai_ai_comment_suggestions_community_ai_comme_8e5aa2c2")
+  @@index([created_at, member_id])
+}
+
+/// Historical sentiment analysis results for comments. Each record links to
+/// one comment and captures sentiment classification such as positive,
+/// neutral, or negative, along with AI confidence scores and timestamps for
+/// auditing purposes.
+///
+/// @namespace AICommenting
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_comment_sentiment_analyses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced comment's {@link community_ai_comments.id}.
+  community_ai_comment_id String
+  
+  /// Sentiment classification: positive, neutral, or negative.
+  sentiment String
+  
+  /// Confidence score for sentiment analysis from AI, range 0.0 to 1.0.
+  confidence_score Float
+  
+  /// Timestamp when the sentiment analysis was performed.
+  analyzed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  comment community_ai_comments @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  
+  @@unique([community_ai_comment_id, analyzed_at], map: "community_ai_comment_sentiment_analyses_community_ai_c_8d44fdde")
+  @@index([analyzed_at])
+}
+
+/// AI-generated replies to user posts or comments. Each reply links to the
+/// original user comment or post and stores the generated reply text with
+/// confidence score and timestamps. Facilitates AI-assisted conversation
+/// enhancement.
+///
+/// @namespace AICommenting
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_ai_generated_replies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced comment's {@link community_ai_comments.id}.
+  community_ai_comment_id String?
+  
+  /// Referenced post's {@link community_ai_posts.id}.
+  community_ai_post_id String?
+  
+  /// Generated reply text provided by the AI model.
+  reply_text String
+  
+  /// Confidence score for the generated reply ranging from 0.0 to 1.0.
+  confidence_score Float
+  
+  /// Timestamp when the reply was generated.
+  created_at DateTime
+  
+  /// Timestamp when the reply was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  comment community_ai_comments? @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [community_ai_post_id], references: [id], onDelete: Cascade)
+  
+  @@index([community_ai_comment_id])
+  @@index([community_ai_post_id])
+  
+  @@index([created_at])
+}

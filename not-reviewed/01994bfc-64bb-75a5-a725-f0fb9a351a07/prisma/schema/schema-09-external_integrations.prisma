@@ -1,0 +1,135 @@
+/// Metadata for external AI service providers integrated into communityAi,
+/// including provider name, API endpoints, authentication methods, and
+/// configuration parameters. This table stores operational information
+/// required to connect and authenticate with AI services used for comment
+/// analysis, fact-checking, and content generation.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_ai_service_providers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The official name of the AI service provider.
+  provider_name String
+  
+  /// The base URI for the provider's API endpoints.
+  api_base_url String
+  
+  /// Authentication mechanism used by the provider (e.g., OAuth2, API Key).
+  auth_type String
+  
+  /// API key or token for accessing the AI service, if applicable.
+  api_key String?
+  
+  /// JSON string storing dynamic configuration parameters for the AI provider.
+  config_json String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp, if the provider entry is deactivated or
+  /// removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  community_ai_api_usage_logs community_ai_api_usage_logs[]
+  
+  @@unique([provider_name])
+  @@index([auth_type, created_at])
+}
+
+/// Metadata for notification service providers integrated into communityAi.
+/// Includes provider name, configuration data, status, and API details for
+/// sending notifications via different channels like email or push
+/// notifications.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_notification_providers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the notification service provider.
+  provider_name String
+  
+  /// JSON string storing dynamic configuration for the notification provider.
+  config_json String?
+  
+  /// Current operational status of the notification provider (e.g., active,
+  /// inactive, error).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Logical deletion timestamp for soft deletes.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([provider_name])
+  @@index([status, created_at])
+}
+
+/// Operational log of API usage for tracking requests to external AI and
+/// notification services, including request timestamps, provider references,
+/// endpoints called, request duration, and error details if any. This table
+/// supports monitoring and quota management for external integrations.
+///
+/// @namespace ExternalIntegrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_api_usage_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced AI service provider. {@link
+  /// community_ai_ai_service_providers.id}
+  service_provider_id String
+  
+  /// The API endpoint path called on the external service.
+  api_endpoint String
+  
+  /// Timestamp when the API request was made.
+  request_timestamp DateTime
+  
+  /// Duration of the API request response in milliseconds.
+  response_time_ms Int
+  
+  /// HTTP status code returned by the external service.
+  status_code Int
+  
+  /// Error message returned by the server if any.
+  error_message String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  serviceProvider community_ai_ai_service_providers @relation(fields: [service_provider_id], references: [id], onDelete: Cascade)
+  
+  @@index([service_provider_id, request_timestamp], map: "community_ai_api_usage_logs_service_provider_id_reques_6bf26bfa")
+}

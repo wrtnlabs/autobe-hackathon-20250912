@@ -1,0 +1,133 @@
+/// Snapshot table capturing computed popularity scores for political topics
+/// at specific timestamps. Each record represents a historical state of a
+/// popularity calculation for auditing and trend analysis purposes.
+/// References the related popular topic. Includes score metrics and aging
+/// fields consistent with time-decayed ranking models.
+///
+/// @namespace Popularity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_popularity_scores {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced popular topic's {@link
+  /// political_news_crawler_popular_topics.id}.
+  political_news_crawler_popular_topic_id String
+  
+  /// Calculated popularity score for the topic at this snapshot.
+  score Float
+  
+  /// Decay factor applied to the score based on the age of the topic mention.
+  decay_factor Float
+  
+  /// Timestamp when this popularity score snapshot was taken.
+  snapshot_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable, otherwise null.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  popularTopic political_news_crawler_popular_topics @relation(fields: [political_news_crawler_popular_topic_id], references: [id], onDelete: Cascade)
+  
+  @@index([political_news_crawler_popular_topic_id, snapshot_at], map: "political_news_crawler_popularity_scores_political_new_670bf173")
+}
+
+/// Primary table listing all current political news topics with computed
+/// popularity rankings. Maintains unique topic identifiers, titles, and
+/// metadata for efficient querying and API response. Supports independent
+/// management of topics and serves as the main entity for popularity-related
+/// queries.
+///
+/// @namespace Popularity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_popular_topics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier for the political topic.
+  topic_code String
+  
+  /// Official title or name of the popular topic.
+  title String
+  
+  /// Optional detailed description or context about the popular topic.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable, otherwise null.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  political_news_crawler_popularity_scores political_news_crawler_popularity_scores[]
+  political_news_crawler_topic_mentions political_news_crawler_topic_mentions[]
+  
+  @@unique([topic_code])
+  @@index([created_at])
+}
+
+/// Subsidiary table recording mentions of political topics within news
+/// articles. Establishes many-to-one relationships with both topics and
+/// crawled news records. Supports detailed traceability of topic references
+/// and feeds data for popularity calculations. Managed as supporting entity
+/// for topic analytics.
+///
+/// @namespace Popularity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_topic_mentions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced popular topic's {@link
+  /// political_news_crawler_popular_topics.id}.
+  political_news_crawler_popular_topic_id String
+  
+  /// Referenced crawled news item's {@link
+  /// political_news_crawler_crawled_news.id}.
+  political_news_crawler_crawled_news_id String
+  
+  /// Optional text snippet or context where the topic is mentioned within the
+  /// article.
+  mention_context String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable, otherwise null.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  popularTopic political_news_crawler_popular_topics @relation(fields: [political_news_crawler_popular_topic_id], references: [id], onDelete: Cascade)
+  crawledNews political_news_crawler_crawled_news @relation(fields: [political_news_crawler_crawled_news_id], references: [id], onDelete: Cascade)
+  
+  @@index([political_news_crawler_popular_topic_id], map: "political_news_crawler_topic_mentions_political_news_c_a5a42e74")
+  @@index([political_news_crawler_crawled_news_id], map: "political_news_crawler_topic_mentions_political_news_c_6f8a44b9")
+}

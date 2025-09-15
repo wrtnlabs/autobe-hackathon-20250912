@@ -1,0 +1,171 @@
+/// Current point balance record associated uniquely with each user in the
+/// OAuth server for point-based transactions. Supports soft deletion and
+/// includes audit timestamps.
+///
+/// @namespace PointsCoupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_user_points {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated user's {@link oauth_server_members.id}.
+  user_id String
+  
+  /// Current total points available for the user.
+  balance Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user oauth_server_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  oauth_server_user_point_histories oauth_server_user_point_histories[]
+  
+  @@unique([user_id])
+  @@index([deleted_at, updated_at])
+}
+
+/// Transaction history records capturing increments and decrements to user
+/// points for audit purposes, linked to the user_points record. Supports
+/// soft deletion and audit timestamps.
+///
+/// @namespace PointsCoupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_user_point_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Related user points record {@link oauth_server_user_points.id}.
+  user_point_id String
+  
+  /// Amount of points added or subtracted in this transaction.
+  change_amount Int
+  
+  /// Point balance after this transaction update.
+  balance_after_change Int
+  
+  /// Description of the reason for the point change.
+  reason String
+  
+  /// Transaction record creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last update, usually same as created_at for historical
+  /// record.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  userPoint oauth_server_user_points @relation(fields: [user_point_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_point_id, created_at])
+}
+
+/// Coupon code definitions for granting points. Includes unique code,
+/// description, point value, usage limits, expiration time, and soft
+/// deletion. Enables controlled issuance and management of point coupons.
+///
+/// @namespace PointsCoupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_point_coupons {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique coupon code string used for redemption.
+  code String
+  
+  /// Detailed explanation of the coupon usage and purpose.
+  description String?
+  
+  /// Points credited when coupon redeemed.
+  value Int
+  
+  /// Maximum number of times this coupon can be issued or redeemed overall.
+  max_issuance Int
+  
+  /// Expiration datetime after which coupon is invalid and unusable.
+  expire_at DateTime
+  
+  /// Coupon creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last update to the coupon record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating coupon deactivation; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauth_server_user_point_coupons oauth_server_user_point_coupons[]
+  
+  @@unique([code])
+  @@index([expire_at, deleted_at])
+}
+
+/// Tracks which coupons have been used by users for point redemption,
+/// linking users to coupons. Includes timestamps and soft delete support.
+/// Enforces uniqueness on user-coupon pairs to prevent duplicate
+/// redemptions.
+///
+/// @namespace PointsCoupons
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_user_point_coupons {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User who redeemed the coupon {@link oauth_server_members.id}.
+  user_id String
+  
+  /// Coupon redeemed {@link oauth_server_point_coupons.id}.
+  point_coupon_id String
+  
+  /// Datetime when the coupon was redeemed by the user.
+  used_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for usage record; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user oauth_server_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  pointCoupon oauth_server_point_coupons @relation(fields: [point_coupon_id], references: [id], onDelete: Cascade)
+  
+  @@index([point_coupon_id])
+  
+  @@unique([user_id, point_coupon_id])
+  @@index([used_at, deleted_at])
+}

@@ -1,0 +1,207 @@
+/// Represents an individual job posting for recruitment, authored and
+/// managed by an HR recruiter. Includes position title, description,
+/// employment type, state (open, closed, paused, etc.), and key business
+/// attributes. References recruiter HR, employment type, job status, and
+/// supports soft deletion and audit tracking. Core business entity enabling
+/// search/filtering, CRUD, and lifecycle management within the recruitment
+/// system.
+///
+/// @namespace JobPostings
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_job_postings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged recruiter's {@link ats_recruitment_hrrecruiters.id}. References
+  /// the HR recruiter responsible for this job posting.
+  hr_recruiter_id String
+  
+  /// Employment type's {@link ats_recruitment_job_employment_types.id}.
+  /// Indicates employment scheme (full-time, part-time, etc.).
+  job_employment_type_id String
+  
+  /// Current state of this posting {@link
+  /// ats_recruitment_job_posting_states.id}. Indicates open, closed, paused,
+  /// etc.
+  job_posting_state_id String
+  
+  /// Job title or position being recruited for.
+  title String
+  
+  /// Detailed job description and requirements.
+  description String
+  
+  /// Job location (onsite, remote, city, etc.).
+  location String?
+  
+  /// Minimum offered salary for this role. Optional if not disclosed.
+  salary_range_min Float?
+  
+  /// Maximum offered salary for this role. Optional if not disclosed.
+  salary_range_max Float?
+  
+  /// Application closing date and time for this posting.
+  application_deadline DateTime?
+  
+  /// Whether this posting is visible to applicants. Posting can be hidden from
+  /// search/listings.
+  is_visible Boolean
+  
+  /// When this job posting was created.
+  created_at DateTime
+  
+  /// When this job posting was last updated.
+  updated_at DateTime
+  
+  /// Soft delete marker. If present, the posting has been withdrawn/deleted
+  /// but is recoverable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  hrRecruiter ats_recruitment_hrrecruiters @relation(fields: [hr_recruiter_id], references: [id], onDelete: Cascade)
+  employmentType ats_recruitment_job_employment_types @relation(fields: [job_employment_type_id], references: [id], onDelete: Cascade)
+  postingState ats_recruitment_job_posting_states @relation(fields: [job_posting_state_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_applications ats_recruitment_applications[]
+  ats_recruitment_export_jobs ats_recruitment_export_jobs[]
+  
+  @@unique([hr_recruiter_id, title])
+  @@index([job_posting_state_id])
+  @@index([job_employment_type_id])
+  @@index([created_at])
+}
+
+/// Represents a master list of skills/technologies referenced in job
+/// postings. Allows HR/administrators to add or deprecate skills based on
+/// evolving tech stacks. Skills are used for job requirement matching and
+/// applicant evaluations. Independently managed.
+///
+/// @namespace JobPostings
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_job_skills {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Skill or technology name (e.g., Python, React, AWS).
+  name String
+  
+  /// Optional description of this skill, clarifying scope, use-case, or
+  /// related tools.
+  description String?
+  
+  /// Whether this skill is currently actively in use for recruitment/job
+  /// postings.
+  is_active Boolean
+  
+  /// Skill creation timestamp.
+  created_at DateTime
+  
+  /// Last modification to this skill definition.
+  updated_at DateTime
+  
+  /// Soft deletion marker if this skill has been deprecated but not
+  /// hard-removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_application_skill_matches ats_recruitment_application_skill_matches[]
+  
+  @@unique([name])
+}
+
+/// Master table defining allowed employment types for job postings (e.g.,
+/// full-time, contract, part-time, internship). Used for normalization and
+/// business validation when job postings specify employment schemes. Can be
+/// managed by system admins/HR.
+///
+/// @namespace JobPostings
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_job_employment_types {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Human-readable employment type label (full-time, part-time, etc.).
+  name String
+  
+  /// Optional explanation or terms related to this employment type.
+  description String?
+  
+  /// Whether this employment type is available for new job postings.
+  is_active Boolean
+  
+  /// When this employment type was created.
+  created_at DateTime
+  
+  /// When this employment type was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion marker for deprecated employment types.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_job_postings ats_recruitment_job_postings[]
+  
+  @@unique([name])
+}
+
+/// Master lookup table for allowed job posting states in the workflow (e.g.,
+/// open, closed, draft, paused, archived). Determines which postings appear
+/// in applicant views and controls business flows. Maintained by system
+/// admins/HR.
+///
+/// @namespace JobPostings
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_job_posting_states {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Machine-friendly state code (e.g., open, closed, paused, draft).
+  state_code String
+  
+  /// Human-readable state label shown in admin/UIs.
+  label String
+  
+  /// Description or policy for this posting state.
+  description String?
+  
+  /// Whether this state is selectable for new job postings.
+  is_active Boolean
+  
+  /// Ordering index to control display/policy evaluation preference.
+  sort_order Int
+  
+  /// Entry creation timestamp.
+  created_at DateTime
+  
+  /// Entry update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete - for deprecated states.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ats_recruitment_job_postings ats_recruitment_job_postings[]
+  
+  @@unique([state_code])
+  @@index([sort_order])
+}

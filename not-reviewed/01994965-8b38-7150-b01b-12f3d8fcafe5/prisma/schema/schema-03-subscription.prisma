@@ -1,0 +1,173 @@
+/// Defines the subscription plans available for users, including pricing,
+/// features, and status. Subscription plans are managed independently and
+/// referenced by user subscriptions. Includes business context for plan
+/// lifecycle management and billing operations.
+///
+/// @namespace Subscription
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_subscription_plans {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier for the subscription plan.
+  code String
+  
+  /// Human-readable name of the subscription plan.
+  name String
+  
+  /// Monthly price of the plan in USD.
+  price Float
+  
+  /// Maximum number of files that can be downloaded per day under this plan.
+  max_files_per_day Int
+  
+  /// Maximum allowed file size per download in megabytes.
+  max_file_size_mb Int
+  
+  /// Total storage quota in megabytes for this plan.
+  total_storage_mb Int
+  
+  /// Current status of the subscription plan, e.g., active, inactive.
+  status String
+  
+  /// Timestamp when this subscription plan was created.
+  created_at DateTime
+  
+  /// Timestamp when this subscription plan was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when this subscription plan was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  telegram_file_downloader_payments telegram_file_downloader_payments[]
+  telegram_file_downloader_subscription_audits telegram_file_downloader_subscription_audits[]
+  
+  @@unique([code])
+  @@index([status])
+}
+
+/// Records payment events from users subscribing to plans. Stores payment
+/// metadata, statuses and links to subscription plans and user identities.
+/// Critical for billing and subscription status tracking.
+///
+/// @namespace Subscription
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_payments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced subscription plan for this payment. {@link
+  /// telegram_file_downloader_subscription_plans.id}
+  subscription_plan_id String
+  
+  /// Reference to the paying user (enduser or developer). {@link
+  /// telegram_file_downloader_endusers.id} or {@link
+  /// telegram_file_downloader_developers.id}
+  user_id String
+  
+  /// Payment gateway provider, e.g., Stripe.
+  payment_provider String
+  
+  /// Status of the payment, e.g., pending, succeeded, failed.
+  payment_status String
+  
+  /// Amount paid in USD.
+  payment_amount Float
+  
+  /// Currency code, e.g., USD.
+  payment_currency String
+  
+  /// External payment reference ID from the provider.
+  payment_reference_id String
+  
+  /// Timestamp of the payment event.
+  payment_date DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  subscriptionPlan telegram_file_downloader_subscription_plans @relation(fields: [subscription_plan_id], references: [id], onDelete: Cascade)
+  user telegram_file_downloader_endusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  telegram_file_downloader_transactions telegram_file_downloader_transactions[]
+  telegram_file_downloader_billing_logs telegram_file_downloader_billing_logs[]
+  telegram_file_downloader_subscription_audits telegram_file_downloader_subscription_audits[]
+  
+  @@index([subscription_plan_id])
+  @@index([user_id])
+  
+  @@unique([payment_reference_id])
+  @@index([payment_status])
+}
+
+/// Stores detailed payment transactions for reconciliation and audit
+/// purposes. Tracks transaction states, amounts, statuses, and associations
+/// with payments and users. Supports accurate billing and fraud detection.
+///
+/// @namespace Subscription
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_transactions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated payment record. {@link telegram_file_downloader_payments.id}
+  payment_id String
+  
+  /// Reference to user who performed the transaction. {@link
+  /// telegram_file_downloader_endusers.id} or {@link
+  /// telegram_file_downloader_developers.id}
+  user_id String
+  
+  /// Type of transaction, e.g., charge, refund.
+  transaction_type String
+  
+  /// Status of the transaction, e.g., succeeded, failed, pending.
+  transaction_status String
+  
+  /// Amount involved in the transaction in USD.
+  transaction_amount Float
+  
+  /// Timestamp when the transaction occurred.
+  transaction_date DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  payment telegram_file_downloader_payments @relation(fields: [payment_id], references: [id], onDelete: Cascade)
+  user telegram_file_downloader_endusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([payment_id])
+  @@index([user_id])
+  
+  @@index([transaction_status])
+}

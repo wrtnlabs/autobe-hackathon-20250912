@@ -1,0 +1,93 @@
+/// Audit event log capturing all relevant system, user, and document
+/// activities for legal and operational traceability. This table records
+/// immutable events with timestamp, event type, user and document
+/// references, IP, and detailed metadata to support compliance and forensic
+/// analysis. Linked to the main document via foreign key. Implements strict
+/// temporal tracking with created_at and updated_at.
+///
+/// @namespace Audits
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_audit_events {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked document's {@link easy_sign_documents.id}.
+  easy_sign_document_id String
+  
+  /// User or system actor who triggered the event, nullable for system events.
+  actor_id String?
+  
+  /// Type of audit event, e.g., DOCUMENT_CREATED, SIGN_REQUESTED, USER_LOGIN.
+  event_type String
+  
+  /// Exact timestamp when the event occurred, ISO 8601 format.
+  event_timestamp DateTime
+  
+  /// IP address from which the event was triggered.
+  event_ip String?
+  
+  /// Additional JSON-formatted metadata providing event details.
+  event_metadata String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  document easy_sign_documents @relation(fields: [easy_sign_document_id], references: [id], onDelete: Cascade)
+  
+  @@index([easy_sign_document_id, event_timestamp], map: "easy_sign_audit_events_easy_sign_document_id_event_tim_6f4eea3c")
+}
+
+/// Stores legal certification documents generated upon contract completion
+/// to provide verifiable proof of contract status and integrity. Each record
+/// links to the original contract document, includes URI for certificate
+/// file, metadata describing certificate details, and timestamps for
+/// creation and updates. Critical for legal compliance and evidentiary
+/// purposes.
+///
+/// @namespace Audits
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_legal_certificates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated contract document's {@link easy_sign_documents.id}.
+  easy_sign_document_id String
+  
+  /// URI or path to the stored legal certificate file, accessible for download.
+  certificate_uri String
+  
+  /// JSON-formatted metadata describing details and validity of the
+  /// certificate.
+  certificate_metadata String?
+  
+  /// Timestamp when the certificate record was created.
+  created_at DateTime
+  
+  /// Timestamp when the certificate record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion, if implemented.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  document easy_sign_documents @relation(fields: [easy_sign_document_id], references: [id], onDelete: Cascade)
+  
+  @@index([easy_sign_document_id])
+}

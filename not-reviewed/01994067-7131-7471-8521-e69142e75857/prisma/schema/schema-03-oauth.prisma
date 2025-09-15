@@ -1,0 +1,242 @@
+/// OAuth authorization code records. Stores unique code strings, JSONB OAuth
+/// request data for robust protocol compliance, and redirect URIs. Linked to
+/// OAuth clients. Includes timestamps for creation, update, and soft
+/// deletion to support revocation and audit trails.
+///
+/// @namespace Oauth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_authorization_codes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the OAuth client requesting authorization. {@link
+  /// oauth_server_oauth_clients.id}
+  oauth_client_id String
+  
+  /// Unique authorization code string issued to client.
+  code String
+  
+  /// OAuth request data as JSONB string for full protocol details.
+  data String
+  
+  /// Redirect URI used in the authorization flow.
+  redirect_uri String
+  
+  /// Expiration datetime of the authorization code.
+  expires_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for revocation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  
+  oauth_server_access_tokens oauth_server_access_tokens[]
+  oauth_server_refresh_tokens oauth_server_refresh_tokens[]
+  oauth_server_id_tokens oauth_server_id_tokens[]
+  
+  @@unique([code])
+  @@index([oauth_client_id, created_at])
+}
+
+/// Stores opaque OAuth access tokens with scopes, expiration, and
+/// timestamps. Each token linked to an OAuth client and optionally the
+/// authorization code used to grant it. Tokens are unique and managed with
+/// creation/update timestamps and soft deletion.
+///
+/// @namespace Oauth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_access_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// OAuth client owning this access token. {@link
+  /// oauth_server_oauth_clients.id}
+  oauth_client_id String
+  
+  /// Authorization code related to this token, nullable if token is from other
+  /// grant types. {@link oauth_server_authorization_codes.id}
+  authorization_code_id String?
+  
+  /// Opaque access token string.
+  token String
+  
+  /// Space-separated scopes granted for this token.
+  scope String
+  
+  /// Expiration datetime for the token.
+  expires_at DateTime
+  
+  /// Token creation timestamp.
+  created_at DateTime
+  
+  /// Token update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for token revocation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  authorizationCode oauth_server_authorization_codes? @relation(fields: [authorization_code_id], references: [id], onDelete: Cascade)
+  
+  oauth_server_token_monitors oauth_server_token_monitors[]
+  
+  @@index([authorization_code_id])
+  
+  @@unique([token])
+  @@index([oauth_client_id, expires_at])
+}
+
+/// Refresh tokens allowing clients to renew access tokens without
+/// reauthorization. Stored with opaque token string, related client and
+/// optionally authorization code, expiration, scopes, and auditing
+/// timestamps with soft deletion support.
+///
+/// @namespace Oauth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_refresh_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// OAuth client associated with this refresh token. {@link
+  /// oauth_server_oauth_clients.id}
+  oauth_client_id String
+  
+  /// Optional authorization code granting this refresh token. {@link
+  /// oauth_server_authorization_codes.id}
+  authorization_code_id String?
+  
+  /// Opaque refresh token string.
+  token String
+  
+  /// Scopes granted by the refresh token, space-separated.
+  scope String
+  
+  /// Expiration datetime of the refresh token.
+  expires_at DateTime
+  
+  /// Creation timestamp of the refresh token.
+  created_at DateTime
+  
+  /// Update timestamp of the refresh token.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for revocation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  authorizationCode oauth_server_authorization_codes? @relation(fields: [authorization_code_id], references: [id], onDelete: Cascade)
+  
+  @@index([authorization_code_id])
+  
+  @@unique([token])
+  @@index([oauth_client_id, expires_at])
+}
+
+/// OpenID Connect ID tokens issued to clients for identity claims, linked to
+/// OAuth clients and optionally authorization codes. Contains token strings,
+/// expirations, timestamps, and soft deletion timestamps for lifecycle
+/// management.
+///
+/// @namespace Oauth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_id_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// OAuth client reference owning this ID token. {@link
+  /// oauth_server_oauth_clients.id}
+  oauth_client_id String
+  
+  /// Related authorization code, nullable if not linked. {@link
+  /// oauth_server_authorization_codes.id}
+  authorization_code_id String?
+  
+  /// ID token string containing OIDC claims, normally a JWT or opaque token.
+  token String
+  
+  /// Expiration timestamp of the ID token.
+  expires_at DateTime
+  
+  /// Timestamp when ID token was issued.
+  created_at DateTime
+  
+  /// Timestamp when ID token was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for token revocation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauthClient oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  authorizationCode oauth_server_authorization_codes? @relation(fields: [authorization_code_id], references: [id], onDelete: Cascade)
+  
+  @@index([authorization_code_id])
+  
+  @@unique([token])
+  @@index([oauth_client_id, expires_at])
+}
+
+/// Scope definitions for OAuth 2.0 authorization requests. Each scope has a
+/// unique code and human-readable description specifying the permission
+/// granted. Includes timestamps for auditing and soft delete support for
+/// scope deactivation.
+///
+/// @namespace Oauth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_scopes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique string code identifying the scope.
+  code String
+  
+  /// Text description clarifying the scope's permissions.
+  description String
+  
+  /// Timestamp when the scope was created.
+  created_at DateTime
+  
+  /// Timestamp when the scope was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for scope removal, nullable if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+  @@index([created_at])
+}

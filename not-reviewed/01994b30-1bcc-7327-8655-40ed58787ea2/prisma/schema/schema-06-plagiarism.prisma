@@ -1,0 +1,164 @@
+/// Plagiarism detection providers metadata, including service name, URLs,
+/// and operational status. Supports asynchronous scans by various plagiarism
+/// engines within CREVERSE AI multi-tenant architecture. No independent user
+/// management APIs; managed as a solitary supporting entity.
+///
+/// @namespace Plagiarism
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_plagiarism_providers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the plagiarism provider configuration. {@link
+  /// creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Unique name identifier of the plagiarism provider service, e.g.,
+  /// "Turnitin", "CustomInternal"
+  name String
+  
+  /// Base URI endpoint for contacting the plagiarism provider
+  base_uri String
+  
+  /// Flag indicating if the plagiarism provider is currently enabled for use
+  enabled Boolean
+  
+  /// Timestamp when this provider record was created
+  created_at DateTime
+  
+  /// Timestamp when this provider record was last updated
+  updated_at DateTime
+  
+  /// Timestamp marking deletion (soft delete) of this provider record
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  creverse_ai_essay_plagiarism_scans creverse_ai_essay_plagiarism_scans[]
+  
+  @@unique([tenant_id, name])
+  @@index([tenant_id, enabled])
+}
+
+/// Records of plagiarism scan requests and results, each linked to a tenant
+/// and a specific essay version. Captures scan lifecycle state, provider
+/// used, result metadata, errors, and timing for asynchronous plagiarism
+/// detection integration.
+///
+/// @namespace Plagiarism
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_plagiarism_scans {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning tenant of the plagiarism scan. {@link creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Referenced essay version being scanned. {@link
+  /// creverse_ai_essay_essay_versions.id}
+  essay_version_id String
+  
+  /// Plagiarism provider used for this scan. {@link
+  /// creverse_ai_essay_plagiarism_providers.id}
+  plagiarism_provider_id String?
+  
+  /// Status of the scan, e.g., "pending", "processing", "completed", "failed"
+  status String
+  
+  /// Percentage progress of the scan operation, 0-100
+  progress Int
+  
+  /// URL to the detailed plagiarism scan results, if available
+  result_url String?
+  
+  /// Optional error code if the scan failed
+  error_code String?
+  
+  /// Timestamp when the scan started
+  started_at DateTime?
+  
+  /// Timestamp when the scan completed
+  completed_at DateTime?
+  
+  /// Record created timestamp
+  created_at DateTime
+  
+  /// Record last updated timestamp
+  updated_at DateTime
+  
+  /// Soft deletion timestamp
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  essayVersion creverse_ai_essay_essay_versions @relation(fields: [essay_version_id], references: [id], onDelete: Cascade)
+  plagiarismProvider creverse_ai_essay_plagiarism_providers? @relation(fields: [plagiarism_provider_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_plagiarism_matches creverse_ai_essay_plagiarism_matches[]
+  
+  @@index([essay_version_id])
+  
+  @@unique([tenant_id, essay_version_id, plagiarism_provider_id], map: "creverse_ai_essay_plagiarism_scans_tenant_id_essay_ver_38e01552")
+  @@index([tenant_id, status])
+  @@index([plagiarism_provider_id, status], map: "creverse_ai_essay_plagiarism_scans_plagiarism_provider_2a5eb735")
+}
+
+/// Historical snapshots of individual plagiarism matches detected per
+/// plagiarism scan. Stores matched source spans, similarity scores, matched
+/// text excerpts, and reference URIs for audit and investigation. Immutable
+/// once created for audit compliance.
+///
+/// @namespace Plagiarism
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_plagiarism_matches {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent plagiarism scan. {@link creverse_ai_essay_plagiarism_scans.id}
+  plagiarism_scan_id String
+  
+  /// Similarity score for this match, e.g., 0.0–100.0 percentage
+  match_score Float
+  
+  /// URI of the matched source document or resource
+  source_uri String?
+  
+  /// Inclusive start character offset of the matched text in the source
+  source_start_char Int
+  
+  /// Inclusive end character offset of the matched text in the source
+  source_end_char Int
+  
+  /// Extracted matched text snippet for audit display
+  matched_text String?
+  
+  /// Timestamp when this match was recorded
+  created_at DateTime
+  
+  /// Timestamp when this match record was last updated
+  updated_at DateTime
+  
+  /// Soft deletion timestamp
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  plagiarismScan creverse_ai_essay_plagiarism_scans @relation(fields: [plagiarism_scan_id], references: [id], onDelete: Cascade)
+  
+  @@index([plagiarism_scan_id])
+  
+  @@index([match_score])
+}

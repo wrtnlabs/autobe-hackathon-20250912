@@ -1,0 +1,68 @@
+import { Module } from "@nestjs/common";
+
+import { AuthWorkflowmanagerController } from "./controllers/auth/workflowManager/AuthWorkflowmanagerController";
+import { AuthTriggeroperatorJoinController } from "./controllers/auth/triggerOperator/join/AuthTriggeroperatorJoinController";
+import { AuthTriggeroperatorLoginController } from "./controllers/auth/triggerOperator/login/AuthTriggeroperatorLoginController";
+import { AuthTriggeroperatorRefreshController } from "./controllers/auth/triggerOperator/refresh/AuthTriggeroperatorRefreshController";
+import { AuthSystemadminController } from "./controllers/auth/systemAdmin/AuthSystemadminController";
+import { AuthWorkerserviceController } from "./controllers/auth/workerService/AuthWorkerserviceController";
+import { NotificationworkflowSystemadminWorkflowmanagersController } from "./controllers/notificationWorkflow/systemAdmin/workflowManagers/NotificationworkflowSystemadminWorkflowmanagersController";
+import { NotificationworkflowWorkflowmanagerWorkflowmanagersController } from "./controllers/notificationWorkflow/workflowManager/workflowManagers/NotificationworkflowWorkflowmanagerWorkflowmanagersController";
+import { NotificationworkflowTriggeroperatorTriggeroperatorsController } from "./controllers/notificationWorkflow/triggerOperator/triggerOperators/NotificationworkflowTriggeroperatorTriggeroperatorsController";
+import { NotificationworkflowSystemadminSystemadminsController } from "./controllers/notificationWorkflow/systemAdmin/systemAdmins/NotificationworkflowSystemadminSystemadminsController";
+import { NotificationworkflowWorkerservicesController } from "./controllers/notificationWorkflow/workerServices/NotificationworkflowWorkerservicesController";
+import { NotificationworkflowWorkerserviceWorkerservicesController } from "./controllers/notificationWorkflow/workerService/workerServices/NotificationworkflowWorkerserviceWorkerservicesController";
+import { NotificationworkflowSystemadminWorkerservicesController } from "./controllers/notificationWorkflow/systemAdmin/workerServices/NotificationworkflowSystemadminWorkerservicesController";
+import { NotificationworkflowWorkflowmanagerWorkflowsController } from "./controllers/notificationWorkflow/workflowManager/workflows/NotificationworkflowWorkflowmanagerWorkflowsController";
+import { NotificationworkflowSystemadminWorkflowsController } from "./controllers/notificationWorkflow/systemAdmin/workflows/NotificationworkflowSystemadminWorkflowsController";
+import { NotificationworkflowWorkflowmanagerWorkflowsWorkflownodesController } from "./controllers/notificationWorkflow/workflowManager/workflows/workflowNodes/NotificationworkflowWorkflowmanagerWorkflowsWorkflownodesController";
+import { NotificationworkflowSystemadminWorkflowsWorkflownodesController } from "./controllers/notificationWorkflow/systemAdmin/workflows/workflowNodes/NotificationworkflowSystemadminWorkflowsWorkflownodesController";
+import { NotificationworkflowWorkflowmanagerWorkflowsWorkflowedgesController } from "./controllers/notificationWorkflow/workflowManager/workflows/workflowEdges/NotificationworkflowWorkflowmanagerWorkflowsWorkflowedgesController";
+import { NotificationworkflowSystemadminWorkflowsWorkflowedgesController } from "./controllers/notificationWorkflow/systemAdmin/workflows/workflowEdges/NotificationworkflowSystemadminWorkflowsWorkflowedgesController";
+import { NotificationworkflowTriggeroperatorTriggerinstancesController } from "./controllers/notificationWorkflow/triggerOperator/triggerInstances/NotificationworkflowTriggeroperatorTriggerinstancesController";
+import { NotificationworkflowSystemadminTriggerinstancesController } from "./controllers/notificationWorkflow/systemAdmin/triggerInstances/NotificationworkflowSystemadminTriggerinstancesController";
+import { NotificationworkflowWorkflowmanagerStepexecutionlogsController } from "./controllers/notificationWorkflow/workflowManager/stepExecutionLogs/NotificationworkflowWorkflowmanagerStepexecutionlogsController";
+import { NotificationworkflowTriggeroperatorStepexecutionlogsController } from "./controllers/notificationWorkflow/triggerOperator/stepExecutionLogs/NotificationworkflowTriggeroperatorStepexecutionlogsController";
+import { NotificationworkflowSystemadminStepexecutionlogsController } from "./controllers/notificationWorkflow/systemAdmin/stepExecutionLogs/NotificationworkflowSystemadminStepexecutionlogsController";
+import { NotificationworkflowWorkflowmanagerNodetemplatesController } from "./controllers/notificationWorkflow/workflowManager/nodeTemplates/NotificationworkflowWorkflowmanagerNodetemplatesController";
+import { NotificationworkflowSystemadminNodetemplatesController } from "./controllers/notificationWorkflow/systemAdmin/nodeTemplates/NotificationworkflowSystemadminNodetemplatesController";
+import { NotificationworkflowSystemadminAuditlogsController } from "./controllers/notificationWorkflow/systemAdmin/auditLogs/NotificationworkflowSystemadminAuditlogsController";
+import { NotificationworkflowWorkflowmanagerAuditlogsController } from "./controllers/notificationWorkflow/workflowManager/auditLogs/NotificationworkflowWorkflowmanagerAuditlogsController";
+import { NotificationworkflowTriggeroperatorAuditlogsController } from "./controllers/notificationWorkflow/triggerOperator/auditLogs/NotificationworkflowTriggeroperatorAuditlogsController";
+import { NotificationworkflowAuditlogsController } from "./controllers/notificationWorkflow/auditLogs/NotificationworkflowAuditlogsController";
+
+@Module({
+  controllers: [
+    AuthWorkflowmanagerController,
+    AuthTriggeroperatorJoinController,
+    AuthTriggeroperatorLoginController,
+    AuthTriggeroperatorRefreshController,
+    AuthSystemadminController,
+    AuthWorkerserviceController,
+    NotificationworkflowSystemadminWorkflowmanagersController,
+    NotificationworkflowWorkflowmanagerWorkflowmanagersController,
+    NotificationworkflowTriggeroperatorTriggeroperatorsController,
+    NotificationworkflowSystemadminSystemadminsController,
+    NotificationworkflowWorkerservicesController,
+    NotificationworkflowWorkerserviceWorkerservicesController,
+    NotificationworkflowSystemadminWorkerservicesController,
+    NotificationworkflowWorkflowmanagerWorkflowsController,
+    NotificationworkflowSystemadminWorkflowsController,
+    NotificationworkflowWorkflowmanagerWorkflowsWorkflownodesController,
+    NotificationworkflowSystemadminWorkflowsWorkflownodesController,
+    NotificationworkflowWorkflowmanagerWorkflowsWorkflowedgesController,
+    NotificationworkflowSystemadminWorkflowsWorkflowedgesController,
+    NotificationworkflowTriggeroperatorTriggerinstancesController,
+    NotificationworkflowSystemadminTriggerinstancesController,
+    NotificationworkflowWorkflowmanagerStepexecutionlogsController,
+    NotificationworkflowTriggeroperatorStepexecutionlogsController,
+    NotificationworkflowSystemadminStepexecutionlogsController,
+    NotificationworkflowWorkflowmanagerNodetemplatesController,
+    NotificationworkflowSystemadminNodetemplatesController,
+    NotificationworkflowSystemadminAuditlogsController,
+    NotificationworkflowWorkflowmanagerAuditlogsController,
+    NotificationworkflowTriggeroperatorAuditlogsController,
+    NotificationworkflowAuditlogsController,
+  ],
+})
+export class MyModule {}

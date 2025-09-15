@@ -1,0 +1,53 @@
+/// Stores personal coffee logs created by authenticated members. Each log is
+/// tied to one member and one cafe, representing the user's tasting
+/// experience including bean name, rating, tasting notes, and brewing
+/// method. Logs are private to members and support soft deletion and audit
+/// timestamps.
+///
+/// @namespace CoffeeLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model specialty_coffee_log_coffee_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged member's {@link specialty_coffee_log_members.id} who owns this
+  /// coffee log.
+  member_id String
+  
+  /// Belonged cafe's {@link specialty_coffee_log_cafes.id} where the coffee
+  /// log is created.
+  cafe_id String
+  
+  /// Name of the coffee bean tasted, as recorded by the user.
+  bean_name String
+  
+  /// User's rating of the coffee from 1 to 5 stars, inclusive.
+  star_rating Int
+  
+  /// Detailed tasting notes provided by the user.
+  tasting_notes String
+  
+  /// Brewing method used for this coffee tasting (e.g., espresso, pour-over).
+  brewing_method String
+  
+  /// Timestamp when this log was created.
+  created_at DateTime
+  
+  /// Timestamp when this log was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when this log was soft deleted; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member specialty_coffee_log_members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  cafe specialty_coffee_log_cafes @relation(fields: [cafe_id], references: [id], onDelete: Cascade)
+  
+  @@index([member_id, created_at])
+  @@index([cafe_id, created_at])
+}

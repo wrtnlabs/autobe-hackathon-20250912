@@ -1,0 +1,123 @@
+/// Stores administrative users with full control over the FlexOffice system.
+/// Contains authentication data such as email and password hash, along with
+/// timestamps for audit and soft deletion. Enables system-level user
+/// management and high privilege access. Email is unique across admins to
+/// ensure distinct login identities.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's login email address, unique across the system.
+  email String
+  
+  /// Hashed password for authentication purposes, never storing plain text
+  /// passwords.
+  password_hash String
+  
+  /// Timestamp when the admin account record was created.
+  created_at DateTime
+  
+  /// Timestamp when the admin account record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if the admin account is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_user_activity_logs flex_office_user_activity_logs[]
+  flex_office_role_assignments flex_office_role_assignments[]
+  
+  @@unique([email])
+  @@index([created_at, email])
+}
+
+/// Represents editor users who can create and manage UI pages and dashboards
+/// within the FlexOffice system. Includes authentication credentials,
+/// timestamps for audit, and soft delete support. Editors have permissions
+/// that are less than admins but allow content modification and
+/// collaboration.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_editors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Full name of the editor user for display and identification purposes.
+  name String
+  
+  /// Editor user login email, unique within the system.
+  email String
+  
+  /// Hashed password for authentication. Do not store plain passwords.
+  password_hash String
+  
+  /// Timestamp when the editor account was created.
+  created_at DateTime
+  
+  /// Timestamp when the editor account was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if the editor account is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_page_editors flex_office_page_editors[]
+  flex_office_page_comments flex_office_page_comments[]
+  flex_office_edit_conflicts flex_office_edit_conflicts[]
+  
+  @@unique([email])
+  @@index([created_at, email])
+}
+
+/// Contains viewer users who have read-only access to dashboards and reports
+/// within FlexOffice. These users have authentication credentials and audit
+/// fields for management and compliance. Viewer accounts are unique by email
+/// and support soft deletion.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_viewers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Full name of the viewer for display and identification.
+  name String
+  
+  /// Viewer's login email, unique within the system.
+  email String
+  
+  /// Hashed credential for authentication, no plain text passwords stored.
+  password_hash String
+  
+  /// Timestamp when the viewer account was created.
+  created_at DateTime
+  
+  /// Timestamp when the viewer account was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if the viewer account is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at, email])
+}

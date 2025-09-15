@@ -1,0 +1,269 @@
+/// Core interview scheduling entity for ATS. Represents a distinct interview
+/// instance bound to an application, linking scheduling info, Google
+/// Calendar syncs, participants, and assigned questions. Maintains canonical
+/// status, history, and is referenced by schedule, participant, question,
+/// and sync subsidiary tables. Subject to multi-stage and fallback
+/// management.
+///
+/// @namespace Interviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_interviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked application. {@link ats_recruitment_applications.id}.
+  ats_recruitment_application_id String
+  
+  /// Interview event title or label (may be shown in calendar or
+  /// notifications).
+  title String
+  
+  /// Interview pipeline stage (e.g., first_phase, tech_round, hr, final,
+  /// custom label).
+  stage String
+  
+  /// Current interview status (scheduled, rescheduled, cancelled, completed,
+  /// failed, etc).
+  status String
+  
+  /// Optional notes for interviewers or schedule specifics.
+  notes String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  application ats_recruitment_applications @relation(fields: [ats_recruitment_application_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_interview_participants ats_recruitment_interview_participants[]
+  ats_recruitment_interview_schedules ats_recruitment_interview_schedules[]
+  ats_recruitment_interview_calendar_syncs ats_recruitment_interview_calendar_syncs[]
+  ats_recruitment_interview_questions ats_recruitment_interview_questions[]
+  
+  @@unique([ats_recruitment_application_id, stage], map: "ats_recruitment_interviews_ats_recruitment_application_929037ea")
+  @@index([stage])
+  @@index([status])
+  @@index([created_at])
+}
+
+/// Relationship table associating each interview with its active
+/// participants. Used to track HR staff, applicants, tech reviewers, and any
+/// external participant roles for specific interviews. Not independently
+/// managed; always paired with a parent interview entity. Ensures role
+/// clarity, allows multiple participants per interview.
+///
+/// @namespace Interviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_interview_participants {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent interview. {@link ats_recruitment_interviews.id}.
+  ats_recruitment_interview_id String
+  
+  /// Applicant participant reference. {@link ats_recruitment_applicants.id}
+  /// (nullable: for other roles).
+  ats_recruitment_applicant_id String?
+  
+  /// HR recruiter participant reference. {@link
+  /// ats_recruitment_hrrecruiters.id}.
+  ats_recruitment_hrrecruiter_id String?
+  
+  /// Technical reviewer participant reference. {@link
+  /// ats_recruitment_techreviewers.id}.
+  ats_recruitment_techreviewer_id String?
+  
+  /// Participant role for this interview (applicant, recruiter, reviewer,
+  /// observer, etc).
+  role String
+  
+  /// Invitation timestamp for participant.
+  invited_at DateTime
+  
+  /// Participant confirmation status (pending, accepted, declined, tentative).
+  confirmation_status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  interview ats_recruitment_interviews @relation(fields: [ats_recruitment_interview_id], references: [id], onDelete: Cascade)
+  applicant ats_recruitment_applicants? @relation(fields: [ats_recruitment_applicant_id], references: [id], onDelete: Cascade)
+  hrRecruiter ats_recruitment_hrrecruiters? @relation(fields: [ats_recruitment_hrrecruiter_id], references: [id], onDelete: Cascade)
+  techReviewer ats_recruitment_techreviewers? @relation(fields: [ats_recruitment_techreviewer_id], references: [id], onDelete: Cascade)
+  
+  @@index([ats_recruitment_applicant_id], map: "ats_recruitment_interview_participants_ats_recruitment_f853ce2e")
+  @@index([ats_recruitment_hrrecruiter_id], map: "ats_recruitment_interview_participants_ats_recruitment_e489a13c")
+  @@index([ats_recruitment_techreviewer_id], map: "ats_recruitment_interview_participants_ats_recruitment_2dc6de47")
+  
+  @@unique([ats_recruitment_interview_id, ats_recruitment_applicant_id, ats_recruitment_hrrecruiter_id, ats_recruitment_techreviewer_id], map: "ats_recruitment_interview_participants_ats_recruitment_f089871f")
+  @@index([ats_recruitment_interview_id], map: "ats_recruitment_interview_participants_ats_recruitment_86d5131a")
+  @@index([role])
+}
+
+/// Detailed time slot schedule records for interviews. Handles multi-slot
+/// scheduling, candidate/HR/tech reviewer availabilities, Google Calendar
+/// sync attempts, and manual overrides. Includes fields for start/end,
+/// source, cancellation, and reschedule flows. Not directly managed by end
+/// users; supports detailed audit and rollback.
+///
+/// @namespace Interviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_interview_schedules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Interview that owns this schedule entry. {@link
+  /// ats_recruitment_interviews.id}.
+  ats_recruitment_interview_id String
+  
+  /// Scheduled start date and time in UTC.
+  start_at DateTime
+  
+  /// Scheduled end date and time in UTC.
+  end_at DateTime
+  
+  /// Timezone of the scheduled event (e.g., 'Asia/Seoul').
+  timezone String
+  
+  /// How this schedule proposal was created (manual, google_calendar, auto,
+  /// rebooked, etc).
+  schedule_source String
+  
+  /// Current status of this schedule slot (proposed, confirmed, cancelled,
+  /// rescheduled, sync_failed).
+  schedule_status String
+  
+  /// Human friendly note about cancellation; filled if schedule gets cancelled.
+  cancellation_reason String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  interview ats_recruitment_interviews @relation(fields: [ats_recruitment_interview_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ats_recruitment_interview_id, start_at, end_at], map: "ats_recruitment_interview_schedules_ats_recruitment_in_6c4b7421")
+  @@index([ats_recruitment_interview_id], map: "ats_recruitment_interview_schedules_ats_recruitment_in_a28ff949")
+  @@index([schedule_status])
+  @@index([created_at])
+}
+
+/// Audit and tracking for all Google Calendar or external calendar sync
+/// attempts, including requested time, sync token/detail, status/result,
+/// error message with context, fallback/manual override flags. Allows
+/// compliance and troubleshooting on calendar negotiation or double
+/// booking/failure scenarios. Read-only from API, only system modifies.
+///
+/// @namespace Interviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_interview_calendar_syncs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The interview associated with the calendar sync. {@link
+  /// ats_recruitment_interviews.id}.
+  ats_recruitment_interview_id String
+  
+  /// Type of external calendar sync (google_calendar, outlook, manual, etc).
+  sync_type String
+  
+  /// Timestamp of when the sync was attempted/requested.
+  sync_time DateTime
+  
+  /// Result/status (pending, success, failed, fallback_manual, double_booked,
+  /// etc).
+  sync_status String
+  
+  /// External calendar system event ID (if available).
+  external_event_id String?
+  
+  /// Access token or sync credential (hashed or partial display for PII).
+  sync_token String?
+  
+  /// Failure message from external API if error occurred.
+  error_message String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  interview ats_recruitment_interviews @relation(fields: [ats_recruitment_interview_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ats_recruitment_interview_id, sync_time, sync_type], map: "ats_recruitment_interview_calendar_syncs_ats_recruitme_ba2abd9c")
+  @@index([sync_status])
+  @@index([sync_time])
+}
+
+/// Question assignment/join table between an interview and its associated
+/// interview questions. Not independently managed, always paired to a parent
+/// interview instance. Links to template-derived or custom manual questions
+/// assigned for this specific interview.
+///
+/// @namespace Interviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_interview_questions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked interview for this question reference. {@link
+  /// ats_recruitment_interviews.id}.
+  ats_recruitment_interview_id String
+  
+  /// Display or asking order of this question in the interview.
+  order Int
+  
+  /// Question content (template or manual, set at time of interview creation).
+  question_text String
+  
+  /// Type/classification (e.g., coding, behavioral, personality, situational,
+  /// technical, etc).
+  question_type String
+  
+  /// True if this question is derived from a predefined template.
+  is_template Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  interview ats_recruitment_interviews @relation(fields: [ats_recruitment_interview_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ats_recruitment_interview_id, order], map: "ats_recruitment_interview_questions_ats_recruitment_in_fe140889")
+  @@index([ats_recruitment_interview_id], map: "ats_recruitment_interview_questions_ats_recruitment_in_597aa808")
+  @@index([question_type])
+}

@@ -1,0 +1,93 @@
+/// OAuth clients registered in the system, representing applications that
+/// request OAuth authorization. Includes client credentials, redirect URIs,
+/// trust flag, and metadata. This is the main entity for client management
+/// in the OAuth server system.
+///
+/// @namespace Clients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_oauth_clients {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique client identifier used by OAuth clients.
+  client_id String
+  
+  /// Client secret used for authentication.
+  client_secret String
+  
+  /// Redirect URI for OAuth response callbacks.
+  redirect_uri String
+  
+  /// URI to the client's logo image.
+  logo_uri String?
+  
+  /// Flag indicating whether the client is trusted, allowing automatic consent.
+  is_trusted Boolean
+  
+  /// Soft delete timestamp; records when the client was deleted.
+  deleted_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  oauth_server_authorization_codes oauth_server_authorization_codes[]
+  oauth_server_access_tokens oauth_server_access_tokens[]
+  oauth_server_refresh_tokens oauth_server_refresh_tokens[]
+  oauth_server_id_tokens oauth_server_id_tokens[]
+  oauth_server_client_profiles oauth_server_client_profiles[]
+  oauth_server_token_monitors oauth_server_token_monitors[]
+  oauth_server_client_secret_regenerations oauth_server_client_secret_regenerations[]
+  
+  @@unique([client_id])
+  @@index([deleted_at])
+}
+
+/// Profile information related to OAuth clients, containing frequently
+/// changing metadata such as nickname and description. Linked to the main
+/// client entity to allow separation of frequently updated profile data.
+///
+/// @namespace Clients
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_client_profiles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged OAuth client {@link oauth_server_oauth_clients.id}.
+  oauth_client_id String
+  
+  /// Nickname of the OAuth client for display purposes.
+  nickname String
+  
+  /// Detailed description of the OAuth client.
+  description String?
+  
+  /// Soft delete timestamp; records when the profile was deleted.
+  deleted_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  client oauth_server_oauth_clients @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade)
+  
+  @@index([oauth_client_id])
+  
+  @@index([deleted_at])
+}

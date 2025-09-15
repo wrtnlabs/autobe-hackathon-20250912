@@ -1,0 +1,152 @@
+/// View aggregated user information for administrative management in the
+/// social login system. Includes essential identifiers, status flags, and
+/// timestamps relevant to user administration and monitoring. Relates to
+/// underlying user and guest tables for detailed linkage.
+///
+/// @namespace Management
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_management_user_views {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User email address, uniquely identifying the user for login and contact.
+  email String
+  
+  /// User chosen nickname visible in administrative view.
+  nickname String
+  
+  /// Flag indicating if the user account is currently active.
+  is_active Boolean
+  
+  /// Flag indicating if the user has administrative privileges.
+  is_admin Boolean
+  
+  /// Timestamp of the last successful login by the user.
+  last_login_at DateTime?
+  
+  /// Timestamp when the user account was created.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the user account information.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([is_active, is_admin])
+  @@index([last_login_at])
+}
+
+/// Consolidated view of access and refresh token information for management
+/// console oversight. Includes token status, expiration, associated user
+/// reference, and audit timestamps for administrative token control and
+/// monitoring.
+///
+/// @namespace Management
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_management_token_views {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the user's {@link social_login_users.id} who owns this token.
+  user_id String
+  
+  /// Indicates token type, e.g., access or refresh.
+  token_type String
+  
+  /// Timestamp when the token was issued.
+  issued_at DateTime
+  
+  /// Timestamp when the token expires.
+  expires_at DateTime
+  
+  /// Flag indicating if the token has been revoked and is no longer valid.
+  is_revoked Boolean
+  
+  //----
+  // RELATIONS
+  //----
+  user social_login_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, token_type])
+  @@index([expires_at])
+}
+
+/// Management configuration settings of OAuth clients used in the social
+/// login service. Includes client identifiers, redirect URIs, status flags,
+/// and timestamps relevant for administrative control and auditing purposes.
+///
+/// @namespace Management
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_management_client_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Human-readable OAuth client name for identification.
+  client_name String
+  
+  /// Unique client identifier used in OAuth flows.
+  client_id String
+  
+  /// JSON formatted string listing allowed redirect URIs for the client.
+  redirect_uris String
+  
+  /// Flag indicating whether this client configuration is currently active.
+  is_active Boolean
+  
+  /// Timestamp when the client was registered.
+  created_at DateTime
+  
+  /// Timestamp of the last update to client settings.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([client_id])
+  @@index([is_active])
+}
+
+/// Aggregated statistics data for monitoring social login system usage and
+/// performance over time. Supports administrative reporting and trend
+/// analysis.
+///
+/// @namespace Management
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model social_login_management_statistics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The date for which these aggregated statistics are recorded.
+  statistic_date DateTime
+  
+  /// Total number of login attempts made on the given date.
+  total_login_count Int
+  
+  /// Number of successful login attempts on the given date.
+  successful_login_count Int
+  
+  /// Number of failed login attempts recorded for the date.
+  failed_login_count Int
+  
+  /// Number of active users on the given date.
+  active_user_count Int
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([statistic_date])
+}

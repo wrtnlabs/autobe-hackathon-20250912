@@ -1,0 +1,163 @@
+/// Represents notification workflows forming the main business entity for
+/// orchestrating notification steps. Contains metadata including unique
+/// code, name, activation status, versioning, and timestamps. Serves as the
+/// root for related workflow nodes and edges. Workflows are DAGs defining
+/// notification sequences for emails, SMS, and delays.
+///
+/// @namespace Workflows
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_workflows {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business identifier code for the workflow.
+  code String
+  
+  /// Display name of the workflow.
+  name String
+  
+  /// Indicates whether the workflow is active and can be triggered.
+  is_active Boolean
+  
+  /// Reference to the starting node of the workflow DAG.
+  entry_node_id String
+  
+  /// Version number of the workflow, incremented on updates.
+  version Int
+  
+  /// Timestamp when the workflow was created.
+  created_at DateTime
+  
+  /// Timestamp when the workflow was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  notification_workflow_workflow_nodes notification_workflow_workflow_nodes[]
+  notification_workflow_workflow_edges notification_workflow_workflow_edges[]
+  notification_workflow_trigger_instances notification_workflow_trigger_instances[]
+  notification_workflow_step_execution_logs notification_workflow_step_execution_logs[]
+  
+  @@unique([code])
+  @@index([is_active, updated_at])
+}
+
+/// Represents nodes within a notification workflow, each defining a step
+/// such as Email, SMS, or Delay. Nodes belong to a parent workflow and can
+/// be sequenced via edges. Stores node type discriminator, LiquidJS
+/// templates for messages, and delay durations as applicable. Supports
+/// validation and lifecycle properties. Managed subsidiary to the workflow
+/// entity.
+///
+/// @namespace Workflows
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_workflow_nodes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent workflow's notification_workflow_workflows.id
+  workflow_id String
+  
+  /// Type of node indicating Email, SMS, or Delay.
+  node_type String
+  
+  /// Display name of the node.
+  name String
+  
+  /// LiquidJS template string for email recipient address.
+  email_to_template String?
+  
+  /// LiquidJS template string for email subject.
+  email_subject_template String?
+  
+  /// LiquidJS template string for email body content.
+  email_body_template String?
+  
+  /// LiquidJS template string for SMS recipient number.
+  sms_to_template String?
+  
+  /// LiquidJS template string for SMS content.
+  sms_body_template String?
+  
+  /// Delay in milliseconds for DelayNode steps.
+  delay_ms Int?
+  
+  /// ISO 8601 duration string representing delay.
+  delay_duration String?
+  
+  /// Timestamp when the node was created.
+  created_at DateTime
+  
+  /// Timestamp when the node was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for the node.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  workflow notification_workflow_workflows @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  
+  notification_workflow_workflow_edges_of_from_node_id notification_workflow_workflow_edges[] @relation("notification_workflow_workflow_edges_of_from_node_id")
+  notification_workflow_workflow_edges_of_to_node_id notification_workflow_workflow_edges[] @relation("notification_workflow_workflow_edges_of_to_node_id")
+  notification_workflow_step_execution_logs notification_workflow_step_execution_logs[]
+  
+  @@unique([workflow_id, name])
+  @@index([workflow_id, node_type])
+}
+
+/// Defines directed edges connecting nodes within notification workflows.
+/// Represents the relationships modeling the DAG structure of workflows by
+/// linking nodes with 'from' and 'to' references. Ensures graph integrity
+/// and no self loops. Managed as subsidiary entity.
+///
+/// @namespace Workflows
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_workflow_edges {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent workflow's notification_workflow_workflows.id
+  workflow_id String
+  
+  /// Source node reference in notification_workflow_workflow_nodes.id
+  from_node_id String
+  
+  /// Target node reference in notification_workflow_workflow_nodes.id
+  to_node_id String
+  
+  /// Timestamp when the edge was created.
+  created_at DateTime
+  
+  /// Timestamp when the edge was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for the edge.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  workflow notification_workflow_workflows @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  fromNode notification_workflow_workflow_nodes @relation("notification_workflow_workflow_edges_of_from_node_id", fields: [from_node_id], references: [id], onDelete: Cascade)
+  toNode notification_workflow_workflow_nodes @relation("notification_workflow_workflow_edges_of_to_node_id", fields: [to_node_id], references: [id], onDelete: Cascade)
+  
+  @@index([from_node_id])
+  @@index([to_node_id])
+  
+  @@index([workflow_id, from_node_id, to_node_id], map: "notification_workflow_workflow_edges_workflow_id_from__e434f534")
+}

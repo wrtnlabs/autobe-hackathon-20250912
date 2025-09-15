@@ -1,0 +1,213 @@
+/// Records of individual freelancer users, enabling independent registration
+/// and management of personal accounts with necessary profile and status
+/// fields. Each freelancer has unique UUID primary key and temporal fields
+/// for audit trail. Supports soft deletion for account deactivation.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_freelancerusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address used for freelancer user login and communication. Must be
+  /// unique.
+  email String
+  
+  /// Optional display nickname or alias for the freelancer user.
+  nickname String?
+  
+  /// Timestamp when the freelancer user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the freelancer user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the freelancer user record was soft deleted (account
+  /// deactivation).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  easy_sign_user_credentials easy_sign_user_credentials[]
+  easy_sign_documents easy_sign_documents[]
+  easy_sign_templates easy_sign_templates[]
+  easy_sign_signatories easy_sign_signatories[]
+  easy_sign_email_notifications easy_sign_email_notifications[]
+  easy_sign_auth_tokens easy_sign_auth_tokens[]
+  easy_sign_two_factor_auths easy_sign_two_factor_auths[]
+  easy_sign_role_assignments easy_sign_role_assignments[]
+  
+  @@unique([email])
+  @@index([created_at, email])
+}
+
+/// Represents corporate users in the system who require team leader approval
+/// for contract-related actions. Contains profile and contact information
+/// with standard temporal audit fields and soft deletion support.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_corporateusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Corporate user's email address for login and notifications, unique per
+  /// account.
+  email String
+  
+  /// Name of the corporation the user belongs to.
+  company_name String
+  
+  /// Department name or unit within the corporation.
+  department String?
+  
+  /// Job position or title of the corporate user.
+  position String?
+  
+  /// Creation timestamp of the corporate user record.
+  created_at DateTime
+  
+  /// Timestamp of last update for the corporate user record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for the corporate user account.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  easy_sign_kakao_notifications easy_sign_kakao_notifications[]
+  
+  @@unique([email])
+  @@index([company_name, email])
+}
+
+/// Team leader user records handle corporate contract approvals and
+/// management. Includes profile data and temporal fields for status tracking
+/// and auditing. Soft deletion supported for account termination or
+/// suspension.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_teamleaders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email used by the team leader for authentication and communication.
+  /// Unique per leader.
+  email String
+  
+  /// Full name of the team leader user.
+  name String
+  
+  /// Optional contact phone number of the team leader.
+  mobile_phone String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to mark suspension or removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  easy_sign_sms_notifications easy_sign_sms_notifications[]
+  
+  @@unique([email])
+  @@index([mobile_phone, email])
+}
+
+/// Administrator user accounts with full system privileges. Manages
+/// configurations, overall system monitoring, and user administration.
+/// Includes profile details and audit timestamps with soft deletion.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator email address for login. Must be unique.
+  email String
+  
+  /// Unique username of the admin account.
+  username String
+  
+  /// Creation timestamp of the admin record.
+  created_at DateTime
+  
+  /// Timestamp for last update.
+  updated_at DateTime
+  
+  /// Soft delete time marking admin deactivation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  easy_sign_admin_logs easy_sign_admin_logs[]
+  
+  @@unique([email])
+  @@unique([username])
+  @@index([username, email])
+}
+
+/// Stores authentication credentials (e.g., password hashes) linked to users
+/// across different roles. Each credential record associates with a user id
+/// from one of the user tables and stores secured hashed password. Includes
+/// timestamps for credential lifecycle tracking and soft deletion.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_user_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the user entity this credential belongs to. Can be from
+  /// freelancer, corporate, team leader, or admin. {@link
+  /// easy_sign_freelancerusers.id, easy_sign_corporateusers.id,
+  /// easy_sign_teamleaders.id, easy_sign_admins.id}
+  user_id String
+  
+  /// Hashed password for authentication stored securely with appropriate
+  /// hashing algorithms.
+  password_hash String
+  
+  /// Timestamp when the credential was created.
+  created_at DateTime
+  
+  /// Timestamp when the credential was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating the credential is inactive.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user easy_sign_freelancerusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@index([created_at, updated_at])
+}

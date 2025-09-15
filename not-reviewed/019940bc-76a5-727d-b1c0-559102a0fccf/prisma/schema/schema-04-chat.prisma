@@ -1,0 +1,48 @@
+/// Real-time chat messages collected from the Chijijik API for auction
+/// rooms, linking each message to the corresponding auction room and team
+/// leader. Supports message content storage, timestamps, and soft deletion
+/// to maintain audit trails and historical analysis.
+///
+/// @namespace Chat
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_chat_messages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged auction room's {@link auction_platform_auction_rooms.id}.
+  auction_platform_auction_room_id String
+  
+  /// Belonged team leader's {@link auction_platform_team_leaders.id}.
+  auction_platform_team_leader_id String
+  
+  /// Unique chat message ID from Chijijik API.
+  chijijik_message_id String
+  
+  /// Content of the chat message.
+  message String
+  
+  /// Name of the message sender.
+  sender_name String
+  
+  /// Timestamp when the message was created.
+  created_at DateTime
+  
+  /// Timestamp when the message was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auctionRoom auction_platform_auction_rooms @relation(fields: [auction_platform_auction_room_id], references: [id], onDelete: Cascade)
+  teamLeader auction_platform_team_leaders @relation(fields: [auction_platform_team_leader_id], references: [id], onDelete: Cascade)
+  
+  @@unique([chijijik_message_id])
+  @@index([auction_platform_auction_room_id, created_at], map: "auction_platform_chat_messages_auction_platform_auctio_584494df")
+  @@index([auction_platform_team_leader_id, created_at], map: "auction_platform_chat_messages_auction_platform_team_l_1ffedb21")
+}

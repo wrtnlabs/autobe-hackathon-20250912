@@ -1,0 +1,256 @@
+/// Guest user entities represent unauthenticated or minimal-permission users
+/// with access primarily to login and public information. Linked to tenants
+/// for multi-tenant scoping. Authentication fields include optional
+/// password_hash for tracking login credentials. Includes status and soft
+/// delete for lifecycle management.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_guest {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id} to enforce
+  /// multi-tenancy scoping.
+  tenant_id String
+  
+  /// Email address used for login and notifications.
+  email String
+  
+  /// Password hash for authentication login.
+  password_hash String?
+  
+  /// User's display nickname for personalization and identification.
+  nickname String?
+  
+  /// Account status indicating lifecycle state such as active, suspended, or
+  /// disabled.
+  status String
+  
+  /// Timestamp of creation.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating if user is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, email])
+  @@index([tenant_id, created_at])
+}
+
+/// Student user entities represent learners submitting essays and viewing
+/// personal grading results. Scoped per tenant and optionally associated
+/// with classes for enrollment. Stores authentication credentials, personal
+/// display info, status, and audit timestamps.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_student {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id} for scoping.
+  tenant_id String
+  
+  /// Associated class {@link creverse_ai_essay_classes.id} for student
+  /// enrollment.
+  class_id String?
+  
+  /// Email address for student login and notifications.
+  email String
+  
+  /// Password hash for authentication login.
+  password_hash String?
+  
+  /// Preferred display nickname of the student.
+  nickname String?
+  
+  /// Account status such as active, suspended, or disabled.
+  status String
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for marking deletion without actual data removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class creverse_ai_essay_classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_essays creverse_ai_essay_essays[]
+  creverse_ai_essay_grading_jobs creverse_ai_essay_grading_jobs[]
+  
+  @@index([class_id])
+  
+  @@unique([tenant_id, email])
+  @@index([tenant_id, class_id, created_at])
+}
+
+/// Teacher user entities represent educators managing rubrics, assignments,
+/// plagiarism reviews, and reports. Scoped by tenant and optionally linked
+/// to classes they teach. Authentication stored via password_hash. Account
+/// lifecycle and soft deletion supported.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_teacher {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant {@link creverse_ai_essay_tenants.id} for multi-tenancy.
+  tenant_id String
+  
+  /// Class {@link creverse_ai_essay_classes.id} associated with this teacher
+  /// if applicable.
+  class_id String?
+  
+  /// Email address for teacher login and notifications.
+  email String
+  
+  /// Authentication password hash.
+  password_hash String?
+  
+  /// Display nickname or name for the teacher user.
+  nickname String?
+  
+  /// Lifecycle status of the teacher account.
+  status String
+  
+  /// Timestamp of account creation.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft delete flag timestamp for account deactivation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class creverse_ai_essay_classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_grading_jobs creverse_ai_essay_grading_jobs[]
+  
+  @@index([class_id])
+  
+  @@unique([tenant_id, email])
+  @@index([tenant_id, class_id, created_at])
+}
+
+/// Analyst user entities represent read-only analytical users accessing
+/// reports, audits, and costs. Scoped to tenants, but typically no class
+/// association. Include authentication credentials and lifecycle management.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_analyst {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant to which analyst belongs {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Email used for login and notifications.
+  email String
+  
+  /// Password hash for authentication.
+  password_hash String?
+  
+  /// Optional display nickname of the analyst.
+  nickname String?
+  
+  /// Current status of the analyst's account.
+  status String
+  
+  /// Creation timestamp of the user account.
+  created_at DateTime
+  
+  /// Timestamp of last update to user info.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if account is deactivated.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, email])
+  @@index([tenant_id, created_at])
+}
+
+/// Admin user entities have full control over tenants, API keys, features,
+/// audits, and system ops. Scoped per tenant. Authentication managed via
+/// password_hash. Soft delete and status track account lifecycle.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_admin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant to which admin belongs {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Email address for login and notifications.
+  email String
+  
+  /// Password hash used for authentication.
+  password_hash String?
+  
+  /// Administrator nickname or display name.
+  nickname String?
+  
+  /// Lifecycle status of the admin account such as active or suspended.
+  status String
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp to the admin record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp marking account deactivation.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_audit_logs creverse_ai_essay_audit_logs[]
+  
+  @@unique([tenant_id, email])
+  @@index([tenant_id, created_at])
+}

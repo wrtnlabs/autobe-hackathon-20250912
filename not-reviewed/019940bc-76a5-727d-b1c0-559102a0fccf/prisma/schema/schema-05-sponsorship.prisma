@@ -1,0 +1,95 @@
+/// Sponsorship event records that capture donation details during auctions,
+/// including donor information, donation amount, auction room association,
+/// and optional member association. These events impact auction bids
+/// dynamically and are traced with timestamps for creation, updating, and
+/// soft deletion.
+///
+/// @namespace Sponsorship
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_sponsorship_events {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Related auction room {@link auction_platform_auction_rooms.id}.
+  auction_room_id String
+  
+  /// Associated member (team leader) {@link auction_platform_members.id}.
+  member_id String?
+  
+  /// Name of the donor or sponsor from the sponsorship event. May be display
+  /// name or anonymous.
+  donor_name String
+  
+  /// Amount donated in this sponsorship event.
+  donation_amount Float
+  
+  /// Optional message included with the sponsorship.
+  message String?
+  
+  /// Unique identifier for this sponsorship event from the Chijijik API, used
+  /// to prevent duplicates.
+  chijijik_sponsorship_id String
+  
+  /// Flag indicating whether an animation was triggered for this sponsorship
+  /// event.
+  animated Boolean
+  
+  /// Timestamp when this record was created.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auctionRoom auction_platform_auction_rooms @relation(fields: [auction_room_id], references: [id], onDelete: Cascade)
+  member auction_platform_members? @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  @@index([member_id])
+  
+  @@unique([chijijik_sponsorship_id])
+  @@index([auction_room_id, donor_name], map: "auction_platform_sponsorship_events_auction_room_id_do_f0e27023")
+}
+
+/// Custom animation metadata for sponsorship notifications to enrich auction
+/// user experience. Contains animation name, file URI, optional description,
+/// and uploader information. Managed through soft deletion and audit
+/// timestamps.
+///
+/// @namespace Sponsorship
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_sponsorship_animations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the custom animation file for sponsorship notifications.
+  animation_name String
+  
+  /// URI location of the animation file, such as S3 URL or CDN link.
+  file_uri String
+  
+  /// Optional detailed description of the animation.
+  description String?
+  
+  /// UUID of the member (team leader or admin) who uploaded this animation.
+  uploaded_by_member_id String?
+  
+  /// Creation timestamp of the animation record.
+  created_at DateTime
+  
+  /// Last update timestamp of the animation record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if animation is active.
+  deleted_at DateTime?
+}

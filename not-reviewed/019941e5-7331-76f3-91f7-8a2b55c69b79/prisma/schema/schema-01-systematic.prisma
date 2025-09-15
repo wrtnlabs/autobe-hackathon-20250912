@@ -1,0 +1,79 @@
+/// System core configuration entries representing key-value pairs to control
+/// various global system behaviors and parameters. Each configuration is
+/// uniquely identified by its key. Used across the EasySign backend system
+/// for feature toggling and global settings. Changes are auditable via
+/// timestamp fields.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_configurations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique configuration key that identifies the setting.
+  config_key String
+  
+  /// Value associated with the configuration key.
+  config_value String
+  
+  /// Optional detailed description of the configuration item.
+  description String?
+  
+  /// Timestamp when the configuration entry was created.
+  created_at DateTime
+  
+  /// Timestamp when the configuration entry was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion of the configuration entry.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([config_key])
+  @@index([created_at, updated_at])
+}
+
+/// Individual system settings for EasySign platform, representing
+/// configurable options at various granularity levels. Includes key, value,
+/// descriptive notes and audit trails for maintainability and historical
+/// referencing. Critical for customizing operational behaviors and feature
+/// toggling.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model easy_sign_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique key identifying this system setting.
+  setting_key String
+  
+  /// Value assigned to the system setting key.
+  setting_value String
+  
+  /// Optional textual notes or comments describing the setting usage or effect.
+  notes String?
+  
+  /// Timestamp when the setting was created.
+  created_at DateTime
+  
+  /// Timestamp when the setting was last modified.
+  updated_at DateTime
+  
+  /// Timestamp indicating soft deletion status.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([setting_key])
+  @@index([created_at, updated_at])
+}

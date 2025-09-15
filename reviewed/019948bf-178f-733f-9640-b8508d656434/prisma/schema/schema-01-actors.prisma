@@ -1,0 +1,29 @@
+/// Represents the logical owner/actor of the Mood Diary. This model
+/// currently supports a single diary user, matching the app's business logic
+/// of a single-user system. It is the reference point for all mood entries
+/// via foreign keys and ensures the actor boundary is clear. By
+/// encapsulating user context here, future expansion to a multi-user
+/// scenario or advanced metadata storage is simplified. Fields are minimized
+/// as only a logical system user is required.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model mood_diary_diaryusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp indicating when the diary user was (theoretically) created.
+  /// Used for future extensibility and auditability, even if only a single
+  /// logical user exists.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  mood_diary_mood_entries mood_diary_mood_entries[]
+  
+  @@index([created_at])
+}

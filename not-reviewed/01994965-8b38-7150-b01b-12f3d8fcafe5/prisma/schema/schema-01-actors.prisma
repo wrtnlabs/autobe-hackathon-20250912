@@ -1,0 +1,114 @@
+/// End users who access the Telegram File Downloader service via web
+/// dashboard. Store authentication credentials, email, and audit timestamps.
+/// Unique email per end user. Supports soft deletion and timestamps for
+/// auditing user record changes.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_endusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address of the end user, unique across end users.
+  email String
+  
+  /// Hashed password for authenticating the end user.
+  password_hash String
+  
+  /// Timestamp when the end user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the end user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the end user record was soft deleted; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  telegram_file_downloader_download_jobs telegram_file_downloader_download_jobs[]
+  telegram_file_downloader_storage_usages telegram_file_downloader_storage_usages[]
+  telegram_file_downloader_payments telegram_file_downloader_payments[]
+  telegram_file_downloader_transactions telegram_file_downloader_transactions[]
+  telegram_file_downloader_audit_logs telegram_file_downloader_audit_logs[]
+  
+  @@unique([email])
+}
+
+/// Developer users who access the Telegram File Downloader service via API.
+/// Store authentication credentials, email, and audit timestamps. Unique
+/// email per developer. Supports soft deletion and timestamps for auditing
+/// user record changes.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_developers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address of the developer user, unique across developers.
+  email String
+  
+  /// Hashed password for authenticating the developer user.
+  password_hash String
+  
+  /// Timestamp when the developer user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the developer user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the developer user record was soft deleted; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  telegram_file_downloader_download_jobs telegram_file_downloader_download_jobs[]
+  telegram_file_downloader_storage_usages telegram_file_downloader_storage_usages[]
+  
+  @@unique([email])
+}
+
+/// Administrator users who manage subscriptions, payment statuses, and logs.
+/// Store authentication credentials, email, and audit timestamps. Unique
+/// email per administrator. Supports soft deletion and timestamps for
+/// auditing user record changes.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_administrators {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address of the administrator user, unique across administrators.
+  email String
+  
+  /// Hashed password for authenticating the administrator user.
+  password_hash String
+  
+  /// Timestamp when the administrator user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the administrator user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the administrator user record was soft deleted; null if
+  /// active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}

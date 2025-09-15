@@ -1,0 +1,267 @@
+/// Represents each logical notification event to be delivered to users
+/// (applicants, HR recruiters, etc.) or system actors. Contains type,
+/// business context, and recipient information. Entry point for notification
+/// workflows. Linked to delivery and failure records. Core notification
+/// metadata is stored here; does not track delivery-specific events. Primary
+/// entity for auditing notification intent, source, and status for business
+/// processes.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Target applicant's {@link ats_recruitment_applicants.id}. Nullable if not
+  /// for applicant.
+  recipient_applicant_id String?
+  
+  /// Target HR recruiter's {@link ats_recruitment_hrrecruiters.id}. Nullable
+  /// if not for HR.
+  recipient_hrrecruiter_id String?
+  
+  /// Target tech reviewer's {@link ats_recruitment_techreviewers.id}. Nullable
+  /// if not for reviewer.
+  recipient_techreviewer_id String?
+  
+  /// Target system admin's {@link ats_recruitment_systemadmins.id}. Nullable
+  /// if not for admin.
+  recipient_systemadmin_id String?
+  
+  /// Notification event type key (e.g., application_status_update,
+  /// interview_scheduled, export_complete, system_alert), used to match to
+  /// template and business process.
+  event_type String
+  
+  /// Name of the business table this notification is related to (e.g.,
+  /// ats_recruitment_applications, ats_recruitment_interviews). Business
+  /// context for linkage.
+  reference_table String
+  
+  /// ID of the referenced business entity (e.g., application, interview,
+  /// export job record).
+  reference_id String
+  
+  /// JSON representation of templated data for dynamic rendering in template.
+  /// Contains context provided to notification message rendering. Large, not
+  /// always indexed.
+  payload_json String?
+  
+  /// Current business status for notification event (e.g., pending, sent,
+  /// delivered, failed, cancelled).
+  status String
+  
+  /// Time the notification event record was created.
+  created_at DateTime
+  
+  /// Time the notification event was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null if active, set if deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  recipientApplicant ats_recruitment_applicants? @relation(fields: [recipient_applicant_id], references: [id], onDelete: Cascade)
+  recipientHrRecruiter ats_recruitment_hrrecruiters? @relation(fields: [recipient_hrrecruiter_id], references: [id], onDelete: Cascade)
+  recipientTechReviewer ats_recruitment_techreviewers? @relation(fields: [recipient_techreviewer_id], references: [id], onDelete: Cascade)
+  recipientSystemAdmin ats_recruitment_systemadmins? @relation(fields: [recipient_systemadmin_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_notification_deliveries ats_recruitment_notification_deliveries[]
+  ats_recruitment_notification_failures ats_recruitment_notification_failures[]
+  
+  @@index([recipient_systemadmin_id])
+  
+  @@index([event_type])
+  @@index([status])
+  @@index([recipient_applicant_id])
+  @@index([recipient_hrrecruiter_id])
+  @@index([recipient_techreviewer_id])
+  @@index([reference_table, reference_id])
+  @@index([created_at])
+}
+
+/// Represents each individual delivery attempt for a notification. May be
+/// one-to-many for the same notification (e.g., primary channel failed,
+/// fallback attempted). Contains channel info, recipient contact, delivery
+/// result, and timestamps. Used for audit trails, compliance, and
+/// troubleshooting. Supporting entity—managed via notification contexts.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_notification_deliveries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked notification's {@link ats_recruitment_notifications.id}.
+  notification_id String
+  
+  /// Channel/medium used to send the notification (e.g., email, sms, app_push,
+  /// webhook).
+  delivery_channel String
+  
+  /// Email, phone number, or channel recipient endpoint for this delivery
+  /// attempt. For auditability and troubleshooting.
+  recipient_address String
+  
+  /// Result status for this specific delivery attempt (e.g., initiated, sent,
+  /// delivered, failed, bounced, retried, cancelled).
+  delivery_status String
+  
+  /// Detailed result code/message from delivery provider/service, e.g., SMTP
+  /// response, SMS error codes. Used for delivery troubleshooting and
+  /// analytics.
+  delivery_result_detail String?
+  
+  /// Attempt count (e.g., 1=first, 2=retried after error). For retry logic
+  /// analytics.
+  delivery_attempt Int
+  
+  /// Timestamp this delivery attempt succeeded (null if never delivered).
+  delivered_at DateTime?
+  
+  /// Timestamp this delivery failed (null if never failed).
+  failed_at DateTime?
+  
+  /// Time this delivery record was created.
+  created_at DateTime
+  
+  /// Time this delivery record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null if active, set if deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  notification ats_recruitment_notifications @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_notification_failures ats_recruitment_notification_failures[]
+  
+  @@index([notification_id])
+  @@index([delivery_channel])
+  @@index([recipient_address])
+  @@index([delivery_status])
+  @@index([created_at])
+}
+
+/// Represents reusable notification message templates (SMS, email, app push,
+/// etc.), typically managed by system admins/operations. Stores template
+/// body (with variables), subject, channel, and activation info. Used to
+/// standardize business communications and allow easy updates. Primary
+/// entity—CRUD by authorized users independent of notification events.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_notification_templates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business key for this template (e.g., INTERVIEW_SCHEDULED_KR,
+  /// APPLICATION_RESULT_EMAIL). Used for event/template matching
+  /// programmatically.
+  template_code String
+  
+  /// Notification channel this template is used for (e.g., email, sms,
+  /// app_push, webhook).
+  channel String
+  
+  /// Human-readable title for template admin UI (not customer visible).
+  title String
+  
+  /// Default message subject/title (for email/channel supporting subject
+  /// lines).
+  subject String?
+  
+  /// Primary template text/body. May use placeholders for dynamic values
+  /// (e.g., {{applicantName}}, {{interviewDate}}).
+  body String
+  
+  /// Whether this template is currently active (enabled for new notifications).
+  is_active Boolean
+  
+  /// Time this template record was created.
+  created_at DateTime
+  
+  /// Time this template was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null if active, set if deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([template_code, channel], map: "ats_recruitment_notification_templates_template_code_c_cb14a7a9")
+  @@index([template_code])
+  @@index([channel])
+  @@index([is_active])
+  @@index([created_at])
+}
+
+/// Notification delivery failure logs—each record describes a failed attempt
+/// to deliver a notification (even after retries). Stores reference to
+/// notification and (optionally) delivery record. Purpose is to maintain
+/// post-mortem records and root-cause analysis for compliance. Supporting
+/// entity—managed through notification workflows.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_notification_failures {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Failed notification event's {@link ats_recruitment_notifications.id}.
+  notification_id String
+  
+  /// Delivery attempt's {@link ats_recruitment_notification_deliveries.id}, if
+  /// related to a specific channel/delivery. Nullable if not tied to a
+  /// delivery attempt.
+  delivery_id String?
+  
+  /// Failure mode (e.g., provider_bounce, permanent_error, invalid_address,
+  /// api_rejected, user_optout). Enables overall post-mortem analytics.
+  failure_type String
+  
+  /// Detailed failure reason/message (freeform, from provider, API or system
+  /// log).
+  failure_message String
+  
+  /// When the failure occurred (event timestamp).
+  occurred_at DateTime
+  
+  /// Time this failure log record was created.
+  created_at DateTime
+  
+  /// Time this failure log was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null if active, set if deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  notification ats_recruitment_notifications @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  delivery ats_recruitment_notification_deliveries? @relation(fields: [delivery_id], references: [id], onDelete: Cascade)
+  
+  @@index([delivery_id])
+  
+  @@index([notification_id])
+  @@index([failure_type])
+  @@index([occurred_at])
+}

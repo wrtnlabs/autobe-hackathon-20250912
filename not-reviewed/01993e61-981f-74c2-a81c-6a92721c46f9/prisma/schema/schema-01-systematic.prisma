@@ -1,0 +1,131 @@
+/// Stores global configuration key-value settings controlling system
+/// behavior. Uniquely identifies settings by config_key with associated
+/// value and description. Supports audit fields and soft deletion to allow
+/// safe update and rollback of system parameters.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_system_configs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique configuration key identifying a system setting.
+  config_key String
+  
+  /// Value associated with the configuration key.
+  config_value String?
+  
+  /// Descriptive explanation of the configuration purpose.
+  description String?
+  
+  /// Timestamp when the configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the configuration was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating if the configuration was soft deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([config_key])
+  @@index([created_at])
+}
+
+/// Represents MCP servers enabling multi-context protocol communication to
+/// support AI IDE integration. Stores connectivity details such as host,
+/// port, protocol, and optional authentication tokens. Supports audit trails
+/// and soft deletion for server management lifecycle.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_mcp_servers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Hostname or IP address of the MCP server.
+  host String
+  
+  /// TCP port number the server listens on.
+  port Int
+  
+  /// Communication protocol, e.g., TCP or WebSocket.
+  protocol String
+  
+  /// Optional authentication token for securing connections.
+  auth_token String?
+  
+  /// Additional notes or description about the MCP server.
+  description String?
+  
+  /// Timestamp when the server record was created.
+  created_at DateTime
+  
+  /// Timestamp when the server record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating soft deletion of the server.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flow_sphere_mcp_connections flow_sphere_mcp_connections[]
+  flow_sphere_mcp_sessions flow_sphere_mcp_sessions[]
+  
+  @@unique([host, port])
+  @@index([created_at])
+}
+
+/// Tracks client MCP connections to MCP servers. Contains client
+/// identifiers, connection state, timestamps of connection lifecycle events,
+/// and foreign key reference to associated MCP server. Useful for managing
+/// live sessions and connection history.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_mcp_connections {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated MCP server {@link flow_sphere_mcp_servers.id}.
+  flow_sphere_mcp_server_id String
+  
+  /// Unique client identifier representing the AI IDE or client session.
+  client_id String
+  
+  /// Current state of the MCP connection, e.g., 'connected', 'disconnected'.
+  state String
+  
+  /// Timestamp when the connection was established.
+  connected_at DateTime?
+  
+  /// Timestamp when the connection was terminated.
+  disconnected_at DateTime?
+  
+  /// Timestamp when the MCP connection record was created.
+  created_at DateTime
+  
+  /// Timestamp when the MCP connection record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  mcpServer flow_sphere_mcp_servers @relation(fields: [flow_sphere_mcp_server_id], references: [id], onDelete: Cascade)
+  
+  flow_sphere_mcp_sessions flow_sphere_mcp_sessions[]
+  
+  @@index([flow_sphere_mcp_server_id, created_at], map: "flow_sphere_mcp_connections_flow_sphere_mcp_server_id__93c4b7e3")
+}

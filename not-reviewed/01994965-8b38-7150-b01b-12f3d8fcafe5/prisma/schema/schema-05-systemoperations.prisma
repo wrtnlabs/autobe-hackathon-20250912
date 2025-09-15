@@ -1,0 +1,140 @@
+/// Job queue entries representing file download tasks queued for processing.
+/// Contains metadata about job status, priority, retry attempts, and
+/// timestamps for queueing and processing. Independent primary table for
+/// managing active download jobs in the system operations domain.
+///
+/// @namespace SystemOperations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_job_queues {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the file download job. Links to the
+  /// telegram_file_downloader_download_jobs.id.
+  job_id String
+  
+  /// Current status of the job in the queue, e.g., 'pending', 'processing',
+  /// 'failed', 'completed'.
+  status String
+  
+  /// Priority level for job processing, higher value means higher priority.
+  priority Int
+  
+  /// Number of times this job has been retried due to failure.
+  retries Int
+  
+  /// Last error message if job processing failed.
+  last_error_message String?
+  
+  /// Timestamp when this job queue entry was created.
+  created_at DateTime
+  
+  /// Timestamp when this job queue entry was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if the job queue entry has been logically
+  /// deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([job_id])
+  @@index([status, priority])
+  @@index([created_at])
+}
+
+/// Error logs recording system failures, exceptions, and notable errors
+/// encountered during file download processing and other backend operations.
+/// Used for troubleshooting and monitoring system health.
+///
+/// @namespace SystemOperations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_error_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Error code identifier for categorizing the type of error.
+  error_code String
+  
+  /// Detailed error message or stack trace information.
+  error_message String
+  
+  /// The system component or module where the error originated.
+  source_component String
+  
+  /// Timestamp when the error occurred.
+  occurred_at DateTime
+  
+  /// Flag indicating whether the error has been resolved.
+  resolved Boolean
+  
+  /// Timestamp when this error log was created.
+  created_at DateTime
+  
+  /// Timestamp when this error log was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([error_code, resolved])
+  @@index([occurred_at])
+}
+
+/// Audit logs capturing system-level changes, user actions, and other
+/// significant events within the Telegram File Downloader service. Supports
+/// traceability and compliance auditing.
+///
+/// @namespace SystemOperations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Optional reference to the user who performed the action. {@link
+  /// telegram_file_downloader_endusers.id}
+  user_id String?
+  
+  /// Type of action performed, e.g., 'login', 'download_request',
+  /// 'subscription_change'.
+  action_type String
+  
+  /// Type of entity involved in action, e.g., 'user', 'download_job'.
+  entity_type String
+  
+  /// UUID of the related entity, if applicable.
+  entity_id String?
+  
+  /// Timestamp when the action was performed.
+  action_timestamp DateTime
+  
+  /// Optional IP address from which the action was performed.
+  ip_address String?
+  
+  /// Timestamp when this audit log entry was created.
+  created_at DateTime
+  
+  /// Timestamp when this audit log entry was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for audit log entry.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user telegram_file_downloader_endusers? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([action_type, action_timestamp], map: "telegram_file_downloader_audit_logs_action_type_action_42c62f57")
+  @@index([user_id])
+}

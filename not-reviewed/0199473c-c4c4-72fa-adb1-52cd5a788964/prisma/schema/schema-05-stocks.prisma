@@ -1,0 +1,202 @@
+/// Table storing virtual stock items available for trading. Includes unique
+/// stock codes, names, initial prices, and soft delete handling. This
+/// primary table serves as the master list of stock definitions for the
+/// virtual stock trading domain.
+///
+/// @namespace Stocks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_stock_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business code for the stock item.
+  code String
+  
+  /// Display name of the stock item.
+  name String
+  
+  /// Initial price of the stock item in points.
+  initial_price Int
+  
+  /// Timestamp when the stock item was created.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the stock item record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chatbot_stock_holdings chatbot_stock_holdings[]
+  chatbot_stock_transactions chatbot_stock_transactions[]
+  chatbot_stock_price_snapshots chatbot_stock_price_snapshots[]
+  
+  @@unique([code])
+  @@unique([name])
+  @@index([created_at])
+}
+
+/// Tracks each user's holdings of stock items. Links users to stock items
+/// with the quantity held. Ensures uniqueness for the user-item pair and
+/// supports soft deletes. Essential for portfolio management in the stock
+/// trading system.
+///
+/// @namespace Stocks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_stock_holdings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owner user of the stock holdings. {@link chatbot_members.id}
+  user_id String
+  
+  /// Stock item referenced. {@link chatbot_stock_items.id}
+  stock_item_id String
+  
+  /// Number of stock units held by user.
+  quantity Int
+  
+  /// Timestamp of when this holding record was created.
+  created_at DateTime
+  
+  /// Timestamp of last update to the holding record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if holding is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user chatbot_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  stockItem chatbot_stock_items @relation(fields: [stock_item_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id, stock_item_id])
+  @@index([user_id])
+  @@index([stock_item_id])
+}
+
+/// Records all stock transactions made by users. Captures transaction type,
+/// quantity, unit price, fees, total price, and timestamp. Links to user and
+/// stock item ensuring referential integrity. This primary table supports
+/// full audit trails of trading activity.
+///
+/// @namespace Stocks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_stock_transactions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User conducting the transaction. {@link chatbot_members.id}
+  user_id String
+  
+  /// Stock item involved in the transaction. {@link chatbot_stock_items.id}
+  stock_item_id String
+  
+  /// Transaction type: 'buy' or 'sell'.
+  transaction_type String
+  
+  /// Quantity of stock units in the transaction.
+  quantity Int
+  
+  /// Price per unit at transaction time in points.
+  price_per_unit Int
+  
+  /// Fee charged for this transaction in points.
+  transaction_fee Int
+  
+  /// Total price after fees in points.
+  total_price Int
+  
+  /// Timestamp of the transaction.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user chatbot_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  stockItem chatbot_stock_items @relation(fields: [stock_item_id], references: [id], onDelete: Cascade)
+  
+  @@index([stock_item_id])
+  
+  @@index([user_id, created_at])
+}
+
+/// Stores historical price snapshots of stock items for audit and analytics.
+/// Each record uniquely identifies a snapshot by stock item and timestamp.
+/// Snapshot stance indicates append-only, immutable history.
+///
+/// @namespace Stocks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_stock_price_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Stock item linked to this price snapshot. {@link chatbot_stock_items.id}
+  stock_item_id String
+  
+  /// Stock price at snapshot time in points.
+  price Int
+  
+  /// Timestamp when this snapshot was recorded.
+  snapshot_time DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  stockItem chatbot_stock_items @relation(fields: [stock_item_id], references: [id], onDelete: Cascade)
+  
+  @@unique([stock_item_id, snapshot_time])
+  @@index([snapshot_time])
+}
+
+/// Records each stock price update event with date, optional admin who
+/// triggered the event, and notes. Tracks daily updates for the virtual
+/// stock system. Supports auditing and operational tracking.
+///
+/// @namespace Stocks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_stock_price_updates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Admin who triggered the update, nullable if system triggered. {@link
+  /// chatbot_admins.id}
+  updated_by_admin_id String?
+  
+  /// Date and time this price update occurred.
+  update_date DateTime
+  
+  /// Optional notes about this update.
+  notes String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  updatedByAdmin chatbot_admins? @relation(fields: [updated_by_admin_id], references: [id], onDelete: Cascade)
+  
+  @@index([updated_by_admin_id])
+  
+  @@unique([update_date])
+}

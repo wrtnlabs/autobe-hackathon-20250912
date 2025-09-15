@@ -1,0 +1,135 @@
+/// Custom logic scripts for extending FlexOffice functionality. Represents
+/// standalone programmable modules that can execute JavaScript or Python
+/// code. Managed independently by administrators or developers. Supports
+/// soft deletion and audit tracking.
+///
+/// @namespace Extensibility
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_custom_scripts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business identifier for the custom script.
+  code String
+  
+  /// Human-readable name of the custom script.
+  name String
+  
+  /// Detailed description of the script's purpose and usage.
+  description String?
+  
+  /// Programming language of the custom script (e.g., JavaScript, Python).
+  script_language String
+  
+  /// Source code content of the custom script.
+  script_content String
+  
+  /// Time of script creation.
+  created_at DateTime
+  
+  /// Time of last script update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp indicating when the script was archived or
+  /// removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+  @@index([created_at, updated_at])
+}
+
+/// Prebuilt widgets available in the FlexOffice marketplace that users can
+/// browse and install. Each widget is uniquely identified and includes
+/// metadata such as version and description. Supports audit and soft delete
+/// for lifecycle management.
+///
+/// @namespace Extensibility
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_marketplace_widgets {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifying the marketplace widget.
+  widget_code String
+  
+  /// Human-friendly widget name.
+  name String
+  
+  /// Version string following semantic versioning for the widget.
+  version String
+  
+  /// Detailed description of the widget's functionality and features.
+  description String?
+  
+  /// Timestamp when the widget was created in the marketplace.
+  created_at DateTime
+  
+  /// Timestamp of last widget metadata update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp marking if the widget has been deprecated or
+  /// removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  flex_office_widget_installations flex_office_widget_installations[]
+  
+  @@unique([widget_code])
+  @@index([created_at, updated_at])
+}
+
+/// Records of marketplace widgets installed within FlexOffice pages. Links
+/// marketplace widgets to specific UI pages and captures installation
+/// metadata for management and audit purposes.
+///
+/// @namespace Extensibility
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flex_office_widget_installations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced marketplace widget {@link flex_office_marketplace_widgets.id}.
+  marketplace_widget_id String
+  
+  /// Associated UI page {@link flex_office_pages.id}.
+  page_id String
+  
+  /// Timestamp when the widget was installed on the page.
+  installation_date DateTime
+  
+  /// JSON string representing configuration settings for the installed widget.
+  configuration_data String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  marketplaceWidget flex_office_marketplace_widgets @relation(fields: [marketplace_widget_id], references: [id], onDelete: Cascade)
+  page flex_office_pages @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  
+  @@index([page_id])
+  
+  @@index([marketplace_widget_id, page_id], map: "flex_office_widget_installations_marketplace_widget_id_1e052f45")
+}

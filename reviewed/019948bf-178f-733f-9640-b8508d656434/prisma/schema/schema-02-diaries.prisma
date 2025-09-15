@@ -1,0 +1,51 @@
+/// This table stores each mood diary entry, representing the core journaling
+/// activity in the Mood Diary application. Each entry records a mood
+/// selected from a fixed set of 8 types, an optional note (up to 500 Unicode
+/// characters), an automatic creation timestamp, and an "archived" status
+/// indicating if the entry is older than 30 days (and therefore excluded
+/// from listings and summaries). Entries are immutable: once created, they
+/// cannot be edited or deleted. Each entry references the logical diary user
+/// in the system ({@link mood_diary_diaryusers}), supporting future
+/// extensibility for multi-user scenarios. All mood and archiving business
+/// rules are strictly enforced in application logic.
+///
+/// @namespace Diaries
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model mood_diary_mood_entries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the logical mood diary user. {@link mood_diary_diaryusers.id}.
+  mood_diary_diaryuser_id String
+  
+  /// Mood type selected for this entry, must be one of: happy, sad, anxious,
+  /// excited, angry, calm, stressed, tired. Enforced via application logic.
+  mood_type String
+  
+  /// Optional freeform note for this entry, max 500 Unicode characters. May be
+  /// blank or null.
+  note String?
+  
+  /// Timestamp when this entry was created (auto-set, UTC, immutable, used for
+  /// archiving and queries).
+  created_at DateTime
+  
+  /// Indicates if this entry has been archived (i.e., older than 30 days, as
+  /// determined by background process). Archived entries are hidden from
+  /// listings/statistics.
+  archived Boolean
+  
+  //----
+  // RELATIONS
+  //----
+  diaryUser mood_diary_diaryusers @relation(fields: [mood_diary_diaryuser_id], references: [id], onDelete: Cascade)
+  
+  @@index([mood_diary_diaryuser_id])
+  
+  @@index([mood_type])
+  @@index([created_at])
+  @@index([archived])
+}

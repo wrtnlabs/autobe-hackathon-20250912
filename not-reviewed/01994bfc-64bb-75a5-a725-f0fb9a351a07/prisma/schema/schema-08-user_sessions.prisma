@@ -1,0 +1,98 @@
+/// Stores authentication sessions for community AI members, including
+/// session tokens, expiration info, IP address, and user agent data. This
+/// model facilitates session lifecycle management, revocation, and auditing.
+/// It references community AI members for user association.
+///
+/// @namespace UserSessions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_user_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated community AI member's {@link community_ai_members.id}.
+  community_ai_member_id String
+  
+  /// Unique token used for session authentication.
+  session_token String
+  
+  /// Timestamp when the session expires.
+  expires_at DateTime
+  
+  /// Optional token used to refresh the session.
+  refresh_token String?
+  
+  /// Expiration timestamp for the refresh token.
+  refresh_token_expires_at DateTime?
+  
+  /// IP address from which the session was initiated.
+  ip_address String?
+  
+  /// User agent string of the client device.
+  user_agent String?
+  
+  /// Timestamp of session creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to the session record.
+  updated_at DateTime
+  
+  /// Timestamp when the session was soft deleted or invalidated.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member community_ai_members @relation(fields: [community_ai_member_id], references: [id], onDelete: Cascade)
+  
+  community_ai_jwt_tokens community_ai_jwt_tokens[]
+  
+  @@unique([session_token])
+  @@index([community_ai_member_id, created_at], map: "community_ai_user_sessions_community_ai_member_id_crea_98a93348")
+}
+
+/// JWT tokens issued in relation to community AI user sessions, recording
+/// token strings, their types (access or refresh), expiration timestamps,
+/// and revocation status. Supports token lifecycle management and security
+/// enforcement.
+///
+/// @namespace UserSessions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_jwt_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated community AI user session's {@link
+  /// community_ai_user_sessions.id}.
+  community_ai_user_session_id String
+  
+  /// JWT token string used for authentication or refresh processes.
+  token String
+  
+  /// Type of JWT token, such as 'access' or 'refresh'.
+  token_type String
+  
+  /// Expiration timestamp of the JWT token.
+  expires_at DateTime
+  
+  /// Timestamp at which the token was revoked, if applicable.
+  revoked_at DateTime?
+  
+  /// Timestamp of token creation.
+  created_at DateTime
+  
+  /// Timestamp of last token update.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  userSession community_ai_user_sessions @relation(fields: [community_ai_user_session_id], references: [id], onDelete: Cascade)
+  
+  @@index([community_ai_user_session_id, expires_at], map: "community_ai_jwt_tokens_community_ai_user_session_id_e_e3039fae")
+}

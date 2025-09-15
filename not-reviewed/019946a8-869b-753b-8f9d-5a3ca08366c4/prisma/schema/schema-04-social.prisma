@@ -1,0 +1,84 @@
+/// Represents bidirectional friendship relationships between members of the
+/// TravelRecord system. Tracks friendship request lifecycle states such as
+/// pending, accepted, and rejected. Supports soft deletion to allow logical
+/// removal without data loss. Linked to member entities via foreign keys.
+/// Enables efficient queries for friend requests, friend lists, and status
+/// management.
+///
+/// @namespace Social
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_friends {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Requesting member's {@link travel_record_member.id}.
+  member_id String
+  
+  /// Target friend member's {@link travel_record_member.id}.
+  friend_member_id String
+  
+  /// Friendship status: pending, accepted, or rejected.
+  status String
+  
+  /// Timestamp when the friendship record was created.
+  created_at DateTime
+  
+  /// Timestamp when the friendship record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the friendship record was soft deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member travel_record_member @relation("travel_record_friends_of_member_id", fields: [member_id], references: [id], onDelete: Cascade)
+  friendMember travel_record_member @relation("travel_record_friends_of_friend_member_id", fields: [friend_member_id], references: [id], onDelete: Cascade)
+  
+  @@index([friend_member_id])
+  
+  @@unique([member_id, friend_member_id])
+  @@index([status, updated_at])
+}
+
+/// Stores privacy settings for travel records, allowing members to control
+/// visibility of their content to friends and the public. Supports privacy
+/// levels such as 'public' and 'private'. Linked to member entities,
+/// enabling personalized privacy controls. Includes timestamps and soft
+/// deletion support for record lifecycle management.
+///
+/// @namespace Social
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model travel_record_privacy_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning member's {@link travel_record_member.id}.
+  member_id String
+  
+  /// Privacy level indicating visibility: 'public' or 'private'.
+  privacy_level String
+  
+  /// Timestamp when the privacy setting was created.
+  created_at DateTime
+  
+  /// Timestamp when the privacy setting was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the privacy setting was soft deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member travel_record_member @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  @@unique([member_id])
+  @@index([privacy_level, updated_at])
+}

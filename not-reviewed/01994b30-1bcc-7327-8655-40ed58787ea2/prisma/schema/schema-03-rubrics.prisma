@@ -1,0 +1,300 @@
+/// Defines rubric templates as the blueprint for essay grading rubrics owned
+/// by tenants. They consist of metadata including tenant reference, name,
+/// language, scope, and timestamps. These templates are managed
+/// independently by users and serve as the basis for immutable rubric
+/// versions.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_templates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the tenant owning this rubric template. {@link
+  /// creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Unique name of the rubric template within the tenant scope.
+  name String
+  
+  /// Language code for the rubric template (e.g., en, fr).
+  language String
+  
+  /// Scope of the rubric template such as class, school, tenant, or global.
+  scope String
+  
+  /// Timestamp of rubric template creation.
+  created_at DateTime
+  
+  /// Timestamp of last rubric template update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp if the template is removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_rubric_versions creverse_ai_essay_rubric_versions[]
+  
+  @@unique([tenant_id, name])
+  @@index([tenant_id])
+}
+
+/// Represents immutable rubric versions created from templates. Each version
+/// contains weighted criteria, anchors, guardrails, and lifecycle status
+/// such as draft, published, or deprecated. Published versions are
+/// immutable. Users may manage versions independently requiring dedicated
+/// API endpoints.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key link to parent rubric template. {@link
+  /// creverse_ai_essay_rubric_templates.id}
+  creverse_ai_essay_rubric_template_id String
+  
+  /// Sequential version number of this rubric within the template.
+  version Int
+  
+  /// Version lifecycle status, e.g. draft, published, deprecated.
+  status String
+  
+  /// Optional text description of this rubric version.
+  description String?
+  
+  /// Timestamp of version creation.
+  created_at DateTime
+  
+  /// Timestamp of last version update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp if this version is removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  rubricTemplate creverse_ai_essay_rubric_templates @relation(fields: [creverse_ai_essay_rubric_template_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_rubric_criteria creverse_ai_essay_rubric_criteria[]
+  creverse_ai_essay_rubric_weights creverse_ai_essay_rubric_weights[]
+  creverse_ai_essay_rubric_guardrails creverse_ai_essay_rubric_guardrails[]
+  creverse_ai_essay_grading_jobs creverse_ai_essay_grading_jobs[]
+  creverse_ai_essay_grading_results creverse_ai_essay_grading_results[]
+  creverse_ai_essay_reports creverse_ai_essay_reports[]
+  
+  @@unique([creverse_ai_essay_rubric_template_id, version], map: "creverse_ai_essay_rubric_versions_creverse_ai_essay_ru_ed0ab624")
+  @@index([creverse_ai_essay_rubric_template_id, status], map: "creverse_ai_essay_rubric_versions_creverse_ai_essay_ru_3864e2c7")
+}
+
+/// Criteria define the individual grading components within each rubric
+/// version. Each criterion has a unique key within the rubric version and
+/// descriptive text. This subsidiary entity is dependent on rubric versions
+/// and is managed through the version API.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_criteria {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent rubric version foreign key. {@link
+  /// creverse_ai_essay_rubric_versions.id}
+  creverse_ai_essay_rubric_version_id String
+  
+  /// Unique key for this criterion within the rubric version.
+  key String
+  
+  /// Optional descriptive text for the criterion.
+  description String?
+  
+  /// Criterion creation date.
+  created_at DateTime
+  
+  /// Criterion update date.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  rubricVersion creverse_ai_essay_rubric_versions @relation(fields: [creverse_ai_essay_rubric_version_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_rubric_anchors creverse_ai_essay_rubric_anchors[]
+  creverse_ai_essay_rubric_weights creverse_ai_essay_rubric_weights[]
+  
+  @@unique([creverse_ai_essay_rubric_version_id, key], map: "creverse_ai_essay_rubric_criteria_creverse_ai_essay_ru_ad9fc9a0")
+  @@index([creverse_ai_essay_rubric_version_id], map: "creverse_ai_essay_rubric_criteria_creverse_ai_essay_ru_1e0fd149")
+}
+
+/// Anchors define grading anchor points connected to rubric criteria,
+/// marking minimum, maximum, or intermediate scale values. This subsidiary
+/// table belongs to rubric criteria and is managed through rubric APIs.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_anchors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key to rubric criterion. {@link
+  /// creverse_ai_essay_rubric_criteria.id}
+  creverse_ai_essay_rubric_criterion_id String
+  
+  /// Text label for the anchor point.
+  label String
+  
+  /// Integer scale value representing the anchor on the scoring scale.
+  scale_value Int
+  
+  /// Date-time anchor created.
+  created_at DateTime
+  
+  /// Date-time anchor last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  rubricCriterion creverse_ai_essay_rubric_criteria @relation(fields: [creverse_ai_essay_rubric_criterion_id], references: [id], onDelete: Cascade)
+  
+  @@unique([creverse_ai_essay_rubric_criterion_id, scale_value], map: "creverse_ai_essay_rubric_anchors_creverse_ai_essay_rub_b2e52897")
+  @@index([creverse_ai_essay_rubric_criterion_id], map: "creverse_ai_essay_rubric_anchors_creverse_ai_essay_rub_1a5f0a91")
+}
+
+/// Weights define the importance of each criterion within a rubric version,
+/// used in overall scoring calculations. Weights tie rubric versions and
+/// criteria as foreign keys, with a double precision weight field.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_weights {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key to rubric version. {@link
+  /// creverse_ai_essay_rubric_versions.id}
+  creverse_ai_essay_rubric_version_id String
+  
+  /// Foreign key to rubric criterion. {@link
+  /// creverse_ai_essay_rubric_criteria.id}
+  creverse_ai_essay_rubric_criterion_id String
+  
+  /// Weight factor indicating criterion significance.
+  weight Float
+  
+  /// Timestamp weight record created.
+  created_at DateTime
+  
+  /// Timestamp weight record last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  rubricVersion creverse_ai_essay_rubric_versions @relation(fields: [creverse_ai_essay_rubric_version_id], references: [id], onDelete: Cascade)
+  rubricCriterion creverse_ai_essay_rubric_criteria @relation(fields: [creverse_ai_essay_rubric_criterion_id], references: [id], onDelete: Cascade)
+  
+  @@index([creverse_ai_essay_rubric_criterion_id], map: "creverse_ai_essay_rubric_weights_creverse_ai_essay_rub_da619493")
+  
+  @@unique([creverse_ai_essay_rubric_version_id, creverse_ai_essay_rubric_criterion_id], map: "creverse_ai_essay_rubric_weights_creverse_ai_essay_rub_bef4a2fc")
+  @@index([creverse_ai_essay_rubric_version_id], map: "creverse_ai_essay_rubric_weights_creverse_ai_essay_rub_74974701")
+}
+
+/// Guardrails impose constraints on rubric versions including allowed
+/// languages, minimum token counts, maximum repetitions, and linked banned
+/// phrases. This subsidiary entity supports enforcement during grading and
+/// essay validation.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_guardrails {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key to rubric version. {@link
+  /// creverse_ai_essay_rubric_versions.id}
+  creverse_ai_essay_rubric_version_id String
+  
+  /// Optional minimum token count required in essays.
+  min_tokens Int?
+  
+  /// Optional maximum number of repeated tokens allowed.
+  max_repetitions Int?
+  
+  /// Comma separated allowed language codes for essay submissions.
+  allowed_languages String?
+  
+  /// Timestamp guardrail created.
+  created_at DateTime
+  
+  /// Timestamp guardrail updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  rubricVersion creverse_ai_essay_rubric_versions @relation(fields: [creverse_ai_essay_rubric_version_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_rubric_banned_phrases creverse_ai_essay_rubric_banned_phrases[]
+  
+  @@index([creverse_ai_essay_rubric_version_id], map: "creverse_ai_essay_rubric_guardrails_creverse_ai_essay__fcdfda94")
+}
+
+/// Banned phrases linked to rubric guardrails, used to flag or disallow
+/// essay text. Each phrase must be unique per guardrail context and
+/// timestamped for auditing.
+///
+/// @namespace Rubrics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_rubric_banned_phrases {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key to related rubric guardrail. {@link
+  /// creverse_ai_essay_rubric_guardrails.id}
+  creverse_ai_essay_rubric_guardrail_id String
+  
+  /// Banned phrase text content.
+  phrase String
+  
+  /// Timestamp when the banned phrase was created.
+  created_at DateTime
+  
+  /// Timestamp when the banned phrase was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  guardrail creverse_ai_essay_rubric_guardrails @relation(fields: [creverse_ai_essay_rubric_guardrail_id], references: [id], onDelete: Cascade)
+  
+  @@unique([creverse_ai_essay_rubric_guardrail_id, phrase], map: "creverse_ai_essay_rubric_banned_phrases_creverse_ai_es_c4c98dc6")
+  @@index([creverse_ai_essay_rubric_guardrail_id], map: "creverse_ai_essay_rubric_banned_phrases_creverse_ai_es_f363386a")
+}

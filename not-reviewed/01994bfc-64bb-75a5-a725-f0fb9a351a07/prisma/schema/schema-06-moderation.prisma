@@ -1,0 +1,226 @@
+/// Flags raised by members regarding community content such as posts or
+/// comments. Each flag indicates the member who raised it, the content
+/// targeted, reason, status, and timestamps. Serves as primary data for
+/// moderation workflows and triggers.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_content_flags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member who raised the flag. {@link community_ai_members.id}
+  community_ai_member_id String
+  
+  /// Targeted post flagged (nullable if the flag is for a comment). {@link
+  /// community_ai_posts.id}
+  community_ai_post_id String?
+  
+  /// Targeted comment flagged (nullable if the flag is for a post). {@link
+  /// community_ai_comments.id}
+  community_ai_comment_id String?
+  
+  /// Reason given by member for flagging the content.
+  reason String
+  
+  /// Current status of the flag such as 'pending', 'reviewed', or 'dismissed'.
+  status String
+  
+  /// Timestamp when the flag was created.
+  created_at DateTime
+  
+  /// Timestamp when the flag was last updated.
+  updated_at DateTime
+  
+  /// Nullable soft delete timestamp to mark if the flag is deleted and hidden
+  /// from public.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member community_ai_members @relation(fields: [community_ai_member_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [community_ai_post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  
+  community_ai_moderator_reviews community_ai_moderator_reviews?
+  
+  @@index([community_ai_post_id])
+  @@index([community_ai_comment_id])
+  
+  @@unique([community_ai_member_id, community_ai_post_id, community_ai_comment_id], map: "community_ai_content_flags_community_ai_member_id_comm_1a4b289a")
+  @@index([status, created_at])
+}
+
+/// Reports submitted independently by members regarding inappropriate
+/// content or user behavior. Tracks the reporting member, referenced
+/// content, report reason, resolution status, and timestamps. Supports
+/// moderation escalation workflows.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_user_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Member who submitted the report. {@link community_ai_members.id}
+  community_ai_member_id String
+  
+  /// Post reported (nullable if the report targets a comment). {@link
+  /// community_ai_posts.id}
+  community_ai_post_id String?
+  
+  /// Comment reported (nullable if the report targets a post). {@link
+  /// community_ai_comments.id}
+  community_ai_comment_id String?
+  
+  /// Reason for reporting the content or user behavior.
+  report_reason String
+  
+  /// Current resolution status such as 'open', 'investigating', or 'closed'.
+  resolution_status String
+  
+  /// Timestamp when the report was created.
+  created_at DateTime
+  
+  /// Timestamp when the report was last updated.
+  updated_at DateTime
+  
+  /// Nullable soft delete timestamp to mark if the report is deleted and
+  /// hidden from public.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member community_ai_members @relation(fields: [community_ai_member_id], references: [id], onDelete: Cascade)
+  post community_ai_posts? @relation(fields: [community_ai_post_id], references: [id], onDelete: Cascade)
+  comment community_ai_comments? @relation(fields: [community_ai_comment_id], references: [id], onDelete: Cascade)
+  
+  community_ai_moderator_reviews community_ai_moderator_reviews?
+  community_ai_admin_actions community_ai_admin_actions?
+  
+  @@index([community_ai_post_id])
+  @@index([community_ai_comment_id])
+  
+  @@unique([community_ai_member_id, community_ai_post_id, community_ai_comment_id], map: "community_ai_user_reports_community_ai_member_id_commu_8cb0c5da")
+  @@index([resolution_status, created_at])
+}
+
+/// Reviews and decisions made by moderators regarding flagged or reported
+/// content. Includes reference to the moderator, related flag or report,
+/// decision details, and audit timestamps. Facilitates moderation workflow
+/// tracking and accountability.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_moderator_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Moderator performing the review. {@link community_ai_moderators.id}
+  community_ai_moderator_id String
+  
+  /// Referenced content flag under review. {@link
+  /// community_ai_content_flags.id}
+  community_ai_content_flag_id String?
+  
+  /// Referenced user report under review. {@link community_ai_user_reports.id}
+  community_ai_user_report_id String?
+  
+  /// Decision outcome such as 'approved', 'rejected', or 'needs more info'.
+  decision String
+  
+  /// Additional comments or reasons by the moderator.
+  comments String?
+  
+  /// Timestamp when the review was created.
+  created_at DateTime
+  
+  /// Timestamp when the review was last updated.
+  updated_at DateTime
+  
+  /// Nullable soft delete timestamp to mark if the review is deleted and
+  /// hidden.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  moderator community_ai_moderators @relation(fields: [community_ai_moderator_id], references: [id], onDelete: Cascade)
+  contentFlag community_ai_content_flags? @relation(fields: [community_ai_content_flag_id], references: [id], onDelete: Cascade)
+  userReport community_ai_user_reports? @relation(fields: [community_ai_user_report_id], references: [id], onDelete: Cascade)
+  
+  community_ai_admin_actions community_ai_admin_actions?
+  
+  @@index([community_ai_moderator_id])
+  
+  @@unique([community_ai_content_flag_id])
+  @@unique([community_ai_user_report_id])
+  @@index([decision, created_at])
+}
+
+/// Administrative actions performed by admins on moderation cases or user
+/// accounts. Captures the admin performing the action, targeted review or
+/// report, action details, and time tracking. Supports audit and governance
+/// of administration.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model community_ai_admin_actions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Admin performing the action. {@link community_ai_admins.id}
+  community_ai_admin_id String
+  
+  /// Moderator review on which this action is based (nullable if action is
+  /// based on a user report). {@link community_ai_moderator_reviews.id}
+  community_ai_moderator_review_id String?
+  
+  /// User report on which this action is based (nullable if action is based on
+  /// a moderator review). {@link community_ai_user_reports.id}
+  community_ai_user_report_id String?
+  
+  /// Type of administrative action such as 'ban user', 'unban user', 'warn
+  /// user', or 'delete content'.
+  action_type String
+  
+  /// Additional details or reasons regarding the action by the admin.
+  details String?
+  
+  /// Timestamp of when the action was performed.
+  created_at DateTime
+  
+  /// Timestamp of the last update on the action.
+  updated_at DateTime
+  
+  /// Nullable soft delete timestamp to mark if the action is deleted and
+  /// hidden.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  admin community_ai_admins @relation(fields: [community_ai_admin_id], references: [id], onDelete: Cascade)
+  moderatorReview community_ai_moderator_reviews? @relation(fields: [community_ai_moderator_review_id], references: [id], onDelete: Cascade)
+  userReport community_ai_user_reports? @relation(fields: [community_ai_user_report_id], references: [id], onDelete: Cascade)
+  
+  @@index([community_ai_admin_id])
+  
+  @@unique([community_ai_moderator_review_id])
+  @@unique([community_ai_user_report_id])
+  @@index([action_type, created_at])
+}

@@ -1,0 +1,120 @@
+/// Stores Telegram API bot credentials used for authenticating and
+/// interacting with Telegram services. Each record represents a single
+/// credential set for a bot instance including its token and metadata for
+/// management.
+///
+/// @namespace Integrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_telegram_api_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The display name of the Telegram bot.
+  bot_name String
+  
+  /// The secret bot token used for authenticating Telegram API calls.
+  bot_token String
+  
+  /// Flag indicating if this credential is currently active and used for
+  /// operations.
+  is_active Boolean
+  
+  /// Timestamp of the last time this credential was used to make an API call.
+  last_used_at DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([bot_token])
+  @@index([is_active])
+}
+
+/// Tracks events received from Stripe webhooks related to payments,
+/// subscriptions, and billing for audit and troubleshooting.
+///
+/// @namespace Integrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_stripe_webhook_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifier of the Stripe webhook event.
+  event_id String
+  
+  /// Type of Stripe event, e.g., 'payment_intent.succeeded',
+  /// 'invoice.payment_failed'.
+  event_type String
+  
+  /// Full JSON payload of the webhook event stored as string.
+  payload String
+  
+  /// Timestamp when the webhook was received by the system.
+  received_at DateTime
+  
+  /// Flag indicating if the webhook event has been processed successfully.
+  processed Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([event_id])
+  @@index([event_type, received_at], map: "telegram_file_downloader_stripe_webhook_logs_event_typ_afb67738")
+}
+
+/// Logs all file upload attempts to AWS S3 including success or failure
+/// status, file metadata, and error information for auditability and
+/// troubleshooting.
+///
+/// @namespace Integrations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model telegram_file_downloader_aws_s3_upload_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the file uploaded to AWS S3.
+  file_name String
+  
+  /// Size of the uploaded file in bytes.
+  file_size_bytes Int
+  
+  /// Status of the upload operation, e.g., 'success', 'failed'.
+  upload_status String
+  
+  /// Error details if the upload failed; null if successful.
+  error_message String?
+  
+  /// Timestamp when the upload attempt was made.
+  attempted_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([upload_status, attempted_at], map: "telegram_file_downloader_aws_s3_upload_logs_upload_sta_c529710b")
+}

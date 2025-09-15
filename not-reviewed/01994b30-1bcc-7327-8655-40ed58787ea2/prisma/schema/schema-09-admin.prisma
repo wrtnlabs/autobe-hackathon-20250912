@@ -1,0 +1,182 @@
+/// Audit logs capturing all user and system actions including PII access,
+/// changes to rubric, grading operations, and administrative activities.
+/// Tracks actor, action type, entity referenced, IP address, and timestamp,
+/// ensuring tenant isolation and compliance auditing.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant associated with the audit log. {@link
+  /// creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// User who performed the action, may be null for system events. {@link
+  /// creverse_ai_essay_admin.id}.
+  actor_user_id String?
+  
+  /// Type of action performed, e.g., rubric_publish, grading_create,
+  /// pii_access.
+  action String
+  
+  /// Type of entity affected by the action, e.g., rubric_version, essay, user,
+  /// feature_flag.
+  entity_type String
+  
+  /// UUID of the entity affected, if applicable.
+  entity_id String?
+  
+  /// Timestamp when the action occurred.
+  timestamp DateTime
+  
+  /// IP address from which action was performed, supports IPv4 and IPv6.
+  ip_address String?
+  
+  /// Optional JSON string with additional context or metadata about the action.
+  details String?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  actorUser creverse_ai_essay_admin? @relation(fields: [actor_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_user_id])
+  
+  @@unique([tenant_id, id])
+  @@index([tenant_id, timestamp])
+}
+
+/// Webhook configurations for delivering event notifications to external
+/// systems. Includes settings for destination URL, secret for signature
+/// validation, retry policies, and event filters. Tracks delivery status and
+/// error reasons.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_webhooks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the webhook configuration. {@link
+  /// creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Destination endpoint URL for webhook delivery.
+  url String
+  
+  /// Secret key for HMAC signature to verify webhook payload integrity.
+  secret String?
+  
+  /// Comma-separated list of event types that trigger this webhook, e.g.,
+  /// grading.completed, plagiarism.scanned.
+  events String
+  
+  /// Number of retry attempts made after a failure.
+  retry_count Int
+  
+  /// Delay in seconds before the next retry attempt.
+  retry_delay_seconds Int
+  
+  /// Last error message if delivery failed, null if no errors.
+  last_error String?
+  
+  /// Indicates if the webhook is currently active and should receive events.
+  active Boolean
+  
+  /// Webhook configuration creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of the last update to webhook configuration.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, url])
+  @@index([tenant_id, active])
+}
+
+/// System health check records for tracking uptime and operational status
+/// metrics. Captures service names, health status, check timestamps, and
+/// optional detailed status information for monitoring and alerting.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_system_health {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the monitored service or subsystem, e.g. grading_worker,
+  /// webhook_dispatcher.
+  service_name String
+  
+  /// Current health status (e.g., healthy, degraded, down).
+  status String
+  
+  /// Timestamp when the health check was performed.
+  checked_at DateTime
+  
+  /// Optional JSON string with detailed health check information or metrics.
+  details String?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([service_name, checked_at])
+  @@index([status, checked_at])
+}
+
+/// Historical records of feature flag changes capturing state over time, the
+/// author of the change, and reason for changes for audit and rollback
+/// capabilities.
+///
+/// @namespace Admin
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_feature_flags_history {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to current feature flag entity. {@link
+  /// creverse_ai_essay_feature_flags.id}.
+  feature_flag_id String
+  
+  /// Timestamp when this change occurred.
+  changed_at DateTime
+  
+  /// User who made the change. {@link creverse_ai_essay_admin.id}.
+  changed_by_user_id String?
+  
+  /// Feature flag value before the change, stored as a JSON string.
+  previous_value String?
+  
+  /// Feature flag value after the change, stored as a JSON string.
+  new_value String?
+  
+  /// Text explaining the reason for the feature flag change.
+  change_reason String?
+  
+  //----
+  // RELATIONS
+  //----
+  featureFlag creverse_ai_essay_feature_flags @relation(fields: [feature_flag_id], references: [id], onDelete: Cascade)
+  
+  @@unique([feature_flag_id, changed_at], map: "creverse_ai_essay_feature_flags_history_feature_flag_i_749355cd")
+  @@index([changed_at])
+}

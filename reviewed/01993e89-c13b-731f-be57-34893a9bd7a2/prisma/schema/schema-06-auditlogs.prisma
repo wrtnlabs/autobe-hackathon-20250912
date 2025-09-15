@@ -1,0 +1,35 @@
+/// Audit log records capturing immutable events related to workflows,
+/// triggers, user roles, and system operations for compliance and forensic
+/// analysis.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// ID of the user or system actor responsible for the event, nullable for
+  /// system events. {@link notification_workflow_workflowmanagers.id}
+  actor_id String?
+  
+  /// Type of event recorded (e.g., workflow_created, trigger_fired,
+  /// user_role_assigned).
+  event_type String
+  
+  /// JSON string containing detailed event data and context.
+  event_data String
+  
+  /// Timestamp of when the event was recorded.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  actor notification_workflow_workflowmanagers? @relation(fields: [actor_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_id])
+  @@index([created_at])
+}

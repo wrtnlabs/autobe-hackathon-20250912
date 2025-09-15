@@ -1,0 +1,275 @@
+/// Represents asynchronous grading jobs binding an essay version and rubric
+/// version. Stores job status, cancellation flags, error messages,
+/// timestamps, and associations to tenants and users. Supports retry logic
+/// and job lifecycle management including queued, processing, succeeded,
+/// failed, and cancelled states.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_grading_jobs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Associated student's {@link creverse_ai_essay_student.id}.
+  student_id String?
+  
+  /// Associated teacher's {@link creverse_ai_essay_teacher.id}.
+  teacher_id String?
+  
+  /// Target rubric version {@link creverse_ai_essay_rubric_versions.id} for
+  /// grading.
+  rubric_version_id String
+  
+  /// Target essay version {@link creverse_ai_essay_essay_versions.id} for
+  /// grading.
+  essay_version_id String
+  
+  /// Current job status such as queued, processing, succeeded, failed, or
+  /// cancelled.
+  status String
+  
+  /// Flag indicating if job cancellation was requested.
+  is_cancelled Boolean
+  
+  /// Error code if the job failed or was cancelled, null if no error.
+  error_code String?
+  
+  /// Detailed error message if any, null if none.
+  error_message String?
+  
+  /// Timestamp when the job was created.
+  created_at DateTime
+  
+  /// Timestamp when the job record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when job processing started, null before processing.
+  started_at DateTime?
+  
+  /// Timestamp when job processing completed, null if not finished.
+  completed_at DateTime?
+  
+  /// Number of retry attempts performed for the job.
+  retry_count Int
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  student creverse_ai_essay_student? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  teacher creverse_ai_essay_teacher? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  rubricVersion creverse_ai_essay_rubric_versions @relation(fields: [rubric_version_id], references: [id], onDelete: Cascade)
+  essayVersion creverse_ai_essay_essay_versions @relation(fields: [essay_version_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_grading_results creverse_ai_essay_grading_results[]
+  creverse_ai_essay_scoring_options creverse_ai_essay_scoring_options?
+  creverse_ai_essay_model_metadata creverse_ai_essay_model_metadata[]
+  
+  @@index([student_id])
+  @@index([teacher_id])
+  @@index([rubric_version_id])
+  @@index([essay_version_id])
+  
+  @@unique([tenant_id, essay_version_id, rubric_version_id], map: "creverse_ai_essay_grading_jobs_tenant_id_essay_version_7fe6adeb")
+  @@index([status, updated_at])
+}
+
+/// Stores detailed scoring results for a completed grading job. Includes
+/// overall rubric score, raw rubric score, normalized score, and
+/// associations to grading job and rubric version. Supports strict
+/// referential integrity and auditability.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_grading_results {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated grading job {@link creverse_ai_essay_grading_jobs.id}.
+  grading_job_id String
+  
+  /// The rubric version {@link creverse_ai_essay_rubric_versions.id} used for
+  /// scoring.
+  rubric_version_id String
+  
+  /// Raw rubric score prior to normalization and calibration.
+  raw_rubric_score Float
+  
+  /// Normalized rubric score scaled to 0-100 based on rubric scale boundaries.
+  rubric_score Float
+  
+  /// Final calibrated score after applying length penalty and other
+  /// adjustments.
+  calibrated_score Float
+  
+  /// Timestamp of result creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to the result.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  gradingJob creverse_ai_essay_grading_jobs @relation(fields: [grading_job_id], references: [id], onDelete: Cascade)
+  rubricVersion creverse_ai_essay_rubric_versions @relation(fields: [rubric_version_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_grading_feedback creverse_ai_essay_grading_feedback[]
+  creverse_ai_essay_grading_calibrations creverse_ai_essay_grading_calibrations?
+  
+  @@unique([grading_job_id])
+  @@index([rubric_version_id])
+}
+
+/// Stores per-criteria qualitative feedback entries for a given grading
+/// result. Linked to grading results for comprehensive review and analytics.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_grading_feedback {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated grading result {@link creverse_ai_essay_grading_results.id}.
+  grading_result_id String
+  
+  /// Unique key for the rubric criteria this feedback refers to.
+  criteria_key String
+  
+  /// Human-readable name of the rubric criteria.
+  criteria_name String
+  
+  /// Textual feedback for the criteria.
+  body String
+  
+  //----
+  // RELATIONS
+  //----
+  gradingResult creverse_ai_essay_grading_results @relation(fields: [grading_result_id], references: [id], onDelete: Cascade)
+  
+  @@index([grading_result_id])
+  
+  @@index([criteria_key])
+}
+
+/// Captures calibration details for grading results including length
+/// penalties and CEFR adjustments. Supports auditability and historical
+/// reference.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_grading_calibrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated grading result {@link creverse_ai_essay_grading_results.id}.
+  grading_result_id String
+  
+  /// Applied length penalty value.
+  length_penalty Float
+  
+  /// Target Common European Framework of Reference (CEFR) level for score
+  /// calibration, null if not applied.
+  target_cefr_level String?
+  
+  /// Optional notes describing the calibration.
+  calibration_notes String?
+  
+  //----
+  // RELATIONS
+  //----
+  gradingResult creverse_ai_essay_grading_results @relation(fields: [grading_result_id], references: [id], onDelete: Cascade)
+  
+  @@unique([grading_result_id])
+}
+
+/// Options and parameters used to configure scoring behavior per grading job
+/// such as tone, normalization, and calibration directives.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_scoring_options {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The grading job {@link creverse_ai_essay_grading_jobs.id} this scoring
+  /// option is linked to.
+  grading_job_id String
+  
+  /// Requested tone for scoring feedback (e.g., formal, friendly).
+  tone String?
+  
+  /// Flag to apply normalization to raw rubric scores.
+  normalize_scores Boolean
+  
+  /// Flag to enable score calibration adjustments.
+  apply_calibration Boolean
+  
+  //----
+  // RELATIONS
+  //----
+  gradingJob creverse_ai_essay_grading_jobs @relation(fields: [grading_job_id], references: [id], onDelete: Cascade)
+  
+  @@unique([grading_job_id])
+}
+
+/// Metadata about each AI model invocation for grading jobs, including token
+/// counts, model version, latency, and cost for audit and cost governance.
+///
+/// @namespace Grading
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_model_metadata {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated grading job {@link creverse_ai_essay_grading_jobs.id}.
+  grading_job_id String
+  
+  /// The name of the AI model invoked for scoring.
+  model_name String
+  
+  /// Specific version tag of the AI model used.
+  model_version String
+  
+  /// Number of tokens consumed during the model call.
+  token_count Int
+  
+  /// Latency in milliseconds for the model call.
+  latency_ms Int
+  
+  /// Cost in USD charged for the model call.
+  cost_usd Float
+  
+  /// Timestamp when this metadata record was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  gradingJob creverse_ai_essay_grading_jobs @relation(fields: [grading_job_id], references: [id], onDelete: Cascade)
+  
+  @@index([grading_job_id])
+  
+  @@index([model_name])
+}

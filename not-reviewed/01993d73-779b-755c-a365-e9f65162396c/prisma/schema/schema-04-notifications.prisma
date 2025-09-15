@@ -1,0 +1,101 @@
+/// This table stores alarms set by authenticated student users for specific
+/// study tasks to trigger PWA notifications at scheduled times. Each alarm
+/// references a study task and the student user who owns it. It supports
+/// auditing via creation and update timestamps and allows soft deletion.
+/// This is a primary table managed independently by users for notification
+/// management.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_task_alarms {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged student's {@link study_planner_students.id} who owns this alarm.
+  student_id String
+  
+  /// Referenced study task's {@link study_planner_study_tasks.id} for which
+  /// the alarm is set.
+  study_task_id String
+  
+  /// Title or label of the alarm for user identification.
+  title String
+  
+  /// Scheduled time for the alarm to trigger the notification.
+  alarm_time DateTime
+  
+  /// Timestamp of record creation for audit trail.
+  created_at DateTime
+  
+  /// Timestamp of last update for audit trail.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating logical removal (nullable).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  student study_planner_students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  studyTask study_planner_study_tasks @relation(fields: [study_task_id], references: [id], onDelete: Cascade)
+  
+  @@index([study_task_id])
+  
+  @@unique([student_id, study_task_id, alarm_time], map: "study_planner_task_alarms_student_id_study_task_id_ala_08a74f27")
+  @@index([alarm_time, student_id])
+}
+
+/// This table contains general reminders created by authenticated student
+/// users which are not tied to specific study tasks. These reminders trigger
+/// PWA notifications to users at scheduled times. It includes fields for
+/// reminder title, scheduled due time, optional description, audit
+/// timestamps, soft deletion, and an active flag to manage reminder status.
+/// This is a primary table managed independently by users.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_general_reminders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged student's {@link study_planner_students.id} who owns this
+  /// reminder.
+  student_id String
+  
+  /// Title or label of the general reminder for user identification.
+  title String
+  
+  /// Scheduled due time for the reminder notification.
+  due_time DateTime
+  
+  /// Optional textual description providing additional context for the
+  /// reminder.
+  description String?
+  
+  /// Flag indicating whether the reminder is currently active and should
+  /// trigger notifications.
+  active Boolean
+  
+  /// Timestamp of record creation for audit and history.
+  created_at DateTime
+  
+  /// Timestamp of last update for audit and history.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating logical removal (nullable).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  student study_planner_students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  
+  @@unique([student_id, title, due_time])
+  @@index([due_time, student_id])
+}

@@ -1,0 +1,36 @@
+/// Stores political news crawler guest user information representing
+/// unauthenticated users accessing APIs. Captures identification via IP and
+/// user agent, includes timestamps for auditing and soft deletion support.
+/// Guests are limited to read-only access with no password or login
+/// credentials.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_guests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// IP address of the guest user.
+  ip_address String
+  
+  /// User agent string presented by the guest.
+  user_agent String?
+  
+  /// Timestamp when the guest record was created.
+  created_at DateTime
+  
+  /// Timestamp when the guest record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion for the guest record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([ip_address, user_agent])
+  @@index([created_at])
+}

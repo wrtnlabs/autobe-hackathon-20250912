@@ -1,0 +1,115 @@
+/// Stores external API integration configurations for the auction platform.
+/// Includes API keys, endpoint URLs, and integration status. Enables
+/// controlled, auditable access to third-party services.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_api_integrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the external API integration, unique identifier.
+  name String
+  
+  /// API key or token used for authentication with the external service.
+  api_key String
+  
+  /// Base URL endpoint of the external API service.
+  endpoint_url String
+  
+  /// Indicates whether this integration is currently active and should be used.
+  active Boolean
+  
+  /// Timestamp when this integration record was created.
+  created_at DateTime
+  
+  /// Timestamp when this integration record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([name])
+  @@index([active, updated_at])
+}
+
+/// Defines configurable rate limiting policies applicable to various
+/// components and endpoints of the auction platform. Controls request
+/// frequency to protect system stability and prevent abuse.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_rate_limits {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the component or service this rate limit policy applies to.
+  component_name String
+  
+  /// Maximum allowed requests per minute for the component.
+  max_requests_per_minute Int
+  
+  /// Maximum allowed requests per hour for the component.
+  max_requests_per_hour Int
+  
+  /// Maximum allowed requests per day for the component.
+  max_requests_per_day Int
+  
+  /// Timestamp when this rate limit record was created.
+  created_at DateTime
+  
+  /// Timestamp when this rate limit record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([component_name])
+  @@index([component_name, updated_at])
+}
+
+/// Records system audit logs capturing significant operations, state
+/// changes, and administrative actions across the auction platform. Supports
+/// monitoring, analytics, and compliance requirements.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to system user performing the action, if applicable. {@link
+  /// auction_platform_members.id}
+  user_id String?
+  
+  /// Description of the performed action or event.
+  action String
+  
+  /// Optional detailed context or metadata associated with the action.
+  details String?
+  
+  /// Timestamp when this audit log entry was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user auction_platform_members? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, created_at])
+}

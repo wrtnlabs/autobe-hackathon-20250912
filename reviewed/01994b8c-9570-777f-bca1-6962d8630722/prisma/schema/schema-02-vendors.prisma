@@ -1,0 +1,33 @@
+/// Represents vendors providing subscription services such as Netflix or
+/// Spotify. Vendors are unique by name and serve as core entities referenced
+/// by user subscriptions. This table stores vendor details with creation and
+/// update timestamps and supports soft deletion.
+///
+/// @namespace Vendors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model subscription_renewal_guardian_vendors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the vendor representing subscription service provider.
+  name String
+  
+  /// Record creation timestamp in UTC.
+  created_at DateTime
+  
+  /// Record last update timestamp in UTC.
+  updated_at DateTime
+  
+  /// Timestamp indicating soft deletion of the record; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  subscription_renewal_guardian_subscriptions subscription_renewal_guardian_subscriptions[]
+  
+  @@unique([name])
+}

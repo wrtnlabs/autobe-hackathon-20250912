@@ -1,0 +1,124 @@
+/// Calendar events representing scheduled auction rooms with support for
+/// mandatory start time and optional end time. This entity supports linking
+/// auction rooms with streaming schedules and enables users to view and
+/// interact with auctions on the platform calendar. It includes temporal
+/// fields for event lifecycle management and a foreign key to the auction
+/// room.
+///
+/// @namespace Schedule
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_calendar_events {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged auction room. {@link auction_platform_auction_rooms.id}.
+  auction_platform_auction_room_id String
+  
+  /// Title or name of the calendar event representing the auction.
+  title String
+  
+  /// Mandatory start date and time of the auction event in ISO 8601 format.
+  start_at DateTime
+  
+  /// Optional end date and time of the auction event, nullable for ongoing or
+  /// open-ended events.
+  end_at DateTime?
+  
+  /// Timestamp of when the calendar event was created.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the calendar event.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auctionRoom auction_platform_auction_rooms @relation(fields: [auction_platform_auction_room_id], references: [id], onDelete: Cascade)
+  
+  auction_platform_schedule_audit_logs auction_platform_schedule_audit_logs[]
+  
+  @@unique([auction_platform_auction_room_id, start_at], map: "auction_platform_calendar_events_auction_platform_auct_f8c5a06a")
+  @@index([start_at, end_at])
+}
+
+/// Records of calendar icon purchases by users, allowing customization of
+/// event appearance on the platform calendar. Each purchase links a user to
+/// a specific icon and contains temporal data for tracking purchase
+/// activity.
+///
+/// @namespace Schedule
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_icon_purchases {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Purchasing user. {@link auction_platform_members.id}.
+  user_id String
+  
+  /// Code identifying the purchased icon for calendar display.
+  icon_code String
+  
+  /// Points spent for this icon purchase.
+  purchase_points Int
+  
+  /// Timestamp when the purchase was made.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the purchase record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user auction_platform_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+}
+
+/// Audit logs capturing changes made to schedule records, providing a
+/// historical trail for compliance and troubleshooting. Each log entry
+/// records what was changed, who changed it, and when.
+///
+/// @namespace Schedule
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_schedule_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced calendar event. {@link auction_platform_calendar_events.id}.
+  schedule_event_id String
+  
+  /// User who made the change. {@link auction_platform_members.id}.
+  changed_by_user_id String
+  
+  /// Type of change (e.g., create, update, delete).
+  change_type String
+  
+  /// Detailed description of the change made.
+  change_description String?
+  
+  /// Timestamp when the change occurred.
+  changed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  scheduleEvent auction_platform_calendar_events @relation(fields: [schedule_event_id], references: [id], onDelete: Cascade)
+  changedByUser auction_platform_members @relation(fields: [changed_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([changed_by_user_id])
+  
+  @@index([schedule_event_id, changed_at], map: "auction_platform_schedule_audit_logs_schedule_event_id_045c0b18")
+}

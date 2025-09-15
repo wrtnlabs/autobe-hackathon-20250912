@@ -1,0 +1,108 @@
+/// Social login OAuth external providers information, managing client IDs,
+/// secrets, and authorization endpoints. Provides configuration for
+/// integrating external OAuth systems such as Naver, Google, Apple, and
+/// others. Supports multi-tenancy and security management for social login
+/// integrations.
+///
+/// @namespace SocialLogins
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_social_providers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique provider identifier name, e.g., 'naver', 'google', 'apple'.
+  provider_name String
+  
+  /// Client ID used in OAuth flows for this provider.
+  client_id String
+  
+  /// Client secret associated with the client ID.
+  client_secret String
+  
+  /// OAuth authorization endpoint URL for the social provider.
+  auth_url String
+  
+  /// OAuth token endpoint URL for the social provider.
+  token_url String
+  
+  /// User info API endpoint URL to fetch user details from social provider.
+  user_info_url String
+  
+  /// OAuth scopes requested for this provider, space separated.
+  scopes String?
+  
+  /// Flag indicating if this social provider integration is active.
+  is_active Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  oauth_server_social_user_links oauth_server_social_user_links[]
+  
+  @@unique([provider_name])
+  @@index([is_active, updated_at])
+}
+
+/// Association table linking internal users with external social login
+/// accounts from various providers. Maintains unique external user IDs per
+/// provider, enabling unified user identity management across multiple
+/// social OAuth services.
+///
+/// @namespace SocialLogins
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model oauth_server_social_user_links {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Internal user reference linked to oauth_server_members.id.
+  user_id String
+  
+  /// Social OAuth provider reference linked to
+  /// oauth_server_social_providers.id.
+  social_provider_id String
+  
+  /// Unique user identifier assigned by the social provider.
+  external_user_id String
+  
+  /// OAuth access token for the user on the social provider.
+  access_token String?
+  
+  /// OAuth refresh token for the user on the social provider.
+  refresh_token String?
+  
+  /// Expiration datetime of the OAuth access token.
+  token_expiry DateTime?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user oauth_server_members @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  socialProvider oauth_server_social_providers @relation(fields: [social_provider_id], references: [id], onDelete: Cascade)
+  
+  @@unique([social_provider_id, external_user_id], map: "oauth_server_social_user_links_social_provider_id_exte_eef000d2")
+  @@index([user_id, social_provider_id])
+}

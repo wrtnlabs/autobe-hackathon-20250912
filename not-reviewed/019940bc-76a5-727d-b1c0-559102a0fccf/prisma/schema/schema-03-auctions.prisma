@@ -1,0 +1,216 @@
+/// Auction room information managed per streamer with schedule data and
+/// auction lifecycle status. This entity tracks start/end times, status, and
+/// auditing timestamps.
+///
+/// @namespace Auctions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_auction_rooms {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the streamer who owns this auction room.
+  streamer_name String
+  
+  /// Scheduled start time of the auction room.
+  start_time DateTime
+  
+  /// Optional scheduled end time of the auction room.
+  end_time DateTime?
+  
+  /// Status of the auction room (e.g., open, closed, pending).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for marking deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auction_platform_bids auction_platform_bids[]
+  auction_platform_point_balances auction_platform_point_balances[]
+  auction_platform_chat_messages auction_platform_chat_messages[]
+  auction_platform_sponsorship_events auction_platform_sponsorship_events[]
+  auction_platform_calendar_events auction_platform_calendar_events[]
+  
+  @@unique([streamer_name, start_time])
+  @@index([status, start_time])
+}
+
+/// Registered users who are candidates for auction, including their profile
+/// information and performance statistics. Used for auction bid targets.
+///
+/// @namespace Auctions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_auction_candidates {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Identifier referencing the member user who is the auction candidate.
+  user_id String
+  
+  /// Candidate's display nickname in auctions.
+  nickname String
+  
+  /// Serialized or JSON string holding game season statistics.
+  season_stats String?
+  
+  /// Timestamp when candidate record was created.
+  created_at DateTime
+  
+  /// Timestamp when candidate record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to mark record removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  auction_platform_bids auction_platform_bids[]
+  
+  @@unique([user_id])
+}
+
+/// Team leaders participating in auctions, linked to member users. Stores
+/// auction point data and account activity timestamps.
+///
+/// @namespace Auctions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_team_leaders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the member user who is the team leader. {@link
+  /// auction_platform_members.id}
+  member_id String
+  
+  /// Points currently available for auction bidding by the team leader.
+  available_points Int
+  
+  /// Creation timestamp for team leader record.
+  created_at DateTime
+  
+  /// Last update timestamp for team leader record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  member auction_platform_members @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  
+  auction_platform_bids auction_platform_bids[]
+  auction_platform_point_balances auction_platform_point_balances[]
+  auction_platform_chat_messages auction_platform_chat_messages[]
+  
+  @@unique([member_id])
+  @@index([available_points])
+}
+
+/// Records of individual bids made by team leaders on auction candidates
+/// within specific auction rooms, with bid amount and timestamps.
+///
+/// @namespace Auctions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_bids {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to auction room {@link auction_platform_auction_rooms.id}
+  auction_room_id String
+  
+  /// Reference to auction candidate {@link
+  /// auction_platform_auction_candidates.id}
+  auction_candidate_id String
+  
+  /// Reference to the bidding team leader {@link
+  /// auction_platform_team_leaders.id}
+  team_leader_id String
+  
+  /// Number of points bid for the candidate.
+  bid_points Int
+  
+  /// Timestamp when the bid was placed.
+  bid_time DateTime
+  
+  /// Indicates if this bid is currently the highest winning bid.
+  is_winning Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  auctionRoom auction_platform_auction_rooms @relation(fields: [auction_room_id], references: [id], onDelete: Cascade)
+  auctionCandidate auction_platform_auction_candidates @relation(fields: [auction_candidate_id], references: [id], onDelete: Cascade)
+  teamLeader auction_platform_team_leaders @relation(fields: [team_leader_id], references: [id], onDelete: Cascade)
+  
+  @@index([auction_candidate_id])
+  @@index([team_leader_id])
+  
+  @@unique([auction_room_id, auction_candidate_id, team_leader_id, bid_time], map: "auction_platform_bids_auction_room_id_auction_candidat_85fc6ca8")
+  @@index([bid_time, is_winning])
+}
+
+/// Tracks auction points allocated and used by team leaders per auction
+/// room, enabling point management and auditing.
+///
+/// @namespace Auctions
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model auction_platform_point_balances {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to team leader {@link auction_platform_team_leaders.id}
+  team_leader_id String
+  
+  /// Reference to auction room {@link auction_platform_auction_rooms.id}
+  auction_room_id String
+  
+  /// Total auction points allocated to the team leader.
+  points_allocated Int
+  
+  /// Total auction points spent by the team leader.
+  points_used Int
+  
+  /// Timestamp when point balance record was created.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  teamLeader auction_platform_team_leaders @relation(fields: [team_leader_id], references: [id], onDelete: Cascade)
+  auctionRoom auction_platform_auction_rooms @relation(fields: [auction_room_id], references: [id], onDelete: Cascade)
+  
+  @@index([auction_room_id])
+  
+  @@unique([team_leader_id, auction_room_id], map: "auction_platform_point_balances_team_leader_id_auction_f9f64c14")
+  @@index([points_allocated, points_used], map: "auction_platform_point_balances_points_allocated_point_94090f72")
+}

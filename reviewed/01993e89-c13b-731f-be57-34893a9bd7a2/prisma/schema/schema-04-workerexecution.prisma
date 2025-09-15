@@ -1,0 +1,63 @@
+/// This table captures detailed execution logs for each workflow step run by
+/// worker servers. It records each attempt's input, output, timestamps, and
+/// result, associating logs with workflow, trigger instances, and nodes. It
+/// supports robust audit trails and troubleshooting by providing immutable
+/// records of every step execution in the Notification Workflow system.
+///
+/// @namespace WorkerExecution
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model notification_workflow_step_execution_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced workflow's notification_workflow_workflows.id.
+  workflow_id String
+  
+  /// Referenced trigger instance's notification_workflow_trigger_instances.id.
+  trigger_id String
+  
+  /// Referenced workflow node's notification_workflow_workflow_nodes.id.
+  node_id String
+  
+  /// Attempt number of this execution step, starting from 1.
+  attempt Int
+  
+  /// Timestamp when execution of this step started.
+  started_at DateTime
+  
+  /// Timestamp when execution of this step finished.
+  finished_at DateTime
+  
+  /// JSON string capturing the input execution context for this step.
+  input_context String
+  
+  /// JSON string capturing the output execution context after this step.
+  output_context String
+  
+  /// Whether this execution step succeeded.
+  success Boolean
+  
+  /// Identifier of the email message if this step sent an email; null
+  /// otherwise.
+  email_message_id String?
+  
+  /// Identifier of the SMS message if this step sent an SMS; null otherwise.
+  sms_message_id String?
+  
+  /// Error message if the execution step failed; null otherwise.
+  error_message String?
+  
+  //----
+  // RELATIONS
+  //----
+  workflow notification_workflow_workflows @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  trigger notification_workflow_trigger_instances @relation(fields: [trigger_id], references: [id], onDelete: Cascade)
+  node notification_workflow_workflow_nodes @relation(fields: [node_id], references: [id], onDelete: Cascade)
+  
+  @@index([workflow_id, started_at], map: "notification_workflow_step_execution_logs_workflow_id__4bcfb368")
+  @@index([trigger_id, started_at], map: "notification_workflow_step_execution_logs_trigger_id_s_f54ed3a8")
+  @@index([node_id, started_at], map: "notification_workflow_step_execution_logs_node_id_star_5caf7fcf")
+}

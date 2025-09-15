@@ -1,0 +1,219 @@
+/// Represents a unique job application: connects an applicant to a specific
+/// job posting and tracks submission, current status, and linked resume.
+/// Enables managing applicant progress through all recruiting stages and
+/// supports direct management of candidate records. Relates to {@link
+/// ats_recruitment_applicants}, {@link ats_recruitment_job_postings}, and
+/// {@link ats_recruitment_resumes}.
+///
+/// @namespace Applications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_applications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Applied applicant's {@link ats_recruitment_applicants.id}. Required for
+  /// identifying the applicant for this application.
+  applicant_id String
+  
+  /// Target job posting's {@link ats_recruitment_job_postings.id}. The job
+  /// posting this application is for.
+  job_posting_id String
+  
+  /// Submitted resume's {@link ats_recruitment_resumes.id}. The resume file
+  /// provided for this application.
+  resume_id String?
+  
+  /// The latest status/state of the application (e.g., submitted, screening,
+  /// code_test, interview, accepted, rejected).
+  current_status String
+  
+  /// Timestamp when the application was submitted.
+  submitted_at DateTime
+  
+  /// The moment when the application last changed its status/state (useful for
+  /// processing timelines).
+  last_state_change_at DateTime
+  
+  /// Record creation timestamp, required for audit/history.
+  created_at DateTime
+  
+  /// The most recent time the record was updated.
+  updated_at DateTime
+  
+  /// The soft deletion timestamp. Null if not deleted; required for
+  /// recoverable deletion pattern.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  applicant ats_recruitment_applicants @relation(fields: [applicant_id], references: [id], onDelete: Cascade)
+  jobPosting ats_recruitment_job_postings @relation(fields: [job_posting_id], references: [id], onDelete: Cascade)
+  resume ats_recruitment_resumes? @relation(fields: [resume_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_application_status_histories ats_recruitment_application_status_histories[]
+  ats_recruitment_application_feedback ats_recruitment_application_feedback[]
+  ats_recruitment_application_skill_matches ats_recruitment_application_skill_matches[]
+  ats_recruitment_coding_tests ats_recruitment_coding_tests[]
+  ats_recruitment_coding_test_submissions ats_recruitment_coding_test_submissions[]
+  ats_recruitment_interviews ats_recruitment_interviews[]
+  ats_recruitment_export_jobs ats_recruitment_export_jobs[]
+  
+  @@unique([resume_id])
+  
+  @@unique([applicant_id, job_posting_id])
+  @@index([job_posting_id])
+  @@index([applicant_id])
+  @@index([current_status])
+}
+
+/// Audit/snapshot table capturing every status or state transition for an
+/// application. Each row records a change (e.g., screening → code_test) with
+/// actor, timestamp, and optional comment. Enables compliance reporting and
+/// allows analysis of progression patterns. Closely linked to {@link
+/// ats_recruitment_applications}, relates to {@link
+/// ats_recruitment_hrrecruiters} and includes details on who enacted the
+/// change.
+///
+/// @namespace Applications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_application_status_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The target application whose status is changing. {@link
+  /// ats_recruitment_applications.id}
+  application_id String
+  
+  /// The HR or reviewer user who performed this status change. References
+  /// {@link ats_recruitment_hrrecruiters.id} or tech reviewers (polymorphic);
+  /// may be nullable if triggered by automation.
+  actor_id String?
+  
+  /// Previous status/state before the change (e.g., screening).
+  from_status String
+  
+  /// The new status/state after the change (e.g., code_test, interview).
+  to_status String
+  
+  /// Timestamp when the status change occurred.
+  changed_at DateTime
+  
+  /// Optional note/comment explaining the reason/notes for this transition.
+  change_comment String?
+  
+  /// When this history record was created (for audit trail).
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  application ats_recruitment_applications @relation(fields: [application_id], references: [id], onDelete: Cascade)
+  actor ats_recruitment_hrrecruiters? @relation(fields: [actor_id], references: [id], onDelete: Cascade)
+  
+  @@index([actor_id])
+  
+  @@index([application_id])
+  @@index([changed_at])
+}
+
+/// Internal or reviewer feedback on an application. Allows structured or
+/// free-form critique, ratings, and recommendations. Supports multiple
+/// feedback per application—one per reviewer—enabling HR and tech reviewers
+/// to record and track input independently of status transitions. Related to
+/// {@link ats_recruitment_applications}.
+///
+/// @namespace Applications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_application_feedback {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The referenced application receiving feedback. {@link
+  /// ats_recruitment_applications.id}
+  application_id String
+  
+  /// The user providing feedback (HR/tech reviewer). References {@link
+  /// ats_recruitment_hrrecruiters.id} or {@link
+  /// ats_recruitment_techreviewers.id} (see user model for disambiguation via
+  /// role/type).
+  reviewer_id String
+  
+  /// Free-form or structured feedback content.
+  feedback_body String
+  
+  /// Numerical rating for the application by this reviewer (if applicable).
+  rating Float?
+  
+  /// Whether this feedback represents a final recommendation or decision.
+  is_final_recommendation Boolean
+  
+  /// Timestamp for when this feedback was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  application ats_recruitment_applications @relation(fields: [application_id], references: [id], onDelete: Cascade)
+  reviewer ats_recruitment_hrrecruiters @relation(fields: [reviewer_id], references: [id], onDelete: Cascade)
+  
+  @@unique([application_id, reviewer_id], map: "ats_recruitment_application_feedback_application_id_re_56ac61ba")
+  @@index([application_id])
+  @@index([reviewer_id])
+}
+
+/// Captures per-skill matching results for each application (AI/NLP-based
+/// comparison between applicant and job requirement). Each row links a skill
+/// to an application with match type, auto-generated or human-validated.
+/// Supports analytics for hiring decision, bias tracking, and quality
+/// improvement. Related to {@link ats_recruitment_applications}.
+///
+/// @namespace Applications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_application_skill_matches {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the application for which this skill match is recorded.
+  /// {@link ats_recruitment_applications.id}
+  application_id String
+  
+  /// Reference to the skill entity (required by job or extracted from
+  /// applicant). {@link ats_recruitment_job_skills.id}
+  skill_id String
+  
+  /// Matching type/code (e.g., required, preferred, missing, extra, etc.).
+  match_type String
+  
+  /// AI/NLP matching confidence score (0-1 scale) or similarity percentage
+  /// (e.g., 0.84 = 84%).
+  ai_score Float?
+  
+  /// Whether this match has been verified by a human (after AI analysis).
+  is_manually_verified Boolean
+  
+  /// Timestamp for creation of this record (audit/supports replay of results).
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  application ats_recruitment_applications @relation(fields: [application_id], references: [id], onDelete: Cascade)
+  skill ats_recruitment_job_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+  
+  @@unique([application_id, skill_id], map: "ats_recruitment_application_skill_matches_application__02cba22e")
+  @@index([application_id])
+  @@index([skill_id])
+}

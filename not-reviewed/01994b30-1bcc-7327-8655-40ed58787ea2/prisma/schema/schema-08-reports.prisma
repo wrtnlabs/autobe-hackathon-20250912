@@ -1,0 +1,116 @@
+/// This table aggregates overall essay grading reports including progress,
+/// distribution, and cost governance metrics per tenant, class, and rubric
+/// over specified time ranges. It supports filtering by tenant, class,
+/// rubric, and time periods and enables efficient read access to analytic
+/// rollups for reporting purposes. The table maintains relationships to
+/// tenant, class, and rubric entities for scoping. Standard temporal fields
+/// track record creation and update times. This table is classified as
+/// primary as users query and browse report summaries independently.
+///
+/// @namespace Reports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant of this report. {@link creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Class related to report entries. {@link creverse_ai_essay_classes.id}
+  class_id String?
+  
+  /// Specific rubric version referenced in the report. {@link
+  /// creverse_ai_essay_rubric_versions.id}
+  rubric_version_id String?
+  
+  /// Start date of the reporting period.
+  date_from DateTime
+  
+  /// End date of the reporting period.
+  date_to DateTime
+  
+  /// Total number of essays included in this report.
+  total_essays Int
+  
+  /// Average normalized score (0-100 scale) across essays.
+  average_score Float
+  
+  /// Reported cost of grading in USD for the period.
+  cost_usd Float?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  class creverse_ai_essay_classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  rubricVersion creverse_ai_essay_rubric_versions? @relation(fields: [rubric_version_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_report_snapshots creverse_ai_essay_report_snapshots[]
+  
+  @@index([class_id])
+  @@index([rubric_version_id])
+  
+  @@unique([tenant_id, class_id, rubric_version_id, date_from, date_to], map: "creverse_ai_essay_reports_tenant_id_class_id_rubric_ve_a409c875")
+  @@index([tenant_id, class_id, rubric_version_id, date_from], map: "creverse_ai_essay_reports_tenant_id_class_id_rubric_ve_d7940768")
+  @@index([tenant_id, class_id, date_to])
+}
+
+/// Historical snapshots of essay reports for audit trails and trend
+/// analysis. Each snapshot captures the state of a specific report at a
+/// point in time, preserving data immutability. The snapshots link to the
+/// main report entity and tenant. This table supports temporal queries for
+/// historical report comparisons and analytics. This is a snapshot table
+/// reflecting append-only audit data.
+///
+/// @namespace Reports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_report_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant of this snapshot. {@link creverse_ai_essay_tenants.id}
+  tenant_id String
+  
+  /// Main report this snapshot refers to. {@link creverse_ai_essay_reports.id}
+  creverse_ai_essay_report_id String
+  
+  /// Timestamp when the snapshot was taken.
+  snapshot_at DateTime
+  
+  /// Total essays counted in this snapshot.
+  total_essays Int
+  
+  /// Average normalized score (0-100 scale).
+  average_score Float
+  
+  /// Cost in USD at snapshot time.
+  cost_usd Float?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  creverseAiEssayReport creverse_ai_essay_reports @relation(fields: [creverse_ai_essay_report_id], references: [id], onDelete: Cascade)
+  
+  @@index([creverse_ai_essay_report_id], map: "creverse_ai_essay_report_snapshots_creverse_ai_essay_r_d8e6a4fc")
+  
+  @@index([tenant_id, creverse_ai_essay_report_id, snapshot_at], map: "creverse_ai_essay_report_snapshots_tenant_id_creverse__68e4edf6")
+}

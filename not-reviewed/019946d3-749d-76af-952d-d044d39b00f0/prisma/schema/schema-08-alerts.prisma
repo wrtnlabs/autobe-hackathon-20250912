@@ -1,0 +1,119 @@
+/// Stores alert events related to crawling operations, capturing failures,
+/// bans, or throttle notifications from crawl sources. Links alerts to
+/// specific crawl sources for traceability. Contains timestamp, severity
+/// level, and descriptive message for operational monitoring.
+///
+/// @namespace Alerts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_crawl_alerts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced crawl source's {@link political_news_crawler_crawl_sources.id}
+  /// which triggered the alert.
+  crawl_source_id String
+  
+  /// Type of alert event indicating the category, e.g., 'ban_detected',
+  /// 'network_error', 'throttle_warning'.
+  alert_type String
+  
+  /// Detailed description of the alert event and context for operational
+  /// understanding.
+  message String
+  
+  /// Severity level of the alert such as 'info', 'warning', 'critical'.
+  severity String
+  
+  /// Timestamp when the alert was created.
+  created_at DateTime
+  
+  /// Timestamp when the alert was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  crawlSource political_news_crawler_crawl_sources @relation(fields: [crawl_source_id], references: [id], onDelete: Cascade)
+  
+  @@unique([crawl_source_id, alert_type, created_at], map: "political_news_crawler_crawl_alerts_crawl_source_id_al_6ad89660")
+  @@index([created_at])
+  @@index([severity])
+}
+
+/// Captures alert events related to processing pipeline failures including
+/// LLM processing errors, queue backlogs, or retry escalations. Provides
+/// detailed messages and timestamp info for system diagnostics and
+/// resolution procedures.
+///
+/// @namespace Alerts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_processing_alerts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Category of processing alert such as 'llm_failure', 'queue_overflow',
+  /// 'retry_limit_reached'.
+  alert_type String
+  
+  /// Detailed description of the processing alert event for operational use.
+  message String
+  
+  /// Severity level of the alert (e.g., 'info', 'warning', 'critical').
+  severity String
+  
+  /// Timestamp when the alert was created.
+  created_at DateTime
+  
+  /// Timestamp for last update of the alert.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([alert_type, created_at], map: "political_news_crawler_processing_alerts_alert_type_cr_ed4a0c20")
+  @@index([created_at])
+  @@index([severity])
+}
+
+/// Contains alert records related to API subsystem errors including rate
+/// limiting, endpoint failures, and error spikes. Supports operational
+/// monitoring by storing detailed messages and timestamps of occurrence.
+///
+/// @namespace Alerts
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model political_news_crawler_api_alerts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type of API alert event such as 'rate_limit_exceeded', 'endpoint_error',
+  /// 'error_spike'.
+  alert_type String
+  
+  /// Detailed message describing the API alert context.
+  message String
+  
+  /// Severity level of the alert such as 'info', 'warning', 'critical'.
+  severity String
+  
+  /// Timestamp when the alert was created.
+  created_at DateTime
+  
+  /// Timestamp when the alert was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([alert_type, created_at])
+  @@index([created_at])
+  @@index([severity])
+}

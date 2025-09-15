@@ -1,0 +1,298 @@
+/// Multi-tenant organizations representing independent educational clients.
+/// Each tenant is the top-level owner for schools, users, and configuration.
+/// Manages billing, contact, and operational metadata for tenant isolation
+/// and multi-tenancy enforcement.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_tenants {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant name for identification.
+  name String
+  
+  /// Email address for billing and contact.
+  billing_email String?
+  
+  /// Timestamp of tenant creation.
+  created_at DateTime
+  
+  /// Timestamp of last tenant update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  creverse_ai_essay_schools creverse_ai_essay_schools[]
+  creverse_ai_essay_classes creverse_ai_essay_classes[]
+  creverse_ai_essay_api_keys creverse_ai_essay_api_keys[]
+  creverse_ai_essay_feature_flags creverse_ai_essay_feature_flags[]
+  creverse_ai_essay_settings creverse_ai_essay_settings[]
+  creverse_ai_essay_guest creverse_ai_essay_guest[]
+  creverse_ai_essay_student creverse_ai_essay_student[]
+  creverse_ai_essay_teacher creverse_ai_essay_teacher[]
+  creverse_ai_essay_analyst creverse_ai_essay_analyst[]
+  creverse_ai_essay_admin creverse_ai_essay_admin[]
+  creverse_ai_essay_rubric_templates creverse_ai_essay_rubric_templates[]
+  creverse_ai_essay_essays creverse_ai_essay_essays[]
+  creverse_ai_essay_grading_jobs creverse_ai_essay_grading_jobs[]
+  creverse_ai_essay_plagiarism_scans creverse_ai_essay_plagiarism_scans[]
+  creverse_ai_essay_ocr_jobs creverse_ai_essay_ocr_jobs[]
+  creverse_ai_essay_reports creverse_ai_essay_reports[]
+  creverse_ai_essay_report_snapshots creverse_ai_essay_report_snapshots[]
+  creverse_ai_essay_audit_logs creverse_ai_essay_audit_logs[]
+  creverse_ai_essay_webhooks creverse_ai_essay_webhooks[]
+  creverse_ai_essay_cost_reports creverse_ai_essay_cost_reports[]
+  creverse_ai_essay_auto_throttle_policies creverse_ai_essay_auto_throttle_policies[]
+  
+  @@unique([name])
+  @@index([created_at, name])
+}
+
+/// Schools represent educational institutions within a tenant. Each school
+/// belongs to one tenant and manages its own classes and teaching staff.
+/// Enforces tenant isolation for multi-tenant architectures.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_schools {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// School's name within the tenant's organization.
+  name String
+  
+  /// ISO region code for localization and filtering.
+  region_code String?
+  
+  /// Timestamp of school creation.
+  created_at DateTime
+  
+  /// Timestamp of last school update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_classes creverse_ai_essay_classes[]
+  
+  @@unique([tenant_id, name])
+  @@index([tenant_id, created_at])
+}
+
+/// Classes represent academic groups within a school used for organizing
+/// students and teachers. Each class belongs to a single school and tenant
+/// and serves as a scope for essay assignments and grading.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_classes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Belonged school's {@link creverse_ai_essay_schools.id}.
+  school_id String
+  
+  /// Class name or code within the school.
+  name String
+  
+  /// Scheduled start date of the class.
+  start_date DateTime?
+  
+  /// Scheduled end date of the class.
+  end_date DateTime?
+  
+  /// Timestamp of class creation.
+  created_at DateTime
+  
+  /// Timestamp of last class update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  school creverse_ai_essay_schools @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_student creverse_ai_essay_student[]
+  creverse_ai_essay_teacher creverse_ai_essay_teacher[]
+  creverse_ai_essay_essays creverse_ai_essay_essays[]
+  creverse_ai_essay_reports creverse_ai_essay_reports[]
+  
+  @@index([school_id])
+  
+  @@unique([tenant_id, school_id, name])
+  @@index([tenant_id, school_id, created_at])
+}
+
+/// API keys associated with tenants for scoped programmatic access. Keys
+/// include usage quotas, types, states, and expiration for security and
+/// operational governance.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_api_keys {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String
+  
+  /// Descriptive name of the API key.
+  name String
+  
+  /// The opaque API key string used for authentication.
+  key String
+  
+  /// API key type (e.g., 'read-only', 'full-access').
+  type String
+  
+  /// Current operational status of the API key.
+  status String
+  
+  /// Monthly API call quota for rate limiting.
+  quota_calls Int
+  
+  /// Daily API call quota for rate limiting.
+  quota_calls_daily Int
+  
+  /// Expiration timestamp after which the key is disabled.
+  expiry_at DateTime?
+  
+  /// Timestamp of API key creation.
+  created_at DateTime
+  
+  /// Timestamp of last API key update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, key])
+  @@index([tenant_id, status])
+}
+
+/// Feature flags that enable or disable functionality at tenant or system
+/// scope. Flags include keys, descriptions, statuses, and value
+/// representations supporting dynamic configuration.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_feature_flags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String?
+  
+  /// Unique feature flag key identifier.
+  key String
+  
+  /// Description of the feature's purpose.
+  description String?
+  
+  /// Current status of the feature flag (e.g., 'enabled', 'disabled').
+  status String
+  
+  /// String representation of the flag's value, e.g., true/false/json.
+  value String?
+  
+  /// Timestamp of feature flag creation.
+  created_at DateTime
+  
+  /// Timestamp of last feature flag update.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants? @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  creverse_ai_essay_feature_flags_history creverse_ai_essay_feature_flags_history[]
+  
+  @@unique([tenant_id, key])
+  @@index([tenant_id, status])
+}
+
+/// General system and tenant-specific settings for configurable platform
+/// behavior and feature toggles. Settings allow key-value configuration with
+/// optional JSON values per tenant.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model creverse_ai_essay_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant's {@link creverse_ai_essay_tenants.id}.
+  tenant_id String?
+  
+  /// Setting key identifier.
+  key String
+  
+  /// String or JSON encoded value for the setting.
+  value String?
+  
+  /// Human-readable description of the setting purpose.
+  description String?
+  
+  /// Timestamp when the setting was created.
+  created_at DateTime
+  
+  /// Timestamp when the setting was last updated.
+  updated_at DateTime
+  
+  /// Timestamp of soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant creverse_ai_essay_tenants? @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([tenant_id, key])
+}

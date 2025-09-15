@@ -1,0 +1,88 @@
+/// User title definitions providing fee discount rates and descriptive
+/// names. This table stores the distinct titles that can be assigned by
+/// administrators to users to grant special benefits such as reduced
+/// transaction fees in minigames. The entity is a primary business object
+/// with full CRUD capabilities. It is normalized and indexed to allow
+/// efficient querying by title name and fee discount.
+///
+/// @namespace Titles
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_titles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The name of the title visible to users and used for display purposes.
+  name String
+  
+  /// The fee discount rate percentage this title grants on minigame
+  /// transactions, e.g., 0 to 100%.
+  fee_discount_rate Int
+  
+  /// Timestamp when the title record was created.
+  created_at DateTime
+  
+  /// Timestamp when the title record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the title record was soft-deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chatbot_user_titles chatbot_user_titles[]
+  
+  @@index([fee_discount_rate])
+}
+
+/// Associations of users to assigned titles with related fee discount
+/// applicability. Each record links one user with one title along with
+/// assignment timestamps and soft deletion support. This table supports
+/// enforceable business rules such as one active title per user and
+/// historical tracking for assignment auditing. References chatbot_members
+/// and chatbot_titles table primary keys.
+///
+/// @namespace Titles
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_user_titles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link chatbot_members.id}. Ensures one-to-one relation
+  /// representing the user's assigned title.
+  chatbot_member_id String
+  
+  /// Referenced title's {@link chatbot_titles.id}. The title assigned to the
+  /// user.
+  chatbot_title_id String
+  
+  /// Timestamp when the title was assigned to the user.
+  assigned_at DateTime
+  
+  /// Timestamp when the user-title association record was created.
+  created_at DateTime
+  
+  /// Timestamp when the user-title association record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the user-title association record was soft-deleted, if
+  /// applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  member chatbot_members @relation(fields: [chatbot_member_id], references: [id], onDelete: Cascade)
+  title chatbot_titles @relation(fields: [chatbot_title_id], references: [id], onDelete: Cascade)
+  
+  @@index([chatbot_title_id])
+  
+  @@unique([chatbot_member_id])
+  @@index([assigned_at])
+}

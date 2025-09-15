@@ -1,0 +1,238 @@
+/// Tracks user assignments to projects with specific roles such as frontend
+/// developer, backend developer, and project manager. Ensures clear
+/// role-based team distribution and workload management through direct CRUD
+/// operations. Includes temporal fields and soft deletion for audit and data
+/// lifecycle management.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_team_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated project {@link flow_sphere_projects.id}.
+  project_id String
+  
+  /// Assigned user {@link flow_sphere_registered_user.id}.
+  user_id String
+  
+  /// User role within the project context, e.g., frontend_developer,
+  /// backend_developer, project_manager.
+  role String
+  
+  /// DateTime when the user was assigned to the role.
+  assigned_at DateTime
+  
+  /// Record creation timestamp for audit.
+  created_at DateTime
+  
+  /// Timestamp when record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project flow_sphere_projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user flow_sphere_registered_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@unique([project_id, user_id, role])
+  @@index([assigned_at, role])
+}
+
+/// Represents current workload metrics for individual users to balance task
+/// assignments and optimize team productivity. Links workload to specific
+/// users with task counts and active hours. Maintains temporal audit fields
+/// and supports soft deletion.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_workload_balances {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User {@link flow_sphere_registered_user.id} whose workload is monitored.
+  user_id String
+  
+  /// Number of tasks assigned to the user.
+  task_count Int
+  
+  /// Recorded active working hours for the user.
+  active_hours Float
+  
+  /// Workload record creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last workload record update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user flow_sphere_registered_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id])
+  @@index([task_count, active_hours])
+}
+
+/// Daily standup updates submitted by users to summarize previous work,
+/// outline plans, and identify blockers. Associates reports with users and
+/// projects. Supports audit timestamps and soft deletion to allow historical
+/// progress tracking and recovery.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_standup_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reporting user {@link flow_sphere_registered_user.id}.
+  user_id String
+  
+  /// Project {@link flow_sphere_projects.id} associated with the standup
+  /// report.
+  project_id String
+  
+  /// Date of the standup report with day-level granularity.
+  report_date DateTime
+  
+  /// Summary of work completed the previous day.
+  yesterday_work_summary String
+  
+  /// Plan for the current day’s activities.
+  today_plan String
+  
+  /// Optional description of current blockers or impediments.
+  blockers String?
+  
+  /// Creation timestamp of the report record.
+  created_at DateTime
+  
+  /// Timestamp when the report was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user flow_sphere_registered_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  project flow_sphere_projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  
+  @@index([project_id])
+  
+  @@unique([user_id, project_id, report_date])
+  @@index([report_date])
+}
+
+/// Tracks blocking relationships between tasks of projects to identify and
+/// manage task dependencies and workflow obstacles. References both blocking
+/// and blocked tasks for project management insight. Maintains audit
+/// timestamps and supports soft deletion for historical traceability.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_task_blockers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Task causing the blockage, referencing {@link flow_sphere_task_tasks.id}.
+  blocking_task_id String
+  
+  /// Task being blocked, referencing {@link flow_sphere_task_tasks.id}.
+  blocked_task_id String
+  
+  /// Record creation datetime for auditing.
+  created_at DateTime
+  
+  /// Timestamp when this record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  blockingTask flow_sphere_task_tasks @relation("flow_sphere_task_blockers_of_blocking_task_id", fields: [blocking_task_id], references: [id], onDelete: Cascade)
+  blockedTask flow_sphere_task_tasks @relation("flow_sphere_task_blockers_of_blocked_task_id", fields: [blocked_task_id], references: [id], onDelete: Cascade)
+  
+  @@index([blocked_task_id])
+  
+  @@unique([blocking_task_id, blocked_task_id])
+  @@index([created_at])
+}
+
+/// Logs notifications sent to users regarding project updates, task
+/// statuses, or system events. Contains notification type, status, content,
+/// and timestamps. Supports soft deletion and audit fields for notification
+/// lifecycle management and historical tracking.
+///
+/// @namespace Collaboration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model flow_sphere_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User receiving the notification {@link flow_sphere_registered_user.id}.
+  user_id String
+  
+  /// Optional project related to the notification {@link
+  /// flow_sphere_projects.id}.
+  project_id String?
+  
+  /// Type of notification, e.g., task_update, daily_reminder, system_alert.
+  notification_type String
+  
+  /// Current status of the notification, e.g., sent, read, failed.
+  status String
+  
+  /// Details of the notification message content.
+  content String
+  
+  /// Timestamp when the notification was sent.
+  sent_at DateTime
+  
+  /// Creation timestamp of the notification record.
+  created_at DateTime
+  
+  /// Timestamp of the last update to this record.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user flow_sphere_registered_user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  project flow_sphere_projects? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([project_id])
+  
+  @@index([status, notification_type, sent_at])
+}

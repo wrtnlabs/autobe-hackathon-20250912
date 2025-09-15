@@ -1,0 +1,77 @@
+/// Defines the three distinct study phases available in the study planner
+/// system (preview, main learning, review). These phases categorize study
+/// activities and enable progress tracking by phase.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_study_phases {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier of the study phase, e.g., 'preview',
+  /// 'main_learning', 'review'.
+  code String
+  
+  /// Human-readable name of the study phase, e.g., 'Preview'.
+  name String
+  
+  /// Optional detailed description of the study phase.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  study_planner_study_tasks study_planner_study_tasks[]
+  study_planner_study_task_progress study_planner_study_task_progress[]
+  study_planner_study_progress_analytics study_planner_study_progress_analytics[]
+  
+  @@unique([code])
+  @@index([created_at])
+}
+
+/// Stores subject categories used for classifying study tasks, including
+/// hierarchical English language subcategories for grammar, vocabulary,
+/// speaking, and others.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model study_planner_subject_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier of the subject category, e.g., 'english_grammar'.
+  code String
+  
+  /// Human-readable name of the subject category, e.g., 'English Grammar'.
+  name String
+  
+  /// Optional detailed description of the subject category.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  study_planner_study_tasks study_planner_study_tasks[]
+  study_planner_learning_gap_charts study_planner_learning_gap_charts[]
+  
+  @@unique([code])
+  @@index([created_at])
+}

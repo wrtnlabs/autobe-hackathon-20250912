@@ -1,0 +1,55 @@
+/// Room tuples define mappings between normal chat rooms and their linked
+/// admin rooms. This table stores session isolation mappings and controls
+/// admin authorization by maintaining unique identifiers, room IDs, display
+/// names, and enablement statuses. It ensures proper role determination and
+/// supports operational enablement and soft deletion. Key fields include
+/// normal_room_id and admin_room_id for chat routing, display name for
+/// identification, and unique_id as a business identity key. Auditing fields
+/// track creation, update, and deletion times.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chatbot_room_tuples {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Identifier for the normal chat room used for member participation.
+  normal_room_id String
+  
+  /// Identifier for the corresponding admin room controlling administrative
+  /// commands.
+  admin_room_id String
+  
+  /// User-friendly display name for this room tuple, used for identification.
+  display_name String
+  
+  /// Unique business identifier for this room tuple, ensuring uniqueness
+  /// across system.
+  unique_id String
+  
+  /// Flag indicating if the room tuple is currently active and operational in
+  /// the system.
+  enabled Boolean
+  
+  /// Timestamp when this room tuple record was created.
+  created_at DateTime
+  
+  /// Timestamp when this room tuple record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating when this room tuple record was soft deleted, if
+  /// applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chatbot_audit_logs chatbot_audit_logs[]
+  
+  @@unique([unique_id])
+  @@index([normal_room_id, enabled])
+  @@index([admin_room_id, enabled])
+}

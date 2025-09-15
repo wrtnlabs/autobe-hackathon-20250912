@@ -1,0 +1,159 @@
+/// Represents an export (CSV/Excel) request/job to extract recruitment
+/// system data for compliance reporting, user self-service, or operational
+/// analytics. Includes job status, actor/initiator, configuration (filters,
+/// selected fields, target entity), delivery method, and export file URI.
+/// Forms an audit log for all sensitive data export operations. Foreign keys
+/// reference the initiator (HR/admin/applicant) and, if applicable, the
+/// target job posting/application/resume.
+///
+/// @namespace Exports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_export_jobs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Export job initiator (usually HR, admin, or applicant), referencing the
+  /// actor's {@link ats_recruitment_hrrecruiters.id}, {@link
+  /// ats_recruitment_systemadmins.id}, or {@link
+  /// ats_recruitment_applicants.id}.
+  initiator_id String
+  
+  /// If export is limited to a specific job posting, reference to {@link
+  /// ats_recruitment_job_postings.id}. Nullable; not required for general
+  /// exports.
+  target_job_posting_id String?
+  
+  /// If export targets a specific application (e.g., applicant self-export),
+  /// reference to {@link ats_recruitment_applications.id}. Nullable.
+  target_application_id String?
+  
+  /// Type of export job (e.g., applicants, applications, resumes, audit logs,
+  /// interviews, etc.). Used for filtering/export logic.
+  job_type String
+  
+  /// Current export status (pending, generating, delivering, complete, failed,
+  /// cancelled, etc.).
+  status String
+  
+  /// Free-text description of export purpose and filters. Useful for
+  /// compliance and auditing.
+  request_description String?
+  
+  /// JSON-encoded representation of applied filters, columns, or selection
+  /// criteria for reproducibility.
+  filter_json String?
+  
+  /// Export file delivery method (download, email, object storage URI, etc.).
+  delivery_method String
+  
+  /// When the export file was actually delivered or made available to the user.
+  delivered_at DateTime?
+  
+  /// URI to the delivered export file (if available, e.g., S3/object storage
+  /// or email attachment).
+  file_uri String?
+  
+  /// Export job creation timestamp (audit trail).
+  created_at DateTime
+  
+  /// Last status update (including progress/failure/delivery).
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  initiator ats_recruitment_hrrecruiters @relation(fields: [initiator_id], references: [id], onDelete: Cascade)
+  targetJobPosting ats_recruitment_job_postings? @relation(fields: [target_job_posting_id], references: [id], onDelete: Cascade)
+  targetApplication ats_recruitment_applications? @relation(fields: [target_application_id], references: [id], onDelete: Cascade)
+  
+  ats_recruitment_export_job_details ats_recruitment_export_job_details[]
+  ats_recruitment_export_failures ats_recruitment_export_failures[]
+  
+  @@unique([initiator_id, created_at, job_type], map: "ats_recruitment_export_jobs_initiator_id_created_at_jo_fe1f133b")
+  @@index([status])
+  @@index([initiator_id, created_at])
+  @@index([target_job_posting_id])
+  @@index([target_application_id])
+}
+
+/// Individual exported data items for each export job. Used for granular
+/// tracking of which specific records were included in a downloadable batch.
+/// References the parent export job and, optionally, the data id in target
+/// tables. Supports post-hoc audits and partial replays of export delivery.
+///
+/// @namespace Exports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_export_job_details {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the parent export job's {@link ats_recruitment_export_jobs.id}.
+  export_job_id String
+  
+  /// ID of the exported entity (applicant, application, resume, etc.). May be
+  /// NULL for summary rows.
+  data_row_id String?
+  
+  /// JSON string representing critical fields from the exported record (not
+  /// entire row - only identifying summary). For reproducibility and audit.
+  row_summary_json String
+  
+  /// Timestamp when row was actually included in file (may differ from job
+  /// start/end for long-running exports).
+  included_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  exportJob ats_recruitment_export_jobs @relation(fields: [export_job_id], references: [id], onDelete: Cascade)
+  entityRow ats_recruitment_applicants? @relation(fields: [data_row_id], references: [id], onDelete: Cascade)
+  
+  @@index([data_row_id])
+  
+  @@unique([export_job_id, data_row_id], map: "ats_recruitment_export_job_details_export_job_id_data__f149112c")
+  @@index([export_job_id])
+}
+
+/// Records and describes failures or exceptions that occurred during any
+/// export process (generation, file delivery, data selection, emailing,
+/// etc.) for compliance, debugging, and post-mortem analyses. Links to the
+/// jobs/steps that experienced errors. Not independently managed; retained
+/// for audit trail.
+///
+/// @namespace Exports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model ats_recruitment_export_failures {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the parent export job's {@link ats_recruitment_export_jobs.id}.
+  export_job_id String
+  
+  /// Stage of process where the failure occurred (filtering, generating,
+  /// delivering, emailing, etc.).
+  failure_stage String
+  
+  /// Detailed error/cause message (may be system error message or business
+  /// exception reason).
+  failure_reason String
+  
+  /// Time of failure occurrence.
+  failed_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  exportJob ats_recruitment_export_jobs @relation(fields: [export_job_id], references: [id], onDelete: Cascade)
+  
+  @@unique([export_job_id, failure_stage, failed_at], map: "ats_recruitment_export_failures_export_job_id_failure__b4ab2c2c")
+  @@index([export_job_id])
+}
