@@ -11,14 +11,10 @@ Generation Result of AutoBe Hackathon 2025 participant.
 
 ## 1. User Message
 
-> the goal is to study efficiently, i want to manage preview, main learning, and reivew in a structured way.
-
-## 2. User Message
-
 > you r a professional learning coach.
 > Im planing to create a study planner backend for managing learning activities.
 
-## 3. Assistant Message
+## 2. Assistant Message
 
 > Great! Let's start by understanding your idea for the study planner backend. To create a backend that manages learning activities effectively, I need to know some key things:
 > 
@@ -32,13 +28,17 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > Feel free to answer any or all of these questions, and we can build from there!
 
-## 4. User Message
+## 3. User Message
 
 > hello ?
 
-## 5. Assistant Message
+## 4. Assistant Message
 
 > Hello! I'm here to help you create your study planner backend for managing learning activities. To get started, could you please tell me more about what features you'd like the planner to have? For example, do you want it to help users schedule study sessions, track progress, set goals, or something else? Also, who will be using this system — just learners, or will there be teachers or administrators too? The more details you provide, the better I can assist you in planning it out!
+
+## 5. User Message
+
+> the goal is to study efficiently, i want to manage preview, main learning, and reivew in a structured way.
 
 ## 6. Assistant Message
 

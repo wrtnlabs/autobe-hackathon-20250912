@@ -1006,39 +1006,9 @@ systemAdmin | admin | An administrative user responsible for overseeing system h
 
 ## 5. User Message
 
-> Continue
-
-## 6. Realize
-
-- functions: 87
-- success: false
-
-```json
-[
-  {
-    "file": "src/providers/postauthSystemAdminJoin.ts",
-    "category": "error",
-    "code": 2322,
-    "start": 2839,
-    "length": 10,
-    "messageText": "Type 'Date' is not assignable to type 'string & Format<\"date-time\">'.\n  Type 'Date' is not assignable to type 'string'."
-  },
-  {
-    "file": "src/providers/postauthSystemAdminJoin.ts",
-    "category": "error",
-    "code": 2322,
-    "start": 2875,
-    "length": 10,
-    "messageText": "Type 'Date' is not assignable to type 'string & Format<\"date-time\">'.\n  Type 'Date' is not assignable to type 'string'."
-  }
-]
-```
-
-## 7. User Message
-
 > Do you have any problem?
 
-## 8. Assistant Message
+## 6. Assistant Message
 
 > 문제 없이 정상적으로 분석(Analyze) 단계가 완료되었습니다.
 > 
@@ -1058,31 +1028,31 @@ systemAdmin | admin | An administrative user responsible for overseeing system h
 > 다음 단계(데이터 모델 설계 및 ERD 작성)로 넘어가도 괜찮을까요? 아니면 더 궁금하거나 수정하고 싶은 요구 사항이 있으신가요? 
 > "진행해주세요"라고 답변해주시면 바로 다음 단계로 이어서 진행하겠습니다!
 
-## 9. User Message
+## 7. User Message
 
 > Continue
 
-## 10. Prisma
+## 8. Prisma
 
 - document: [`docs/ERD.md`](./docs/ERD.md)
 - namespaces: 5
 - tables: 16
 - success: true
 
-## 11. User Message
+## 9. User Message
 
 > Continue
 
-## 12. Interface
+## 10. Interface
 
 - operations: 101
 - schemas: 94
 
-## 13. User Message
+## 11. User Message
 
 > Continue
 
-## 14. Assistant Message
+## 12. Assistant Message
 
 > 데이터베이스 설계 및 ERD가 성공적으로 생성되었습니다.  
 > 이제 API 인터페이스(엔드포인트/DTO/OpenAPI TypeScript 코드) 자동 설계 단계로 진입할 수 있습니다.
@@ -1105,20 +1075,20 @@ systemAdmin | admin | An administrative user responsible for overseeing system h
 > 
 > 추가로 궁금한 점이나 수정할 요구사항이 있다면 언제든 말씀해 주세요.
 
-## 15. User Message
+## 13. User Message
 
 > Continue
 
-## 16. Interface
+## 14. Interface
 
 - operations: 87
 - schemas: 89
 
-## 17. User Message
+## 15. User Message
 
 > Good. Keep going
 
-## 18. Assistant Message
+## 16. Assistant Message
 
 > 이제 API 명세 및 타입스크립트/NestJS 코드, OpenAPI/Swagger 문서 등의 인터페이스 코드가 모두 자동 설계되어 반영된 상태입니다.
 > 
@@ -1152,11 +1122,41 @@ systemAdmin | admin | An administrative user responsible for overseeing system h
 > 원하시는대로 안내해드리겠습니다.  
 > “계속” 또는 “test 코드도 생성해주세요” 등으로 답변 주시면 자동으로 다음 단계로 이어집니다!
 
+## 17. User Message
+
+> Continue
+
+## 18. Test
+
+- functions: 83
+- success: true
+
 ## 19. User Message
 
 > Continue
 
-## 20. Test
+## 20. Realize
 
-- functions: 83
-- success: true
+- functions: 87
+- success: false
+
+```json
+[
+  {
+    "file": "src/providers/postauthSystemAdminJoin.ts",
+    "category": "error",
+    "code": 2322,
+    "start": 2839,
+    "length": 10,
+    "messageText": "Type 'Date' is not assignable to type 'string & Format<\"date-time\">'.\n  Type 'Date' is not assignable to type 'string'."
+  },
+  {
+    "file": "src/providers/postauthSystemAdminJoin.ts",
+    "category": "error",
+    "code": 2322,
+    "start": 2875,
+    "length": 10,
+    "messageText": "Type 'Date' is not assignable to type 'string & Format<\"date-time\">'.\n  Type 'Date' is not assignable to type 'string'."
+  }
+]
+```

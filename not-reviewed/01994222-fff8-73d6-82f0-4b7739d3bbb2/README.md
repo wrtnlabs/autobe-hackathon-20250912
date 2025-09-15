@@ -9,35 +9,13 @@ Generation Result of AutoBe Hackathon 2025 participant.
 - title: [qwen] 보상 분석 서비스
 - review: null
 
-## 1. Analyze
-
-### Roles
-
-Name | Kind | Description
------|------|--------------
-hrOperator | admin | HR team members who can upload compensation data in Excel format, adjust Pay Band Min/Mid/Max values through interactive sliders, and run budget simulations by modifying headcount or average salary. This role has full control over data input and system configuration. 
-employeeViewer | member | General employees who can only view the Pay Band visualization and budget simulation results. They have read-only access and cannot modify any data, settings, or parameters. 
-
-### Documents
-
-- [`docs/analysis/00-toc.md`](./docs/analysis/00-toc.md)
-- [`docs/analysis/01-service-vision.md`](./docs/analysis/01-service-vision.md)
-- [`docs/analysis/02-user-roles.md`](./docs/analysis/02-user-roles.md)
-- [`docs/analysis/03-authentication-flow.md`](./docs/analysis/03-authentication-flow.md)
-- [`docs/analysis/04-data-upload-spec.md`](./docs/analysis/04-data-upload-spec.md)
-- [`docs/analysis/05-pay-band-structure.md`](./docs/analysis/05-pay-band-structure.md)
-- [`docs/analysis/06-visualization-requirements.md`](./docs/analysis/06-visualization-requirements.md)
-- [`docs/analysis/07-budget-simulation.md`](./docs/analysis/07-budget-simulation.md)
-- [`docs/analysis/08-user-workflow.md`](./docs/analysis/08-user-workflow.md)
-- [`docs/analysis/09-non-functional-requirements.md`](./docs/analysis/09-non-functional-requirements.md)
-
-## 2. User Message
+## 1. User Message
 
 > 나는 보상 데이터를 업로드 하면 Pay Band  그림을 그려서 화면에 보여주고, Min, Max 값을 변화시켜 그림이 달라지는 모습을 동적으로 보여주는 서비스가 필요해.
 > 
 > 인원 수와 금액을 합쳐져서 Budget이 변경되는 것도 시뮬레이션이 되었으면 좋겠어.
 
-## 3. Assistant Message
+## 2. Assistant Message
 
 > 안녕하세요! 보상 데이터를 업로드하면 Pay Band 그래프를 시각화하고, Min/Max 값을 변경해 동적으로 그래프가 변하는 기능, 그리고 인원 수와 금액에 따라 Budget이 변화하는 시뮬레이션을 제공하는 서비스를 원하시는군요. 매우 흥미로운 요구사항입니다!
 > 
@@ -90,11 +68,7 @@ employeeViewer | member | General employees who can only view the Pay Band visua
 > 
 > 어떤 방식으로 시스템을 만들고 싶으신가요? 😊
 
-## 4. User Message
-
-> 계속 해줘
-
-## 5. User Message
+## 3. User Message
 
 > #### 1. **사용자 역할**
 > 사용자는 2가지 계층으로 구분 될 것 같아.
@@ -130,7 +104,7 @@ employeeViewer | member | General employees who can only view the Pay Band visua
 >   - 현재 연봉 vs Pay Band Min/Max 위치 표시  
 >   - Budget 변화에 따른 전체 지출 추이 그래프
 
-## 6. Assistant Message
+## 4. Assistant Message
 
 > 감사합니다! 매우 명확하고 구체적인 요구사항을 제공해 주셔서 정말 좋습니다.  
 > 이제 사용자 분의 비즈니스 목표와 시스템 작동 방식을 완벽히 이해했고, 다음 단계로 넘어가 **구조화된 요구사항 특성 문서**(Specification)를 생성할 준비가 되었습니다.
@@ -173,6 +147,32 @@ employeeViewer | member | General employees who can only view the Pay Band visua
 > 
 > > 💬 *“네, 이 내용으로 진행해주세요.”라고만 답해 주세요. 나머지는 제가 전부 수행해 드립니다.*
 
-## 7. User Message
+## 5. User Message
 
 > 네 진행해 주세요
+
+## 6. Analyze
+
+### Roles
+
+Name | Kind | Description
+-----|------|--------------
+hrOperator | admin | HR team members who can upload compensation data in Excel format, adjust Pay Band Min/Mid/Max values through interactive sliders, and run budget simulations by modifying headcount or average salary. This role has full control over data input and system configuration. 
+employeeViewer | member | General employees who can only view the Pay Band visualization and budget simulation results. They have read-only access and cannot modify any data, settings, or parameters. 
+
+### Documents
+
+- [`docs/analysis/00-toc.md`](./docs/analysis/00-toc.md)
+- [`docs/analysis/01-service-vision.md`](./docs/analysis/01-service-vision.md)
+- [`docs/analysis/02-user-roles.md`](./docs/analysis/02-user-roles.md)
+- [`docs/analysis/03-authentication-flow.md`](./docs/analysis/03-authentication-flow.md)
+- [`docs/analysis/04-data-upload-spec.md`](./docs/analysis/04-data-upload-spec.md)
+- [`docs/analysis/05-pay-band-structure.md`](./docs/analysis/05-pay-band-structure.md)
+- [`docs/analysis/06-visualization-requirements.md`](./docs/analysis/06-visualization-requirements.md)
+- [`docs/analysis/07-budget-simulation.md`](./docs/analysis/07-budget-simulation.md)
+- [`docs/analysis/08-user-workflow.md`](./docs/analysis/08-user-workflow.md)
+- [`docs/analysis/09-non-functional-requirements.md`](./docs/analysis/09-non-functional-requirements.md)
+
+## 7. User Message
+
+> 계속 해줘

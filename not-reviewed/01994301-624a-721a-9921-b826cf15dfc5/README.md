@@ -9,33 +9,11 @@ Generation Result of AutoBe Hackathon 2025 participant.
 - title: ATS 서비스
 - review: null
 
-## 1. Test
-
-- functions: 244
-- success: true
-
-## 2. Realize
-
-- functions: 260
-- success: true
-
-## 3. User Message
-
-> 계속해
-
-## 4. User Message
-
-> 계속 작업해줘.
-
-## 5. User Message
-
-> Prisma 완료 되었나?
-
-## 6. User Message
+## 1. User Message
 
 > 나는 ATS 채용 시스템을 개발하고 싶어
 
-## 7. Assistant Message
+## 2. Assistant Message
 
 > 멋진 프로젝트 아이디어입니다! ATS(지원자 추적 시스템, Applicant Tracking System)는 채용 프로세스를 자동화하고 효율화하는 데 매우 중요한 역할을 합니다. 더 나은 결과물을 만들기 위해 여러분의 요구사항을 조금 더 깊게 여쭙고 싶어요.
 > 
@@ -51,7 +29,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > 위 질문에 답해주시면, 보다 구체적으로 설계해드릴 수 있습니다! 혹시 답변이 어렵거나, "알아서 기획해줘"도 괜찮아요. 원하시는 대로 말씀해 주세요.
 
-## 8. User Message
+## 3. User Message
 
 > ### 1. 기본 목적
 > 나의 ATS 개발은 채용 담당자가 지원자들을 관리하고, 면접 일정을 조율하며, 적합한 인재를 찾는 시스템을 만드는 것이 목적이야.
@@ -77,7 +55,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > "AI가 이력서를 보고 ‘필요한 면접 질문’을 자동 추천"  
 > "Google Calendar와 연동"
 
-## 9. Assistant Message
+## 4. Assistant Message
 
 > 아주 구체적으로 정리해주셔서 감사합니다! 말씀해주신 요구사항을 정리한 뒤, 실제 개발 단계별로 진행하도록 하겠습니다.
 > 
@@ -119,14 +97,14 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > 지금까지 말씀주신 내용이면, 상세 분석 및 설계 문서를 자동으로 생성할 수 있습니다. 혹시 추가로 요청사항이 있을까요? 아니면 바로 분석 단계로 넘어갈까요?
 
-## 10. User Message
+## 5. User Message
 
 > 1. 외부 API 연동 방식으로 진행해도 됨
 > 2. 외부 API 활용 방식도 괜찮음
 > 3. 코딩테스트는 외부 코딩 테스트 플랫폼과 자체 웹코드판을 모두 제공하면 좋겠음
 > 4. 각 담당자 개인 구글 계정 연동 방식으로 해줘.
 
-## 11. Analyze
+## 6. Analyze
 
 ### Roles
 
@@ -151,15 +129,15 @@ systemAdmin | admin | ATS 전체 시스템 환경설정, 사용자/권한 관리
 - [`docs/analysis/09-security-and-compliance.md`](./docs/analysis/09-security-and-compliance.md)
 - [`docs/analysis/10-additional-cases-and-future-considerations.md`](./docs/analysis/10-additional-cases-and-future-considerations.md)
 
-## 12. User Message
+## 7. User Message
 
 > 계속해줘
 
-## 13. User Message
+## 8. User Message
 
 > 지금 어디까지 작업이 되었나요?
 
-## 14. Assistant Message
+## 9. Assistant Message
 
 > 현재 작업 진행 상황과 앞으로의 절차를 안내드리겠습니다.
 > 
@@ -187,38 +165,60 @@ systemAdmin | admin | ATS 전체 시스템 환경설정, 사용자/권한 관리
 > 
 > 추가적으로 궁금한 점이나 변경·보완하고 싶은 내용이 있으면 언제든 말씀해 주세요!
 
-## 15. User Message
+## 10. User Message
+
+> 계속 작업해줘.
+
+## 11. User Message
+
+> Prisma 완료 되었나?
+
+## 12. User Message
+
+> 계속해
+
+## 13. User Message
 
 > Prisma 마무리 해줘
 
-## 16. Prisma
+## 14. Prisma
 
 - document: [`docs/ERD.md`](./docs/ERD.md)
 - namespaces: 10
 - tables: 42
 - success: true
 
-## 17. User Message
+## 15. User Message
 
 > 다음 단계 진행해줘.
 
-## 18. User Message
-
-> 다음 단계 진행해줘.
-
-## 19. Interface
+## 16. Interface
 
 - operations: 260
 - schemas: 204
 
-## 20. User Message
+## 17. User Message
 
 > 다음 단계 진행해줘.
 
-## 21. Interface
+## 18. Interface
 
 - operations: 312
 - schemas: 224
+
+## 19. User Message
+
+> 다음 단계 진행해줘.
+
+## 20. Test
+
+- functions: 244
+- success: true
+
+## 21. Realize
+
+- functions: 260
+- success: true
 
 ## 22. User Message
 

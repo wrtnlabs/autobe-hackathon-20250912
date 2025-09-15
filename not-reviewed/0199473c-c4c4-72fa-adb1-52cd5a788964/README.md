@@ -11,38 +11,9 @@ Generation Result of AutoBe Hackathon 2025 participant.
 
 ## 1. User Message
 
-> Plus, make sure the virtual stocks price update on buy/sell, and there's initial 5% fee for selling stocks.  
-> Start analysis if no more questions or inconsistencies.
-
-## 2. Analyze
-
-### Roles
-
-Name | Kind | Description
------|------|--------------
-guest | guest | Unauthenticated users with minimal permissions, limited to public resources and no access to bot features. 
-member | member | Authenticated users who can participate in chat rooms, earn points, play minigames, and view rankings. 
-admin | admin | Administrators who have elevated permissions to manage users, points, titles, virtual stocks, and oversee the bot operation via admin rooms. 
-
-### Documents
-
-- [`docs/analysis/00-toc.md`](./docs/analysis/00-toc.md)
-- [`docs/analysis/01-service-overview.md`](./docs/analysis/01-service-overview.md)
-- [`docs/analysis/02-user-roles.md`](./docs/analysis/02-user-roles.md)
-- [`docs/analysis/03-core-features.md`](./docs/analysis/03-core-features.md)
-- [`docs/analysis/04-minigames.md`](./docs/analysis/04-minigames.md)
-- [`docs/analysis/05-title-system.md`](./docs/analysis/05-title-system.md)
-- [`docs/analysis/06-commands.md`](./docs/analysis/06-commands.md)
-- [`docs/analysis/07-point-system.md`](./docs/analysis/07-point-system.md)
-- [`docs/analysis/08-virtual-stock.md`](./docs/analysis/08-virtual-stock.md)
-- [`docs/analysis/09-slot-machine.md`](./docs/analysis/09-slot-machine.md)
-- [`docs/analysis/10-error-security-performance.md`](./docs/analysis/10-error-security-performance.md)
-
-## 3. User Message
-
 > Can you write chatbot server? It will receive relevant messages in webhook endpoint, and there's API to reply on http://host.docker.internal:3000
 
-## 4. Assistant Message
+## 2. Assistant Message
 
 > To build the chatbot server you described, I need a little more information to clarify your requirements:
 > 
@@ -54,7 +25,7 @@ admin | admin | Administrators who have elevated permissions to manage users, po
 > 
 > Once I have this information, I can proceed with designing the server accordingly.
 
-## 5. User Message
+## 3. User Message
 
 > 1. message payload includes: sender id (which should not be exposed) and nickname, room id (which should not be exposed)
 > 2. See code snippet below
@@ -140,7 +111,7 @@ admin | admin | Administrators who have elevated permissions to manage users, po
 > 
 > If you need more information, or something is not clear, feel free to request details.
 
-## 6. Assistant Message
+## 4. Assistant Message
 
 > Thank you for the detailed requirements. To recap and confirm:
 > 
@@ -168,7 +139,7 @@ admin | admin | Administrators who have elevated permissions to manage users, po
 > 
 > With these answers, I can proceed to draft the detailed requirements specification to run the analyze agent.
 
-## 7. User Message
+## 5. User Message
 
 > 1. I prefer /webhook, but as the bridge isn't implemented yet, you can decide it.
 > 2. Yes, it should be real-time.
@@ -181,7 +152,7 @@ admin | admin | Administrators who have elevated permissions to manage users, po
 > 9. scheduled job, in KST (UTC +9)
 > 10. I prefer PostgreSQL, but not required.
 
-## 8. Assistant Message
+## 6. Assistant Message
 
 > Thank you for the clarifications. Here's what I've understood about the chatbot server requirements:
 > 
@@ -200,6 +171,35 @@ admin | admin | Administrators who have elevated permissions to manage users, po
 > I will now proceed to create a detailed requirements specification document incorporating all these features, constraints, data models (users, points, titles, stocks, transactions, rooms), business rules, and APIs (webhook, reply, admin commands). This document will provide the foundation for next steps.
 > 
 > If you want me to start the formal analysis now, please confirm or let me know if anything needs adjustment.
+
+## 7. User Message
+
+> Plus, make sure the virtual stocks price update on buy/sell, and there's initial 5% fee for selling stocks.  
+> Start analysis if no more questions or inconsistencies.
+
+## 8. Analyze
+
+### Roles
+
+Name | Kind | Description
+-----|------|--------------
+guest | guest | Unauthenticated users with minimal permissions, limited to public resources and no access to bot features. 
+member | member | Authenticated users who can participate in chat rooms, earn points, play minigames, and view rankings. 
+admin | admin | Administrators who have elevated permissions to manage users, points, titles, virtual stocks, and oversee the bot operation via admin rooms. 
+
+### Documents
+
+- [`docs/analysis/00-toc.md`](./docs/analysis/00-toc.md)
+- [`docs/analysis/01-service-overview.md`](./docs/analysis/01-service-overview.md)
+- [`docs/analysis/02-user-roles.md`](./docs/analysis/02-user-roles.md)
+- [`docs/analysis/03-core-features.md`](./docs/analysis/03-core-features.md)
+- [`docs/analysis/04-minigames.md`](./docs/analysis/04-minigames.md)
+- [`docs/analysis/05-title-system.md`](./docs/analysis/05-title-system.md)
+- [`docs/analysis/06-commands.md`](./docs/analysis/06-commands.md)
+- [`docs/analysis/07-point-system.md`](./docs/analysis/07-point-system.md)
+- [`docs/analysis/08-virtual-stock.md`](./docs/analysis/08-virtual-stock.md)
+- [`docs/analysis/09-slot-machine.md`](./docs/analysis/09-slot-machine.md)
+- [`docs/analysis/10-error-security-performance.md`](./docs/analysis/10-error-security-performance.md)
 
 ## 9. User Message
 

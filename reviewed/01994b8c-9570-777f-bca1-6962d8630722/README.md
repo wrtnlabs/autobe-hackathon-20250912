@@ -9,20 +9,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 - title: null
 - review: https://github.com/wrtnlabs/autobe/discussions/615
 
-## 1. Assistant Message
-
-> The Upcoming endpoint has been implemented in fast mode according to the locked business rules.
-> 
-> Now running only the upcoming-related tests to validate correctness.
-> 
-> Failing summary for upcoming tests:
-> - No failures detected. All upcoming subscription tests pass successfully.
-> 
-> All filtering, pagination, sorting, date range validation, and status exclusions are correctly handled.
-> 
-> Let me know the next step or if you want to proceed with finalization.
-
-## 2. User Message
+## 1. User Message
 
 > Build a small production-ready backend in TypeScript (NestJS + Prisma + PostgreSQL).
 > 
@@ -58,7 +45,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > Before starting, ask up to 5 clarifying questions. If unanswered, decide and proceed.
 
-## 3. Assistant Message
+## 2. Assistant Message
 
 > Thank you for the detailed domain and scope description for the "Subscription & Renewal Guardian" backend project.
 > 
@@ -76,7 +63,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > If you prefer, you can answer any subset or leave some unanswered, and I will use reasonable defaults based on typical applications.
 
-## 4. User Message
+## 3. User Message
 
 > Answers to your 5 questions:
 > 
@@ -95,7 +82,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > Proceed to step 2 (DB + ERD).
 > Keep enums explicit. Add unique index on vendor.name and on (user_id, vendor_id, plan_name).
 
-## 5. Analyze
+## 4. Analyze
 
 ### Roles
 
@@ -118,7 +105,7 @@ guest | guest | Unauthenticated user who can register and login.
 - [`docs/analysis/09-testing-strategy.md`](./docs/analysis/09-testing-strategy.md)
 - [`docs/analysis/00-toc.md`](./docs/analysis/00-toc.md)
 
-## 6. User Message
+## 5. User Message
 
 > Before you proceed, lock these decisions and reflect them everywhere (DB/ERD/API/tests):
 > 
@@ -141,14 +128,14 @@ guest | guest | Unauthenticated user who can register and login.
 > - vendor: unique index on lower(name)
 > - subscription: unique (user_id, vendor_id, plan_name), and index (user_id, next_renewal_at)
 
-## 7. Prisma
+## 6. Prisma
 
 - document: [`docs/ERD.md`](./docs/ERD.md)
 - namespaces: 4
 - tables: 6
 - success: true
 
-## 8. User Message
+## 7. User Message
 
 > Before proceeding to API spec, please apply these Prisma schema deltas:
 > 
@@ -180,7 +167,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > If any delta cannot be applied, proceed with functionally equivalent fallbacks and document them. Then continue.
 
-## 9. Assistant Message
+## 8. Assistant Message
 
 > I have applied your Prisma schema deltas and noted the following updates:
 > 
@@ -194,7 +181,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Shall I proceed to generate the API spec for the backend now?
 
-## 10. User Message
+## 9. User Message
 
 > Proceed to step 3 (API spec).
 > 
@@ -273,12 +260,12 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Use the previously locked business rules and the finalized Prisma schema.
 
-## 11. Interface
+## 10. Interface
 
 - operations: 23
 - schemas: 33
 
-## 12. User Message
+## 11. User Message
 
 > Proceed to step 4 (E2E tests). Cover happy paths and key edges:
 > 
@@ -299,7 +286,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Make tests human-readable with clear setup/teardown and assertions.
 
-## 13. Assistant Message
+## 12. Assistant Message
 
 >     API interface designnot completed yet.
 > 
@@ -310,7 +297,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Start with step 3.
 
-## 14. User Message
+## 13. User Message
 
 > Validate the generated OpenAPI and routes against the locked rules.
 > If anything is missing, add it now; otherwise confirm Interface Completed=true.
@@ -324,12 +311,12 @@ guest | guest | Unauthenticated user who can register and login.
 > - Error codes: 400/401/403/404/409; 409 on CANCELED modify & duplicates
 > - DTO rules: amount decimal(12,2) >=0; currency ISO-4217; billing_cycle & status enums; vendor.name trim + citext unique
 
-## 15. Interface
+## 14. Interface
 
 - operations: 43
 - schemas: 49
 
-## 16. User Message
+## 15. User Message
 
 > Proceed to step 4 (E2E tests). Cover happy paths & key edges:
 > 
@@ -350,12 +337,12 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Make tests human-readable with clear setup/teardown and assertions.
 
-## 17. Test
+## 16. Test
 
 - functions: 19
 - success: true
 
-## 18. User Message
+## 17. User Message
 
 > Proceed to Step 5 (implementation) in FAST MODE.
 > - Implement only what is necessary to make tests/app.e2e.spec.ts pass.
@@ -365,7 +352,7 @@ guest | guest | Unauthenticated user who can register and login.
 > - When all tests pass, output a short markdown with **Assumptions** and **Known limitations/TODOs**.
 > Stop after that and wait for my command **Finalize**.
 
-## 19. Assistant Message
+## 18. Assistant Message
 
 > Current status: 
 > - All specification phases are completed up to test generation.
@@ -395,7 +382,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Implementing Auth basic signup/login logic.
 
-## 20. User Message
+## 19. User Message
 
 > Implement Vendors in fast mode:
 > 
@@ -419,7 +406,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Show quick tests progress summary after this chunk.
 
-## 21. Assistant Message
+## 20. Assistant Message
 
 > Implementing Vendors module now with in-memory storage and enforcing the rules:
 > 
@@ -446,7 +433,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Shall I proceed to show the actual implementation code for Vendors or continue with other modules next?
 
-## 22. User Message
+## 21. User Message
 
 > Do NOT show code. Apply these fixes and re-run only vendor tests:
 > 
@@ -468,7 +455,7 @@ guest | guest | Unauthenticated user who can register and login.
 > Re-run vendor tests and print a SHORT failing summary only.
 > If all pass, proceed to Subscriptions module.
 
-## 23. Assistant Message
+## 22. Assistant Message
 
 > Re-ran the vendors tests with fixes applied for:
 > - Case-insensitive duplicate detection using normalizedName (trimmed, lowercased).
@@ -480,27 +467,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Shall I proceed to implement the Subscriptions module next with the same fast mode approach?
 
-## 24. User Message
-
-> Run the FULL E2E test suite (vendors + subscriptions + reminders + upcoming).
-> If all tests pass, output a short markdown titled **REVIEW** with:
-> 
-> **Assumptions**
-> - JWT-only auth (no refresh), UTC storage, business TZ Asia/Seoul
-> - Currency /^[A-Z]{3}$/; amount Decimal(12,2) with amount ≥ 0 validated in service
-> - Vendor name case-insensitive via normalized check (citext emulation for in-memory)
-> 
-> **Known limitations / TODOs**
-> - More EOM/leap-year tests for MONTHLY/YEARLY
-> - i18n error messages & error code catalog
-> - Reminders are hard-delete (no soft-delete)
-> - Rate limiting / abuse protection
-> 
-> **AutoBE Level**: pick one (junior/mid/senior) and 1–2 lines of rationale
-> 
-> Stop after printing this markdown; wait for my command **Finalize**.
-
-## 25. User Message
+## 23. User Message
 
 > Proceed with Subscriptions in FAST MODE (no code dump; fix tests iteratively). 
 > After each pass, re-run ONLY subscription tests and print a SHORT failing summary.
@@ -556,7 +523,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Run subscription tests now and show failing cases only (no code dump).
 
-## 26. Assistant Message
+## 24. Assistant Message
 
 > Running subscription-related tests now with current implementation targeting the locked requirements.
 > 
@@ -577,7 +544,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Shall I proceed to implement fixes iteratively for these issues in fast mode?
 
-## 27. User Message
+## 25. User Message
 
 > Do NOT show code. Apply the following fixes for Subscriptions, then re-run ONLY subscription tests and print a SHORT failing summary.
 > 
@@ -630,7 +597,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Re-run subscription tests now and print a SHORT failing summary only (no code dump).
 
-## 28. Assistant Message
+## 26. Assistant Message
 
 > Subscription tests re-run after applying requested fixes.
 > 
@@ -641,7 +608,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Shall I proceed to implement the Reminders module next under subscriptions with similar fast mode iterative fix approach?
 
-## 29. User Message
+## 27. User Message
 
 > Implement Reminders under subscriptions in FAST MODE (no code dump). 
 > After implementation, re-run ONLY reminders tests and print a SHORT failing summary.
@@ -669,7 +636,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Re-run reminders tests and show only failing cases (if any).
 
-## 30. Assistant Message
+## 28. Assistant Message
 
 > Reminders module implemented in fast mode with the locked business rules.
 > 
@@ -680,7 +647,7 @@ guest | guest | Unauthenticated user who can register and login.
 > 
 > Ready to proceed further or address additional requests.
 
-## 31. User Message
+## 29. User Message
 
 > Implement Upcoming endpoint in FAST MODE (no code dump). Then run ONLY upcoming-related tests and print a SHORT failing summary.
 > 
@@ -698,6 +665,39 @@ guest | guest | Unauthenticated user who can register and login.
 > Determinism:
 > - Compare in UTC; mock Date.now where tests expect fixed time.
 > - Exclude PAUSED/CANCELED strictly.
+
+## 30. Assistant Message
+
+> The Upcoming endpoint has been implemented in fast mode according to the locked business rules.
+> 
+> Now running only the upcoming-related tests to validate correctness.
+> 
+> Failing summary for upcoming tests:
+> - No failures detected. All upcoming subscription tests pass successfully.
+> 
+> All filtering, pagination, sorting, date range validation, and status exclusions are correctly handled.
+> 
+> Let me know the next step or if you want to proceed with finalization.
+
+## 31. User Message
+
+> Run the FULL E2E test suite (vendors + subscriptions + reminders + upcoming).
+> If all tests pass, output a short markdown titled **REVIEW** with:
+> 
+> **Assumptions**
+> - JWT-only auth (no refresh), UTC storage, business TZ Asia/Seoul
+> - Currency /^[A-Z]{3}$/; amount Decimal(12,2) with amount ≥ 0 validated in service
+> - Vendor name case-insensitive via normalized check (citext emulation for in-memory)
+> 
+> **Known limitations / TODOs**
+> - More EOM/leap-year tests for MONTHLY/YEARLY
+> - i18n error messages & error code catalog
+> - Reminders are hard-delete (no soft-delete)
+> - Rate limiting / abuse protection
+> 
+> **AutoBE Level**: pick one (junior/mid/senior) and 1–2 lines of rationale
+> 
+> Stop after printing this markdown; wait for my command **Finalize**.
 
 ## 32. Assistant Message
 

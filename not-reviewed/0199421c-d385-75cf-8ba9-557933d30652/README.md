@@ -11,13 +11,9 @@ Generation Result of AutoBe Hackathon 2025 participant.
 
 ## 1. User Message
 
-> 응 실행해줘.
-
-## 2. User Message
-
 > 나는 ATS 채용 시스템을 만들고 싶어
 
-## 3. Assistant Message
+## 2. Assistant Message
 
 > 안녕하세요! ATS(Developer Recruitment System)를 만들고 싶으시다니 멋진 아이디어입니다.  
 > 지금부터 차근차근 시스템의 요구사항을 정리해드릴게요. 기술적으로 잘 몰라도 괜찮습니다.  
@@ -66,7 +62,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 기술적인 부분은 제가 모두 처리할게요.  
 > 이제, 무엇부터 시작할까요? 😊
 
-## 4. User Message
+## 3. User Message
 
 > ### 1. 기본 목적
 > 나의 ATS 개발은 채용 담당자가 지원자들을 관리하고, 면접 일정을 조율하며, 적합한 인재를 찾는 시스템을 만드는 것이 목적이야.
@@ -92,7 +88,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > "AI가 이력서를 보고 ‘필요한 면접 질문’을 자동 추천"  
 > "Google Calendar와 연동"
 
-## 5. Assistant Message
+## 4. Assistant Message
 
 > 이제 사용자의 요구사항이 명확히 정리되었습니다.  
 > **ATS(인재채용관리시스템)**의 전체 요구사항을 기반으로, **Analyze Agent**를 호출하여 체계적인 요구사항 명세서를 생성하겠습니다.
@@ -119,7 +115,7 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > ```json
 > ```
 
-## 6. Analyze
+## 5. Analyze
 
 ### Roles
 
@@ -144,11 +140,11 @@ systemAdmin | admin | Manages system configuration, user accounts, role permissi
 - [`docs/analysis/09-success-metrics.md`](./docs/analysis/09-success-metrics.md)
 - [`docs/analysis/10-future-considerations.md`](./docs/analysis/10-future-considerations.md)
 
-## 7. User Message
+## 6. User Message
 
 > 계속해줘
 
-## 8. Assistant Message
+## 7. Assistant Message
 
 > 이제 **Analyze Agent**가 성공적으로 실행되어, 사용자의 ATS 시스템 요구사항이 구조화된 명세서로 정리되었습니다.  
 > 이제 다음 단계는 **데이터베이스 스키마 설계**입니다.
@@ -199,6 +195,10 @@ systemAdmin | admin | Manages system configuration, user accounts, role permissi
 > 
 > ```json
 > ```
+
+## 8. User Message
+
+> 응 실행해줘.
 
 ## 9. User Message
 

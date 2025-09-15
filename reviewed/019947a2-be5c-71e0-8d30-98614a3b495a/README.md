@@ -11,13 +11,9 @@ Generation Result of AutoBe Hackathon 2025 participant.
 
 ## 1. User Message
 
-> 1. yes, 2 naming groups, add/remove members, assign group admin 3. send image or video 4. save past messages 5. new message notification 6. snapchat preference
-
-## 2. User Message
-
 > I want to create chatting application. I am a newbie of programming, so create analysis requirements for this project
 
-## 3. Assistant Message
+## 2. Assistant Message
 
 > Great! Let's start by understanding your vision for the chatting application. I'll ask some simple questions to gather your requirements step by step.
 > 
@@ -34,11 +30,11 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 
 > Feel free to answer as simply as you like, and I can help clarify or explain any terms!
 
-## 4. User Message
+## 3. User Message
 
 > community groups, regular user, one-on-one & group chats, social login
 
-## 5. Assistant Message
+## 4. Assistant Message
 
 > Thanks for the info! So, your chatting app is for community groups, with regular users as members. Core features include one-on-one messaging, group chats, and social login for user access.
 > 
@@ -52,6 +48,10 @@ Generation Result of AutoBe Hackathon 2025 participant.
 > 6. Any preferences on which social login providers to support? (e.g., Google, Facebook, Apple)
 > 
 > Feel free to add anything else you imagine for your app!
+
+## 5. User Message
+
+> 1. yes, 2 naming groups, add/remove members, assign group admin 3. send image or video 4. save past messages 5. new message notification 6. snapchat preference
 
 ## 6. Assistant Message
 
