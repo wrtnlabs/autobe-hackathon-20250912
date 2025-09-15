@@ -1,0 +1,460 @@
+/// Represents a top-level tenant or organization (hospital, clinic,
+/// practice) within the healthcarePlatform system. Defines the overall data
+/// isolation boundary for all entity assignments, resources, and business
+/// operations. Serves as the ultimate parent in the multi-tenant data model.
+/// Relationships: has many departments, staff assignments, configurations,
+/// locale settings. Critical for RBAC, compliance, and resource
+/// partitioning.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_organizations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business code for the organization (assigned for technical or
+  /// cross-system mapping).
+  code String
+  
+  /// Official organization name for display and legal documentation.
+  name String
+  
+  /// Current status of the organization (active, suspended, pending, archived,
+  /// etc.).
+  status String
+  
+  /// Creation timestamp for the organization.
+  created_at DateTime
+  
+  /// Last update timestamp for the organization.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for archival/compliance retention (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_departments healthcare_platform_departments[]
+  healthcare_platform_org_department_assignments healthcare_platform_org_department_assignments[]
+  healthcare_platform_user_org_assignments healthcare_platform_user_org_assignments[]
+  healthcare_platform_configuration healthcare_platform_configuration[]
+  healthcare_platform_locale_settings healthcare_platform_locale_settings[]
+  healthcare_platform_patient_records healthcare_platform_patient_records[]
+  healthcare_platform_appointments healthcare_platform_appointments[]
+  healthcare_platform_resource_schedules healthcare_platform_resource_schedules[]
+  healthcare_platform_room_reservations healthcare_platform_room_reservations[]
+  healthcare_platform_equipment_reservations healthcare_platform_equipment_reservations[]
+  healthcare_platform_calendar_settings healthcare_platform_calendar_settings[]
+  healthcare_platform_billing_invoices healthcare_platform_billing_invoices[]
+  healthcare_platform_billing_discount_policies healthcare_platform_billing_discount_policies[]
+  healthcare_platform_billing_payment_methods healthcare_platform_billing_payment_methods[]
+  healthcare_platform_insurance_policies healthcare_platform_insurance_policies[]
+  healthcare_platform_financial_audit_logs healthcare_platform_financial_audit_logs[]
+  healthcare_platform_analytics_dashboards healthcare_platform_analytics_dashboards[]
+  healthcare_platform_analytics_reports healthcare_platform_analytics_reports[]
+  healthcare_platform_decision_support_rules healthcare_platform_decision_support_rules[]
+  healthcare_platform_clinical_alerts healthcare_platform_clinical_alerts[]
+  healthcare_platform_outcome_metrics healthcare_platform_outcome_metrics[]
+  healthcare_platform_benchmark_definitions healthcare_platform_benchmark_definitions[]
+  healthcare_platform_kpi_snapshots healthcare_platform_kpi_snapshots[]
+  healthcare_platform_external_emr_connectors healthcare_platform_external_emr_connectors[]
+  healthcare_platform_lab_integrations healthcare_platform_lab_integrations[]
+  healthcare_platform_lab_order_transactions healthcare_platform_lab_order_transactions[]
+  healthcare_platform_lab_result_imports healthcare_platform_lab_result_imports[]
+  healthcare_platform_pharmacy_integrations healthcare_platform_pharmacy_integrations[]
+  healthcare_platform_pharmacy_transactions healthcare_platform_pharmacy_transactions[]
+  healthcare_platform_insurance_api_integrations healthcare_platform_insurance_api_integrations[]
+  healthcare_platform_device_data_ingestions healthcare_platform_device_data_ingestions[]
+  healthcare_platform_integration_logs healthcare_platform_integration_logs[]
+  healthcare_platform_compliance_consents healthcare_platform_compliance_consents[]
+  healthcare_platform_compliance_agreements healthcare_platform_compliance_agreements[]
+  healthcare_platform_policy_versions healthcare_platform_policy_versions[]
+  healthcare_platform_risk_assessments healthcare_platform_risk_assessments[]
+  healthcare_platform_legal_holds healthcare_platform_legal_holds[]
+  healthcare_platform_compliance_reviews healthcare_platform_compliance_reviews[]
+  healthcare_platform_audit_logs healthcare_platform_audit_logs[]
+  healthcare_platform_access_logs healthcare_platform_access_logs[]
+  healthcare_platform_data_export_logs healthcare_platform_data_export_logs[]
+  healthcare_platform_security_incidents healthcare_platform_security_incidents[]
+  healthcare_platform_emergency_access_overrides healthcare_platform_emergency_access_overrides[]
+  healthcare_platform_audit_log_archives healthcare_platform_audit_log_archives[]
+  healthcare_platform_notifications healthcare_platform_notifications[]
+  healthcare_platform_notification_preferences healthcare_platform_notification_preferences[]
+  healthcare_platform_reminders healthcare_platform_reminders[]
+  
+  @@unique([code])
+  @@index([status])
+}
+
+/// A department or business unit within an organization (e.g., Cardiology,
+/// Radiology, Billing). Departments are mapped to an organization and
+/// provide an isolated context for department head assignments, scheduling,
+/// and resource allocation. Enables finer-grained access control and
+/// workflow partitioning within each organization.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_departments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Short code for the department (unique within organization for business
+  /// logic).
+  code String
+  
+  /// Display/legal name for the department.
+  name String
+  
+  /// Current status of the department (active, suspended, pending, archived,
+  /// etc.).
+  status String
+  
+  /// Department creation timestamp.
+  created_at DateTime
+  
+  /// Last modification timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp (null = active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_org_department_assignments healthcare_platform_org_department_assignments[]
+  healthcare_platform_locale_settings healthcare_platform_locale_settings[]
+  healthcare_platform_patient_records healthcare_platform_patient_records[]
+  healthcare_platform_appointments healthcare_platform_appointments[]
+  healthcare_platform_analytics_dashboards healthcare_platform_analytics_dashboards[]
+  healthcare_platform_analytics_reports healthcare_platform_analytics_reports[]
+  healthcare_platform_clinical_alerts healthcare_platform_clinical_alerts[]
+  healthcare_platform_outcome_metrics healthcare_platform_outcome_metrics[]
+  healthcare_platform_kpi_snapshots healthcare_platform_kpi_snapshots[]
+  healthcare_platform_risk_assessments healthcare_platform_risk_assessments[]
+  healthcare_platform_legal_holds healthcare_platform_legal_holds[]
+  
+  @@unique([healthcare_platform_organization_id, code], map: "healthcare_platform_departments_healthcare_platform_or_a194d62e")
+  @@index([healthcare_platform_organization_id, status], map: "healthcare_platform_departments_healthcare_platform_or_ef48f18b")
+}
+
+/// Represents platform-wide and organization-level roles (e.g., admin,
+/// doctor, nurse, technician, patient, receptionist). Defines RBAC and
+/// permission boundaries. Roles can be platform global, organization-scoped,
+/// or department-scoped depending on configuration. Used in conjunction with
+/// permissions and user assignments.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_roles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Role code used for assignment, internal mappings, and cross-system
+  /// integration (e.g., 'system_admin', 'organization_admin',
+  /// 'medical_doctor').
+  code String
+  
+  /// Role display name.
+  name String
+  
+  /// Level at which this role applies: platform, organization, department.
+  scope_type String
+  
+  /// Current status of the role (active, retired, system-only, archived, etc.).
+  status String
+  
+  /// Role creation timestamp.
+  created_at DateTime
+  
+  /// Last role update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp for role archival (null=active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_escalation_events healthcare_platform_escalation_events[]
+  
+  @@unique([code, scope_type])
+  @@index([status])
+}
+
+/// Permission entity defining a specific actionable operation or scope
+/// (e.g., 'manage_users', 'view_ehr', 'edit_billing'). Used in RBAC to
+/// define which actions are available for which roles. Permissions can be
+/// assigned to roles at platform, org, or department level. Enables granular
+/// authorization policies.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code for this permission (e.g., 'edit_patient_record').
+  code String
+  
+  /// Human-readable name for this permission.
+  name String
+  
+  /// Explanation of the permission's intent and usage scenario.
+  description String
+  
+  /// Level at which this permission is applicable: platform, organization,
+  /// department.
+  scope_type String
+  
+  /// Current status of the permission (active, retired, system, etc.).
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp if permission is retired.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code, scope_type])
+  @@index([status])
+}
+
+/// Maps organizations to departments for organizational hierarchy management
+/// and delegation workflows. Each row links a department to its parent
+/// organization with timestamp and audit trail for team structures. Enables
+/// complex org/department relationship enforcement and permission
+/// propagation.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_org_department_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Assigned organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Assigned department's {@link healthcare_platform_departments.id}.
+  healthcare_platform_department_id String
+  
+  /// Assignment creation timestamp.
+  created_at DateTime
+  
+  /// Assignment update timestamp (last structural change).
+  updated_at DateTime
+  
+  /// Soft delete timestamp for assignment. Null if currently active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments @relation(fields: [healthcare_platform_department_id], references: [id], onDelete: Cascade)
+  
+  @@unique([healthcare_platform_organization_id, healthcare_platform_department_id], map: "healthcare_platform_org_department_assignments_healthc_8d97a56d")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_org_department_assignments_healthc_92461972")
+  @@index([healthcare_platform_department_id], map: "healthcare_platform_org_department_assignments_healthc_f01ae7be")
+}
+
+/// Mapping table assigning users to organizations for platform access, RBAC,
+/// and scoped business operations. Critical for multi-tenant data and
+/// permission enforcement. Each record ties a user to a single org (others
+/// are referenced from user tables in other components). Assignment
+/// timestamp and status are tracked for audit and access review.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_user_org_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to user in global user tables (e.g.,
+  /// healthcare_platform_systemadmins, organizationadmins, etc. in other
+  /// components).
+  user_id String
+  
+  /// Organization this user is assigned to. {@link
+  /// healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Role code for assigned user within this organization instance (syncs with
+  /// roles in roles table).
+  role_code String
+  
+  /// Current assignment status (active, pending, suspended, deleted).
+  assignment_status String
+  
+  /// Assignment creation timestamp.
+  created_at DateTime
+  
+  /// Assignment update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if assignment is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_systemadmins @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_appointments healthcare_platform_appointments[]
+  healthcare_platform_insurance_eligibility_checks healthcare_platform_insurance_eligibility_checks[]
+  healthcare_platform_insurance_claim_statuses healthcare_platform_insurance_claim_statuses[]
+  healthcare_platform_financial_audit_logs healthcare_platform_financial_audit_logs[]
+  healthcare_platform_analytics_dashboards healthcare_platform_analytics_dashboards[]
+  healthcare_platform_analytics_reports healthcare_platform_analytics_reports[]
+  healthcare_platform_dashboard_preferences healthcare_platform_dashboard_preferences[]
+  healthcare_platform_clinical_alerts healthcare_platform_clinical_alerts[]
+  healthcare_platform_risk_assessments healthcare_platform_risk_assessments[]
+  healthcare_platform_legal_holds healthcare_platform_legal_holds[]
+  healthcare_platform_compliance_reviews healthcare_platform_compliance_reviews[]
+  healthcare_platform_audit_logs healthcare_platform_audit_logs[]
+  healthcare_platform_access_logs healthcare_platform_access_logs[]
+  healthcare_platform_data_export_logs healthcare_platform_data_export_logs[]
+  healthcare_platform_security_incidents healthcare_platform_security_incidents[]
+  healthcare_platform_emergency_access_overrides healthcare_platform_emergency_access_overrides[]
+  
+  @@unique([user_id, healthcare_platform_organization_id], map: "healthcare_platform_user_org_assignments_user_id_healt_eda9ed68")
+  @@index([healthcare_platform_organization_id, role_code], map: "healthcare_platform_user_org_assignments_healthcare_pl_ffe848b8")
+}
+
+/// Represents system-wide and per-organization configuration settings.
+/// Stores configuration keys and values for customizable, versioned, and
+/// auditable settings. Can be global (if organization_id is null) or linked
+/// to a specific organization for tenant-scoped config. Only
+/// business/operational configuration data (never clinical or PHI).
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_configuration {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization this config applies to (nullable for global configs). {@link
+  /// healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String?
+  
+  /// Configuration key (e.g., 'language', 'timezone', 'feature_flag_name').
+  key String
+  
+  /// Configuration value as string (can be serialized for structured values).
+  value String
+  
+  /// Description of what this config controls and its impact.
+  description String
+  
+  /// Config record creation timestamp.
+  created_at DateTime
+  
+  /// Last configuration update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations? @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_configuration_healthcare_platform__515af742")
+  
+  @@unique([key, healthcare_platform_organization_id], map: "healthcare_platform_configuration_key_healthcare_platf_868e3afa")
+}
+
+/// Stores locale and regionalization settings for the platform or specific
+/// organizations/departments (time zone, language, formatting). Used for
+/// translation and location-aware experiences. Unique per
+/// organization/department context, providing override hierarchy. Only
+/// technical/business localization.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_locale_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization for which the locale settings apply. Nullable for
+  /// platform-global settings. {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String?
+  
+  /// (Optional) Department for which these settings are specifically applied.
+  /// Nullable if org-level or platform global. {@link
+  /// healthcare_platform_departments.id}.
+  healthcare_platform_department_id String?
+  
+  /// Language code (e.g., en-US, es-ES) for localization.
+  language String
+  
+  /// IANA timezone string for scheduling/notifications (e.g.,
+  /// 'America/New_York').
+  timezone String
+  
+  /// Default date display format (e.g., YYYY-MM-DD, MM/DD/YYYY).
+  date_format String
+  
+  /// Default time display format (e.g., 24h, 12h).
+  time_format String
+  
+  /// Number formatting convention for region/country (e.g., 1,234.56 vs
+  /// 1.234,56).
+  number_format String
+  
+  /// Settings record creation timestamp.
+  created_at DateTime
+  
+  /// Settings last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if settings are active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations? @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [healthcare_platform_department_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_department_id], map: "healthcare_platform_locale_settings_healthcare_platfor_f121b472")
+  
+  @@unique([healthcare_platform_organization_id, healthcare_platform_department_id], map: "healthcare_platform_locale_settings_healthcare_platfor_834108db")
+}

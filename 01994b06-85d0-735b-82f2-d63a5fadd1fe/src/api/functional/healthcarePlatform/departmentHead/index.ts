@@ -1,0 +1,14 @@
+export * as organizations from "./organizations/index";
+export * as nurses from "./nurses/index";
+export * as patientRecords from "./patientRecords/index";
+export * as appointments from "./appointments/index";
+export * as roomReservations from "./roomReservations/index";
+export * as equipmentReservations from "./equipmentReservations/index";
+export * as billingInvoices from "./billingInvoices/index";
+export * as analyticsDashboards from "./analyticsDashboards/index";
+export * as analyticsReports from "./analyticsReports/index";
+export * as clinicalAlerts from "./clinicalAlerts/index";
+export * as outcomeMetrics from "./outcomeMetrics/index";
+export * as kpiSnapshots from "./kpiSnapshots/index";
+export * as notifications from "./notifications/index";
+export * as reminders from "./reminders/index";

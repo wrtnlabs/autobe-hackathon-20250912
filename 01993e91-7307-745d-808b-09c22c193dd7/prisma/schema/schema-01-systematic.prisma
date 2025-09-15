@@ -1,0 +1,110 @@
+/// Task Management Roles define distinct user roles like TPM, PM, Developer,
+/// etc. These roles control access and permissions within the task
+/// management system. This table serves as a foundational system
+/// configuration for role-based authorization and is referenced by user and
+/// assignment tables.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_roles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier for the role, e.g., 'TPM', 'PM', 'Developer'.
+  code String
+  
+  /// Human-readable name of the role, e.g., 'Technical Project Manager'.
+  name String
+  
+  /// Detailed description explaining the role's responsibilities and
+  /// permissions.
+  description String?
+  
+  /// Timestamp when the role record was created.
+  created_at DateTime
+  
+  /// Timestamp when the role record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+}
+
+/// Task Management Task Statuses define the possible states a task can have,
+/// such as 'To Do', 'In Progress', and 'Done'. This table controls workflow
+/// states and is referenced by task lifecycle tables for state management.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_task_statuses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code representing the task status, e.g., 'to_do', 'in_progress',
+  /// 'done'.
+  code String
+  
+  /// Human-readable status name, e.g., 'To Do', 'In Progress', 'Done'.
+  name String
+  
+  /// Detailed explanation of the status and its significance in the workflow.
+  description String?
+  
+  /// Timestamp indicating when the status was created.
+  created_at DateTime
+  
+  /// Timestamp indicating when the status was last modified.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  task_management_tasks task_management_tasks[]
+  task_management_task_status_changes task_management_task_status_changes[]
+  
+  @@unique([code])
+}
+
+/// Task Management Priorities define the level of urgency or importance for
+/// tasks, such as low, medium, or high. These settings influence task
+/// sorting and alerting mechanisms within the system.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_priorities {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code representing priority level, e.g., 'low', 'medium', 'high'.
+  code String
+  
+  /// Human-friendly priority name, e.g., 'Low', 'Medium', 'High'.
+  name String
+  
+  /// Detailed notes about the priority's impact and usage rules.
+  description String?
+  
+  /// Timestamp when the priority record was created.
+  created_at DateTime
+  
+  /// Timestamp when the priority record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  task_management_tasks task_management_tasks[]
+  
+  @@unique([code])
+}

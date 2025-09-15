@@ -1,0 +1,30 @@
+/// Guest user role representing unauthenticated users who can add, view, and
+/// search books. This table stores minimal identity information for guest
+/// users. It serves as a primary identity entity without authentication
+/// credentials. This entity is primarily to support access control in the
+/// Actors domain, isolated from main business entities to ensure clean
+/// domain separation.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model library_management_guestusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Timestamp when the guest user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the guest user record was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp allowing recovery of guest user records.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([created_at, updated_at])
+}

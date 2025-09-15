@@ -1,0 +1,309 @@
+/// Job Group represents the top-level job classification in the
+/// organizational hierarchy. It categorizes broad job families to organize
+/// job roles systematically. This model serves as the parent entity for job
+/// series and is fundamental for job architecture management.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_job_groups {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifying the job group.
+  code String
+  
+  /// Name of the job group.
+  name String
+  
+  /// Detailed description of the job group.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  job_performance_eval_job_series job_performance_eval_job_series[]
+  
+  @@unique([code])
+  @@index([name, created_at])
+}
+
+/// Job Series represents the mid-level job classification under a job group.
+/// It helps segment job roles into more specific clusters. This model
+/// references the parent job group and is essential for maintaining job
+/// hierarchy.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_job_series {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent job group's {@link job_performance_eval_job_groups.id}.
+  job_group_id String
+  
+  /// Unique code identifying the job series.
+  code String
+  
+  /// Name of the job series.
+  name String
+  
+  /// Detailed description of the job series.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  jobGroup job_performance_eval_job_groups @relation(fields: [job_group_id], references: [id], onDelete: Cascade)
+  
+  job_performance_eval_job_roles job_performance_eval_job_roles[]
+  
+  @@unique([code])
+  @@index([job_group_id, name, created_at], map: "job_performance_eval_job_series_job_group_id_name_crea_7f0810a7")
+}
+
+/// Job Role represents the specific job function within a job series. It
+/// encapsulates roles employees occupy and links to job series for
+/// hierarchical clarity. This model is the base for assignments and
+/// evaluations.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_job_roles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent job series' {@link job_performance_eval_job_series.id}.
+  job_series_id String
+  
+  /// Unique code identifying the job role.
+  code String
+  
+  /// Name of the job role.
+  name String
+  
+  /// Detailed description of the job role.
+  description String?
+  
+  /// Growth Level classification associated with this job role.
+  growth_level String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  jobSeries job_performance_eval_job_series @relation(fields: [job_series_id], references: [id], onDelete: Cascade)
+  
+  job_performance_eval_task_groups job_performance_eval_task_groups[]
+  
+  @@unique([code])
+  @@index([job_series_id, name, growth_level, created_at], map: "job_performance_eval_job_roles_job_series_id_name_grow_cd4e18d0")
+}
+
+/// Task Group organizes related tasks under job roles for better management
+/// and categorization. It groups tasks logically and serves as a parent for
+/// tasks.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_task_groups {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged job role's {@link job_performance_eval_job_roles.id}.
+  job_role_id String
+  
+  /// Unique code identifying the task group.
+  code String
+  
+  /// Name of the task group.
+  name String
+  
+  /// Detailed description of the task group.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  jobRole job_performance_eval_job_roles @relation(fields: [job_role_id], references: [id], onDelete: Cascade)
+  
+  job_performance_eval_tasks job_performance_eval_tasks[]
+  
+  @@unique([code])
+  @@index([job_role_id, name, created_at], map: "job_performance_eval_task_groups_job_role_id_name_crea_7427a1d2")
+}
+
+/// Task represents the detailed work activities under a task group. It
+/// specifies tasks employees perform as part of their job role
+/// responsibilities.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent task group's {@link job_performance_eval_task_groups.id}.
+  task_group_id String
+  
+  /// Unique code identifying the task.
+  code String
+  
+  /// Name of the task.
+  name String
+  
+  /// Detailed description of the task.
+  description String?
+  
+  /// Associated knowledge area's {@link
+  /// job_performance_eval_knowledge_areas.id}.
+  knowledge_area_id String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  taskGroup job_performance_eval_task_groups @relation(fields: [task_group_id], references: [id], onDelete: Cascade)
+  
+  job_performance_eval_task_activities job_performance_eval_task_activities[]
+  
+  @@unique([code])
+  @@index([task_group_id, name, knowledge_area_id, created_at], map: "job_performance_eval_tasks_task_group_id_name_knowledg_f2cbd294")
+}
+
+/// Task Activity specifies detailed actionable activities within tasks. It
+/// breaks down tasks into finer units for precise evaluation and tracking.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_task_activities {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent task's {@link job_performance_eval_tasks.id}.
+  task_id String
+  
+  /// Unique code identifying the task activity.
+  code String
+  
+  /// Name of the task activity.
+  name String
+  
+  /// Detailed description of the task activity.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  task job_performance_eval_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  
+  @@unique([code])
+  @@index([task_id, name, created_at], map: "job_performance_eval_task_activities_task_id_name_crea_d262e311")
+}
+
+/// Knowledge Area represents domains of expertise or knowledge relevant to
+/// job tasks. It categorizes knowledge areas to support task and skill
+/// mappings.
+///
+/// @namespace Jobs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_knowledge_areas {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifying the knowledge area.
+  code String
+  
+  /// Name of the knowledge area.
+  name String
+  
+  /// Detailed description of the knowledge area.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+  @@index([name, created_at])
+}

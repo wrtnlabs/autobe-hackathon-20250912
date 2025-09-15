@@ -1,0 +1,10 @@
+export * as patients from "./patients/index";
+export * as patientRecords from "./patientRecords/index";
+export * as appointments from "./appointments/index";
+export * as billingInvoices from "./billingInvoices/index";
+export * as analyticsDashboards from "./analyticsDashboards/index";
+export * as analyticsReports from "./analyticsReports/index";
+export * as notifications from "./notifications/index";
+export * as notificationPreferences from "./notificationPreferences/index";
+export * as notificationHistory from "./notificationHistory/index";
+export * as reminders from "./reminders/index";

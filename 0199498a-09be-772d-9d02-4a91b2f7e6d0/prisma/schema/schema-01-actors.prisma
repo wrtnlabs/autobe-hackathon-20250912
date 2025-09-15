@@ -1,0 +1,116 @@
+/// Holds registered authenticated StoryField AI users that have passed
+/// Spring backend verification and possess a valid external user ID. Each
+/// entry maps to a verified, onboarded user authorized to generate content
+/// and access their own data only. Serves as the reference basis for all
+/// user-generated content, TTS, and story traceability. Maintains audit
+/// fields for creation, update, and soft deletion. Stance is primary, as
+/// these users require independent business management, onboarding, and
+/// compliance traceability.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_authenticatedusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// External user ID issued by Spring backend; unique per authenticated user.
+  /// Used as a reference key to external identity system.
+  external_user_id String
+  
+  /// Unique email address of authenticated user; must match email used for
+  /// Spring registration.
+  email String
+  
+  /// Describes the actor type in the business domain; always
+  /// "authenticatedUser" for this table.
+  actor_type String
+  
+  /// Timestamp of initial record creation. Used for traceability and
+  /// compliance.
+  created_at DateTime
+  
+  /// Timestamp of last update to record. For audit tracking.
+  updated_at DateTime
+  
+  /// Timestamp when user soft-deleted (deactivated or removed, but not fully
+  /// purged). Null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  storyfield_ai_stories storyfield_ai_stories[]
+  storyfield_ai_token_sessions storyfield_ai_token_sessions[]
+  storyfield_ai_token_revocations storyfield_ai_token_revocations[]
+  storyfield_ai_auth_audit_logs storyfield_ai_auth_audit_logs[]
+  storyfield_ai_integration_logs storyfield_ai_integration_logs[]
+  storyfield_ai_s3_upload_histories storyfield_ai_s3_upload_histories[]
+  storyfield_ai_external_api_failures storyfield_ai_external_api_failures[]
+  
+  @@unique([external_user_id])
+  @@unique([email])
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+/// Records StoryField AI system administrative accounts. Each entry maps to
+/// a separate admin, distinct from standard authenticated users, with
+/// privilege for system oversight, abuse monitoring, and administrative
+/// actions. Tracks audit and compliance fields, as well as last login date
+/// and optional admin notes. Stance is primary due to independent admin
+/// lifecycle management and business impact.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_systemadmins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// External admin ID, mapped from Spring/JWT backend. Uniquely identifies an
+  /// administrator for credential mapping and traceability.
+  external_admin_id String
+  
+  /// Administrative email address, unique per admin and used for
+  /// login/audit/policy notification.
+  email String
+  
+  /// Role descriptor for actor type; always "systemAdmin" for this table.
+  actor_type String
+  
+  /// Datetime of the admin's last successful login into the system. For
+  /// privileged access tracking and compliance audits.
+  last_login_at DateTime?
+  
+  /// Optional notes regarding admin privileges, actions, or incident response
+  /// logs. Enables enhanced compliance and system audit.
+  admin_notes String?
+  
+  /// Timestamp of initial record creation. Audit/investigation baseline.
+  created_at DateTime
+  
+  /// Timestamp of last information update or privilege change for this admin
+  /// account.
+  updated_at DateTime
+  
+  /// Timestamp of logical deletion (soft delete) if admin is removed from
+  /// current oversight, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  storyfield_ai_token_sessions storyfield_ai_token_sessions[]
+  storyfield_ai_token_revocations storyfield_ai_token_revocations[]
+  storyfield_ai_auth_audit_logs storyfield_ai_auth_audit_logs[]
+  
+  @@unique([external_admin_id])
+  @@unique([email])
+  @@index([created_at])
+  @@index([updated_at])
+}

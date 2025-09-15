@@ -1,0 +1,337 @@
+/// Represents every notification event issued in the system (real-time,
+/// batch, or escalated). Stores business payload, delivery status, retry
+/// logic, type/channel, and criticality. Links to user/org as recipient,
+/// sender if applicable, and escalation record if triggered. Used for
+/// audit/compliance and notification search across all users and orgs.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Recipient user's {@link healthcare_platform_patients.id} or equivalent
+  /// user table from other components.
+  recipient_user_id String?
+  
+  /// Target organization's {@link healthcare_platform_organizations.id}.
+  organization_id String?
+  
+  /// Sender user's {@link healthcare_platform_patients.id} or appropriate user
+  /// table.
+  sender_user_id String?
+  
+  /// Logical type/category (e.g., appointment_reminder, billing_alert,
+  /// compliance_breach, escalation, info, marketing).
+  notification_type String
+  
+  /// Delivery channel (e.g., in_app, email, sms, push, phone_call, postal,
+  /// fax).
+  notification_channel String
+  
+  /// Notification subject/title (for email/SMS/push display).
+  subject String?
+  
+  /// Notification full body (text or HTML if channel supports).
+  body String
+  
+  /// Link to related resource or call-to-action (e.g., portal URL, patient
+  /// record).
+  payload_link String?
+  
+  /// Whether the notification is considered critical (SLA/incident/mandatory
+  /// acknowledgement required).
+  critical Boolean
+  
+  /// Current delivery status (pending, in_progress, delivered, failed,
+  /// acknowledged, snoozed, escalated).
+  delivery_status String
+  
+  /// How many times delivery was attempted.
+  delivery_attempts Int
+  
+  /// Time notification successfully delivered (null if never delivered).
+  delivered_at DateTime?
+  
+  /// Timestamp of most recent delivery attempt.
+  last_delivery_attempt_at DateTime?
+  
+  /// If present, recipient acknowledged notification at this time.
+  acknowledged_at DateTime?
+  
+  /// If snoozed, when notification will be re-tried.
+  snoozed_until DateTime?
+  
+  /// Associated escalation event, if triggered. {@link
+  /// healthcare_platform_escalation_events.id}.
+  escalation_event_id String?
+  
+  /// Time notification was created in the system.
+  created_at DateTime
+  
+  /// Last update time.
+  updated_at DateTime
+  
+  /// Soft deletion marker.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  recipientUser healthcare_platform_patients? @relation("healthcare_platform_notifications_of_recipient_user_id", fields: [recipient_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  senderUser healthcare_platform_patients? @relation("healthcare_platform_notifications_of_sender_user_id", fields: [sender_user_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_notification_history healthcare_platform_notification_history[]
+  healthcare_platform_escalation_events healthcare_platform_escalation_events[]
+  
+  @@index([sender_user_id])
+  
+  @@index([recipient_user_id, delivery_status], map: "healthcare_platform_notifications_recipient_user_id_de_5c268a89")
+  @@index([organization_id, notification_type], map: "healthcare_platform_notifications_organization_id_noti_f2d090dc")
+  @@index([critical, delivery_status])
+  @@index([escalation_event_id])
+  @@index([created_at])
+}
+
+/// Stores notification delivery preferences for users, roles, or
+/// organizations. Allows opt-in/opt-out management per channel or
+/// notification type. May include snooze/mute/dnd windows and escalation
+/// handling policy. Used by core delivery logic and user/organization
+/// preference UIs.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_notification_preferences {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User that owns this preference set. {@link
+  /// healthcare_platform_patients.id} or other user table as appropriate.
+  user_id String
+  
+  /// Organization scope (for global or role-based prefs). {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String?
+  
+  /// Channel this preference applies to (email, sms, push, in_app, etc).
+  notification_channel String
+  
+  /// Applicable notification type/category (matches notification model).
+  notification_type String
+  
+  /// Whether this preference is enabled.
+  enabled Boolean
+  
+  /// Mute window start (for DND configurations).
+  mute_start DateTime?
+  
+  /// Mute window end (for DND configurations).
+  mute_end DateTime?
+  
+  /// Policy for escalation when not acknowledged (e.g., escalate_after,
+  /// escalate_to_role, escalate_immediate).
+  escalation_policy String?
+  
+  /// Creation time.
+  created_at DateTime
+  
+  /// Last update time.
+  updated_at DateTime
+  
+  /// Soft delete marker.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_patients @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id])
+  
+  @@unique([user_id, notification_channel, notification_type], map: "healthcare_platform_notification_preferences_user_id_n_90363935")
+  @@index([organization_id], map: "healthcare_platform_notification_preferences_organizat_8f59049d")
+}
+
+/// Delivery outcome history for notifications—each record logs an attempt or
+/// event (delivered, failed, retried, bounced, acknowledged, snoozed,
+/// escalated) with full outcome metadata. Enables full audit/trace of
+/// notification lifecycle for compliance or troubleshooting.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_notification_history {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Which notification this history refers to. {@link
+  /// healthcare_platform_notifications.id}.
+  notification_id String
+  
+  /// Delivery event type (delivered, failed, retried, acknowledged, snoozed,
+  /// bounced, escalated).
+  event_type String
+  
+  /// Timestamp of this event.
+  event_time DateTime
+  
+  /// Channel used for this attempt/event.
+  delivery_channel String
+  
+  /// Delivery status after this event.
+  delivery_status String
+  
+  /// Extended info or failure message, payload snapshot, or user agent, etc.
+  details String?
+  
+  /// Record creation time.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  notification healthcare_platform_notifications @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  
+  @@index([notification_id, event_type], map: "healthcare_platform_notification_history_notification__36034d24")
+  @@index([event_time])
+}
+
+/// Records notification or SLA escalations for compliance, regulatory, or
+/// operational attention. Links to source notification, target/handler
+/// role/user, deadlines, outcome and final resolution. Exists independently
+/// as audit/compliance entity searchable by regulatory staff.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_escalation_events {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Source notification that triggered escalation. {@link
+  /// healthcare_platform_notifications.id}.
+  source_notification_id String
+  
+  /// User assigned to handle escalation. {@link
+  /// healthcare_platform_patients.id} or role user.
+  target_user_id String?
+  
+  /// If escalated to a role (compliance, orgAdmin, etc). {@link
+  /// healthcare_platform_roles.id}.
+  target_role_id String?
+  
+  /// Reason/type for escalation (sla_violation, breach, compliance_required,
+  /// ack_timeout, business_policy, system_alert).
+  escalation_type String
+  
+  /// Severity/priority (normal, urgent, critical, info).
+  escalation_level String
+  
+  /// Time by which action/acknowledgement is due.
+  deadline_at DateTime
+  
+  /// Resolution status (open, in_progress, resolved, expired, error,
+  /// dismissed).
+  resolution_status String
+  
+  /// When escalation was resolved/closed.
+  resolution_time DateTime?
+  
+  /// Human-entered disposition, root cause, or audit note.
+  resolution_notes String?
+  
+  /// Record created at.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  sourceNotification healthcare_platform_notifications @relation(fields: [source_notification_id], references: [id], onDelete: Cascade)
+  targetUser healthcare_platform_patients? @relation(fields: [target_user_id], references: [id], onDelete: Cascade)
+  targetRole healthcare_platform_roles? @relation(fields: [target_role_id], references: [id], onDelete: Cascade)
+  
+  @@index([source_notification_id], map: "healthcare_platform_escalation_events_source_notificat_a5bbba8d")
+  @@index([target_user_id, resolution_status], map: "healthcare_platform_escalation_events_target_user_id_r_d4c127a9")
+  @@index([target_role_id, resolution_status], map: "healthcare_platform_escalation_events_target_role_id_r_d97f75c2")
+  @@index([deadline_at])
+}
+
+/// Active and scheduled reminders for users (patients/staff) or system jobs.
+/// Tracks status, delivery schedule, target, message, and outcomes. Supports
+/// organization-level and user-level filtering, and is the source of
+/// appointment, medication, and compliance reminders.
+///
+/// @namespace Notifications
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_reminders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User to receive this reminder. {@link healthcare_platform_patients.id} or
+  /// appropriate user entity.
+  target_user_id String?
+  
+  /// Scope organization for the reminder. {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String?
+  
+  /// Class/category (appointment, medication, task, compliance, followup,
+  /// checkin, survey, job, etc).
+  reminder_type String
+  
+  /// Reminder content payload (displayed to recipient, may be templated).
+  reminder_message String
+  
+  /// When this reminder is set to deliver.
+  scheduled_for DateTime
+  
+  /// Current delivery status (pending, sent, snoozed, failed, acknowledged,
+  /// expired, cancelled).
+  status String
+  
+  /// If delivered, time of delivery.
+  delivered_at DateTime?
+  
+  /// If acknowledged by user, time acknowledged.
+  acknowledged_at DateTime?
+  
+  /// If snoozed, when to re-deliver.
+  snoozed_until DateTime?
+  
+  /// If failed, why.
+  failure_reason String?
+  
+  /// Created at timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete marker.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  targetUser healthcare_platform_patients? @relation(fields: [target_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([target_user_id, status])
+  @@index([organization_id])
+  @@index([scheduled_for])
+}

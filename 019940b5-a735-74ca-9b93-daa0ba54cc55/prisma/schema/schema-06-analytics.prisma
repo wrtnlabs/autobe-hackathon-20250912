@@ -1,0 +1,51 @@
+/// Aggregated analytical data for event registrations, including total
+/// sign-ups, waitlist size, and category-wise sign-up counts for workshops,
+/// seminars, social, and networking events. This table captures temporal
+/// snapshots of event metrics that support reporting, trend analysis, and
+/// decision making by organizers and admins. It references the base event to
+/// link metrics contextually.
+///
+/// @namespace Analytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_analytics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged event's {@link event_registration_events.id}.
+  event_registration_event_id String
+  
+  /// Total confirmed event sign-ups at the snapshot time.
+  total_sign_ups Int
+  
+  /// Number of users currently on the waitlist at the snapshot time.
+  waitlist_length Int
+  
+  /// Number of sign-ups to events categorized as 'workshop' at this snapshot.
+  popularity_category_workshop Int
+  
+  /// Number of sign-ups to events categorized as 'seminar' at this snapshot.
+  popularity_category_seminar Int
+  
+  /// Number of sign-ups to events categorized as 'social' at this snapshot.
+  popularity_category_social Int
+  
+  /// Number of sign-ups to events categorized as 'networking' at this snapshot.
+  popularity_category_networking Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last updated timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  eventRegistrationEvent event_registration_events @relation(fields: [event_registration_event_id], references: [id], onDelete: Cascade)
+  
+  @@unique([event_registration_event_id, created_at], map: "event_registration_event_analytics_event_registration__a60e2974")
+  @@index([total_sign_ups, waitlist_length], map: "event_registration_event_analytics_total_sign_ups_wait_807e9448")
+}

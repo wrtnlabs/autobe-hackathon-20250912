@@ -1,0 +1,184 @@
+/// Project entity representing distinct projects for task grouping and
+/// management within the system. Projects have unique codes, descriptive
+/// names, owners, and standard temporal audit fields. They act as primary
+/// containers for related boards and tasks, supporting structured project
+/// workflows. References owners from existing user tables via foreign keys
+/// and supports soft deletion with deletion timestamps.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_projects {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owner user reference. {@link task_management_tpm.id} or equivalent user
+  /// table.
+  owner_id String
+  
+  /// Unique code identifier for the project.
+  code String
+  
+  /// Descriptive name of the project.
+  name String
+  
+  /// Optional detailed description of the project.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Optional timestamp indicating soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  owner task_management_tpm @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  
+  task_management_tasks task_management_tasks[]
+  task_management_boards task_management_boards[]
+  task_management_project_members task_management_project_members[]
+  
+  @@unique([code])
+  @@index([owner_id, created_at])
+}
+
+/// Board entity representing logical groupings of tasks within projects.
+/// Boards have unique codes, descriptive names, project associations,
+/// owners, and temporal audit fields. They enable task organization and
+/// management distinct from projects and support soft deletion.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_boards {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated project reference. {@link task_management_projects.id}.
+  project_id String
+  
+  /// Board owner user reference. {@link task_management_tpm.id} or equivalent
+  /// user table.
+  owner_id String
+  
+  /// Unique board code within the project.
+  code String
+  
+  /// Descriptive name of the board.
+  name String
+  
+  /// Optional detailed description of the board.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Optional timestamp indicating soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project task_management_projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  owner task_management_tpm @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  
+  task_management_tasks task_management_tasks[]
+  task_management_board_members task_management_board_members[]
+  
+  @@index([owner_id])
+  
+  @@unique([code])
+  @@index([project_id, owner_id])
+}
+
+/// Membership entity connecting users to boards to represent membership
+/// associations. Supports multiple members per board, with unique
+/// constraints to prevent duplicate memberships. Includes references to user
+/// and board entities, and temporal audit fields for membership tracking.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_board_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated board reference. {@link task_management_boards.id}.
+  board_id String
+  
+  /// Member user reference. {@link task_management_tpm.id} or equivalent user
+  /// table.
+  user_id String
+  
+  /// Creation timestamp of membership record.
+  created_at DateTime
+  
+  /// Last update timestamp of membership record.
+  updated_at DateTime
+  
+  /// Optional timestamp indicating soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  board task_management_boards @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  user task_management_tpm @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([board_id, user_id])
+  @@index([user_id])
+}
+
+/// Membership entity connecting users to projects with membership roles and
+/// assignment tracking. Ensures unique membership via composite keys.
+/// Includes references to projects and users, and audit timestamps for
+/// membership lifecycle management.
+///
+/// @namespace Projects
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_project_members {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated project reference. {@link task_management_projects.id}.
+  project_id String
+  
+  /// Member user reference. {@link task_management_tpm.id} or equivalent user
+  /// table.
+  user_id String
+  
+  /// Creation timestamp of membership record.
+  created_at DateTime
+  
+  /// Last update timestamp of membership record.
+  updated_at DateTime
+  
+  /// Optional timestamp indicating soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  project task_management_projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user task_management_tpm @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([project_id, user_id])
+  @@index([user_id])
+}

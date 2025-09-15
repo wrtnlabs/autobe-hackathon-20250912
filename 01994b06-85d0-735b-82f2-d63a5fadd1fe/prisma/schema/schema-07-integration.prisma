@@ -1,0 +1,493 @@
+/// Defines external EMR/EHR connector adapters (e.g. Epic, Cerner,
+/// AllScripts) configured for each organization. Captures connection
+/// metadata, status, and mapping linkage to supported integration types.
+/// Separation at org level ensures compliance and audit boundaries. Related
+/// to {@link healthcare_platform_organizations.id}.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_external_emr_connectors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Vendor/platform identifier (e.g. 'Epic', 'Cerner', 'AllScripts', or
+  /// custom type).
+  connector_type String
+  
+  /// Connection URI or endpoint for the EMR/EHR API.
+  connection_uri String
+  
+  /// Operational status of the connector (e.g. 'active', 'pending', 'failed',
+  /// 'disabled').
+  status String
+  
+  /// Time of most recent successful data sync through this connector.
+  last_sync_at DateTime?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([healthcare_platform_organization_id, connector_type], map: "healthcare_platform_external_emr_connectors_healthcare_5fb306b5")
+  @@index([status])
+}
+
+/// Configuration per organization for integrated laboratory providers (e.g.,
+/// LabCorp, Quest). Contains connection info, provider code, supported
+/// order/result formats, and operational status. Related to {@link
+/// healthcare_platform_organizations.id}. Enables role/tenant isolation for
+/// inbound and outbound lab workflows.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_lab_integrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// External lab provider code (e.g., 'LabCorp', 'Quest', custom).
+  lab_vendor_code String
+  
+  /// Primary endpoint URI for lab system API.
+  connection_uri String
+  
+  /// Supported message/document type (e.g., HL7, FHIR, C-CDA).
+  supported_message_format String
+  
+  /// Integration status for this lab provider (e.g., 'active', 'disabled',
+  /// 'pending').
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_lab_results healthcare_platform_lab_results[]
+  healthcare_platform_lab_order_transactions healthcare_platform_lab_order_transactions[]
+  healthcare_platform_lab_result_imports healthcare_platform_lab_result_imports[]
+  
+  @@unique([healthcare_platform_organization_id, lab_vendor_code], map: "healthcare_platform_lab_integrations_healthcare_platfo_9fec95b3")
+  @@index([status])
+}
+
+/// Tracks all outbound lab order transmissions to external providers, mapped
+/// to the originating organization and optionally linked to the EHR
+/// encounter or lab order. Ensures trace and audit trail for each order,
+/// with status and error fields for sync result. Related to {@link
+/// healthcare_platform_organizations.id}.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_lab_order_transactions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization sending the lab order {@link
+  /// healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Lab integration used for transaction {@link
+  /// healthcare_platform_lab_integrations.id}.
+  lab_integration_id String
+  
+  /// External/lab system provided order ID for reconciliation.
+  external_lab_order_id String?
+  
+  /// Transmission status (e.g., 'created','sent','acknowledged','failed').
+  status String
+  
+  /// Additional information or error detail regarding transmission/processing
+  /// status.
+  status_message String?
+  
+  /// Time the order was created within healthcarePlatform.
+  requested_at DateTime
+  
+  /// Timestamp lab order was sent to external system.
+  transmitted_at DateTime?
+  
+  /// Timestamp for external system acknowledgement, if received.
+  acknowledged_at DateTime?
+  
+  /// Creation timestamp (audit trail).
+  created_at DateTime
+  
+  /// Last transaction update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  labIntegration healthcare_platform_lab_integrations @relation(fields: [lab_integration_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_lab_order_transactions_healthcare__b10987bd")
+  @@index([lab_integration_id], map: "healthcare_platform_lab_order_transactions_lab_integra_a44f3ce4")
+  
+  @@index([status])
+}
+
+/// Captures all inbound external lab result imports, per organization and
+/// lab provider. Provides immutable audit trail of external payload, parsing
+/// status, and linkages to core clinical data. Related to {@link
+/// healthcare_platform_organizations.id}, links to originating lab
+/// integration.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_lab_result_imports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Receiving organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Lab integration related to import {@link
+  /// healthcare_platform_lab_integrations.id}.
+  lab_integration_id String
+  
+  /// URI or blob reference to the raw inbound result (for
+  /// audit/troubleshooting).
+  raw_payload_reference String
+  
+  /// Parsing outcome (e.g., 'parsed','error','partial').
+  parsed_status String
+  
+  /// Parsing detail, including error context if any.
+  parsed_message String?
+  
+  /// Timestamp of import attempt.
+  imported_at DateTime
+  
+  /// Entry creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  labIntegration healthcare_platform_lab_integrations @relation(fields: [lab_integration_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_lab_result_imports_healthcare_plat_a8e2ebb4")
+  @@index([lab_integration_id])
+  
+  @@index([parsed_status])
+}
+
+/// Defines ePrescribing/pharmacy network integrations for each organization.
+/// Includes API endpoint, provider/vendor identifiers, supported protocols,
+/// and status tracking. Related to {@link
+/// healthcare_platform_organizations.id}. Enables role/tenant isolation for
+/// eRx messaging.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_pharmacy_integrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Identifier of external pharmacy network/provider (e.g., 'Surescripts',
+  /// 'NCPDP', custom).
+  pharmacy_vendor_code String
+  
+  /// eRx API endpoint URI.
+  connection_uri String
+  
+  /// Communication protocol or standard supported (e.g., 'NCPDP', 'FHIR', HL7
+  /// batch/message, etc.).
+  supported_protocol String
+  
+  /// Integration status (e.g., 'active','pending','failed').
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_pharmacy_transactions healthcare_platform_pharmacy_transactions[]
+  
+  @@unique([healthcare_platform_organization_id, pharmacy_vendor_code], map: "healthcare_platform_pharmacy_integrations_healthcare_p_33ecebf0")
+  @@index([status])
+}
+
+/// Tracks all outbound and inbound ePrescription transactions with external
+/// pharmacy networks for audit and traceability. Links to the originating
+/// organization and configured pharmacy integration. Stores transaction
+/// payload reference, status, and errors. Related to {@link
+/// healthcare_platform_organizations.id}.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_pharmacy_transactions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Pharmacy integration for the transaction {@link
+  /// healthcare_platform_pharmacy_integrations.id}.
+  pharmacy_integration_id String
+  
+  /// Pharmacy operation performed (e.g., 'new eRx', 'refill', 'cancel',
+  /// 'status_query').
+  transaction_type String
+  
+  /// Identifier assigned by external pharmacy network/system.
+  external_transaction_id String?
+  
+  /// Transaction status ('pending', 'sent', 'acknowledged', 'error', etc.).
+  status String
+  
+  /// Additional message or error info associated with transaction.
+  status_message String?
+  
+  /// Pointer/URI to stored payload (for troubleshooting/audit).
+  payload_reference String?
+  
+  /// Timestamp when the transaction was triggered.
+  requested_at DateTime
+  
+  /// Timestamp when sent to external network.
+  transmitted_at DateTime?
+  
+  /// Timestamp of acknowledgement from pharmacy/external system.
+  acknowledged_at DateTime?
+  
+  /// Entry creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  pharmacyIntegration healthcare_platform_pharmacy_integrations @relation(fields: [pharmacy_integration_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_pharmacy_transactions_healthcare_p_d8f9673c")
+  @@index([pharmacy_integration_id], map: "healthcare_platform_pharmacy_transactions_pharmacy_int_abbd76c2")
+  
+  @@index([status])
+}
+
+/// Per-organization insurance platform API configuration for real-time
+/// eligibility verification and claims. Stores API URIs, vendor identifiers,
+/// credential linkage, supported transaction types, and status. Related to
+/// {@link healthcare_platform_organizations.id}. Enables strict role/tenant
+/// boundary for payer connectivity.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_insurance_api_integrations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Insurance payer or clearinghouse code (e.g., 'UHC', 'Aetna', 'Humana').
+  insurance_vendor_code String
+  
+  /// API endpoint for real-time eligibility or claim submission.
+  connection_uri String
+  
+  /// Comma-separated supported transaction types (e.g.,
+  /// 'eligibility,claims,realtime').
+  supported_transaction_types String
+  
+  /// Connector status (e.g. 'active','test','failed').
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([healthcare_platform_organization_id, insurance_vendor_code], map: "healthcare_platform_insurance_api_integrations_healthc_a7904659")
+  @@index([status])
+}
+
+/// Describes configured ingestion routes for medical device data (e.g.,
+/// monitors, diagnostic equipment) per organization. Captures ingestion
+/// endpoint, device type, supported protocol, and operational status.
+/// Related to {@link healthcare_platform_organizations.id}.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_device_data_ingestions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Device/system type for ingestion (e.g., 'vital_monitor', 'infusion_pump',
+  /// 'ecg').
+  device_type String
+  
+  /// Ingestion endpoint for the device feed/API.
+  ingest_endpoint_uri String
+  
+  /// Communication/protocol standard supported (e.g. 'HL7', 'FHIR', 'custom').
+  supported_protocol String
+  
+  /// Ingestion route status (e.g. 'ready','pending','error').
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([healthcare_platform_organization_id, device_type], map: "healthcare_platform_device_data_ingestions_healthcare__04679bd4")
+  @@index([status])
+}
+
+/// General-purpose log for all integration-related successes, errors, or
+/// status events. Can reference any integration/transaction as needed (by
+/// uuid and metadata). Used for audit, troubleshooting, and compliance.
+/// Queryable by org, integration type, and time window. Related to {@link
+/// healthcare_platform_organizations.id}.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_integration_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization for which event occurred. {@link
+  /// healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Type of integration for this event (e.g., 'emr', 'lab', 'pharmacy',
+  /// 'insurance', 'device').
+  integration_type String
+  
+  /// Related integration transaction or object (nullable for generic logs).
+  referenced_transaction_id String?
+  
+  /// Event status (e.g., 'success','failure','timeout','retry').
+  event_status String
+  
+  /// Short status/error code (e.g., 'E_CONN', 'E_PARSE', 'OK').
+  event_code String
+  
+  /// Verbose event description, error details, or stack trace (if any).
+  event_message String?
+  
+  /// Event occurrence timestamp.
+  occurred_at DateTime
+  
+  /// Entry creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_integration_logs_healthcare_platfo_09978d5e")
+  
+  @@index([event_status])
+  @@index([integration_type, occurred_at], map: "healthcare_platform_integration_logs_integration_type__9d3f9d5c")
+}

@@ -1,0 +1,203 @@
+/// Shopping lists created by users for meal planning and grocery shopping,
+/// linking to the owning user and containing multiple items. Supports soft
+/// deletion and audit timestamps for lifecycle management.
+///
+/// @namespace ShoppingListsCostTracking
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_shopping_lists {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning user who created the shopping list. {@link
+  /// recipe_sharing_regularusers.id}
+  user_id String
+  
+  /// User-defined name of the shopping list.
+  name String
+  
+  /// Timestamp when the shopping list was created.
+  created_at DateTime
+  
+  /// Timestamp of last update to the shopping list.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  recipe_sharing_shopping_list_items recipe_sharing_shopping_list_items[]
+  
+  @@unique([user_id, name])
+  @@index([created_at, user_id])
+}
+
+/// Items included in a shopping list, typically representing ingredients and
+/// quantities needed. Managed as subsidiary to shopping lists for CRUD
+/// consistency.
+///
+/// @namespace ShoppingListsCostTracking
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_shopping_list_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent shopping list. {@link recipe_sharing_shopping_lists.id}
+  shopping_list_id String
+  
+  /// Referenced ingredient. {@link recipe_sharing_ingredients.id}
+  ingredient_id String
+  
+  /// Quantity of the ingredient to purchase.
+  quantity Float
+  
+  /// Unit of measure for the quantity, e.g., grams, cups.
+  unit String
+  
+  /// Optional notes such as brand preference or substitution hints.
+  notes String?
+  
+  /// Timestamp when the item was added to the shopping list.
+  created_at DateTime
+  
+  /// Timestamp when the item was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  shoppingList recipe_sharing_shopping_lists @relation(fields: [shopping_list_id], references: [id], onDelete: Cascade)
+  ingredient recipe_sharing_ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+  
+  @@index([shopping_list_id])
+  
+  @@index([ingredient_id])
+}
+
+/// Grocery stores where ingredient prices and availability are tracked.
+/// Maintains store contact and web information for integration.
+///
+/// @namespace ShoppingListsCostTracking
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_grocery_stores {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Store name.
+  name String
+  
+  /// Physical address of the grocery store.
+  address String?
+  
+  /// Contact phone number for the store.
+  phone String?
+  
+  /// Store website URL.
+  website_url String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  recipe_sharing_store_ingredient_prices recipe_sharing_store_ingredient_prices[]
+  
+  @@unique([name])
+}
+
+/// Price and availability information of ingredients at specific grocery
+/// stores. Supports audit timestamps for tracking updates.
+///
+/// @namespace ShoppingListsCostTracking
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_store_ingredient_prices {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced grocery store. {@link recipe_sharing_grocery_stores.id}
+  grocery_store_id String
+  
+  /// Referenced ingredient. {@link recipe_sharing_ingredients.id}
+  ingredient_id String
+  
+  /// Price of ingredient at the store in local currency.
+  price Float
+  
+  /// Availability status of the ingredient at the store.
+  available Boolean
+  
+  /// Timestamp of last price and availability update.
+  last_updated DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  groceryStore recipe_sharing_grocery_stores @relation(fields: [grocery_store_id], references: [id], onDelete: Cascade)
+  ingredient recipe_sharing_ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+  
+  recipe_sharing_price_update_logs recipe_sharing_price_update_logs[]
+  
+  @@index([ingredient_id])
+  
+  @@unique([grocery_store_id, ingredient_id], map: "recipe_sharing_store_ingredient_prices_grocery_store_i_0447ef4b")
+  @@index([available])
+}
+
+/// Historical logs of ingredient price changes at grocery stores for audit
+/// and trend analysis. Append-only with timestamped entries.
+///
+/// @namespace ShoppingListsCostTracking
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_price_update_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced price record. {@link recipe_sharing_store_ingredient_prices.id}
+  store_ingredient_price_id String
+  
+  /// Previous price before update.
+  price_before Float
+  
+  /// New price after update.
+  price_after Float
+  
+  /// Timestamp of price update.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  storeIngredientPrice recipe_sharing_store_ingredient_prices @relation(fields: [store_ingredient_price_id], references: [id], onDelete: Cascade)
+  
+  @@index([store_ingredient_price_id])
+  
+  @@index([updated_at])
+}

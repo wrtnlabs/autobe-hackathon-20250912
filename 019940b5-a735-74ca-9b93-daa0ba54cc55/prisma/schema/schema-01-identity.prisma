@@ -1,0 +1,142 @@
+/// Regular users who register with email and password, including profile
+/// information. They must verify email before signing up for events. Holds
+/// authentication-related data such as email (unique) and password_hash,
+/// plus personal details like full name, phone number, and profile picture
+/// URL. Timestamps track creation and updates for audit purposes.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_regular_users {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User's unique email address used for login authentication.
+  email String
+  
+  /// Hashed password for secure authentication; never store plain passwords.
+  password_hash String
+  
+  /// User's full legal or preferred name.
+  full_name String
+  
+  /// User's phone number, optional but useful for contacting.
+  phone_number String?
+  
+  /// URL of user's profile picture, optional.
+  profile_picture_url String?
+  
+  /// Flag indicating if user has verified their email address.
+  email_verified Boolean
+  
+  /// Timestamp when the user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the user record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  event_registration_email_verification_tokens event_registration_email_verification_tokens[]
+  event_registration_event_attendees event_registration_event_attendees[]
+  event_registration_event_waitlists event_registration_event_waitlists[]
+  event_registration_notifications event_registration_notifications[]
+  event_registration_organizer_requests event_registration_organizer_requests[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Event organizers who can create and manage their own events after admin
+/// approval. Stores authentication credentials plus contact details and
+/// profile information such as full name, phone number, and profile picture
+/// URL. Email must be unique. Tracks email verification status and
+/// timestamps for creation and updates.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_organizers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Event organizer's unique email address for authentication.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Full name of the event organizer.
+  full_name String
+  
+  /// Contact phone number of the event organizer, optional.
+  phone_number String?
+  
+  /// URL for profile picture of the organizer, optional.
+  profile_picture_url String?
+  
+  /// Indicator whether the organizer has verified their email.
+  email_verified Boolean
+  
+  /// Timestamp when the organizer record was created.
+  created_at DateTime
+  
+  /// Timestamp when the organizer record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Administrators with global system privileges capable of managing users,
+/// events, and approving organizer requests. Holds unique email
+/// authentication data and profile information. Tracks email verification
+/// and audit timestamps indicating creation and last update.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_admins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Administrator's unique email address for login.
+  email String
+  
+  /// Hashed password for authentication security.
+  password_hash String
+  
+  /// Admin's full name for identification.
+  full_name String
+  
+  /// Optional phone number for admin contact.
+  phone_number String?
+  
+  /// Optional profile picture URL for admin users.
+  profile_picture_url String?
+  
+  /// Flag indicating if admin's email has been verified.
+  email_verified Boolean
+  
+  /// Record creation timestamp for audit purposes.
+  created_at DateTime
+  
+  /// Record last update timestamp for audit purposes.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}

@@ -1,0 +1,42 @@
+/// Core entity representing regular users who authenticate primarily via
+/// Snapchat social login. Stores key user identity and
+/// authentication-related information. This model maintains user
+/// authentication state and supports the social login mechanism for regular
+/// users. Auditing fields track creation and update timestamps.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_regular_users {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifier provided by Snapchat for social login authentication.
+  social_login_id String
+  
+  /// User's display name or nickname.
+  nickname String
+  
+  /// Optional user profile image URL.
+  profile_image_uri String?
+  
+  /// Timestamp when the user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the user record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  chat_app_authentication_sessions chat_app_authentication_sessions[]
+  chat_app_notifications chat_app_notifications[]
+  chat_app_group_memberships chat_app_group_memberships[]
+  chat_app_messages_of_sender_id chat_app_messages[] @relation("chat_app_messages_of_sender_id")
+  chat_app_messages_of_recipient_id chat_app_messages[] @relation("chat_app_messages_of_recipient_id")
+  
+  @@unique([social_login_id])
+  @@index([nickname, created_at])
+}

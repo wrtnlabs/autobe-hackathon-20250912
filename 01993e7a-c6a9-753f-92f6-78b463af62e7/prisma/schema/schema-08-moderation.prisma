@@ -1,0 +1,145 @@
+/// Queue for flags on recipe reviews submitted by users for moderation
+/// processing. Supports workflow status tracking, reporter identification,
+/// and reason for flagging. Enables moderators to triage and respond to user
+/// reports of inappropriate content.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_flag_queues {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The flagged review's identifier. {@link recipe_sharing_reviews.id}
+  recipe_sharing_review_id String?
+  
+  /// Identifier of the user who reported the content. {@link
+  /// recipe_sharing_regularusers.id} or {@link recipe_sharing_premiumusers.id}
+  reported_by_user_id String
+  
+  /// Reason for flagging such as spam, offensive language, or personal attacks.
+  flag_reason String
+  
+  /// Current review flag status: pending, in_review, resolved, or dismissed.
+  status String
+  
+  /// Flag creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp when the flag record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if the flag entry is removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  recipeSharingReview recipe_sharing_reviews? @relation(fields: [recipe_sharing_review_id], references: [id], onDelete: Cascade)
+  reporter recipe_sharing_regularusers @relation(fields: [reported_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([reported_by_user_id])
+  
+  @@unique([recipe_sharing_review_id, reported_by_user_id], map: "recipe_sharing_flag_queues_recipe_sharing_review_id_re_c645fec8")
+  @@index([status, updated_at])
+}
+
+/// Audit records of moderator operations on flagged content and category
+/// approvals. Each action records moderator identity, action type, target
+/// entity, timestamp, and optional comments to maintain accountability and
+/// history.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_moderator_actions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Identifier of moderator performing the action. {@link
+  /// recipe_sharing_moderators.id}
+  moderator_id String
+  
+  /// The moderation action type such as hide_review, unhide_review,
+  /// approve_category, reject_category.
+  action_type String
+  
+  /// ID of the entity affected by the moderator action (review, category
+  /// approval, etc.).
+  target_id String
+  
+  /// Timestamp when the moderation action was performed.
+  action_timestamp DateTime
+  
+  /// Optional moderator comments on the action taken.
+  comments String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion time if the record is removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  moderator recipe_sharing_moderators @relation(fields: [moderator_id], references: [id], onDelete: Cascade)
+  
+  @@index([moderator_id, action_timestamp], map: "recipe_sharing_moderator_actions_moderator_id_action_t_ba468c1f")
+}
+
+/// Tracks user-submitted categories or tags pending moderator approval.
+/// Includes submitting user reference, category name, approval status,
+/// timestamps for submission and review, and auditing fields.
+///
+/// @namespace Moderation
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_category_approvals {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The user who submitted the category or tag. {@link
+  /// recipe_sharing_regularusers.id} or {@link recipe_sharing_premiumusers.id}
+  submitted_by_user_id String
+  
+  /// Name of the category or tag submitted by the user for approval.
+  category_name String
+  
+  /// Approval status of the submitted category: pending, approved, rejected.
+  approval_status String
+  
+  /// Timestamp when the submission was created.
+  submitted_at DateTime
+  
+  /// Timestamp when the category submission was reviewed by a moderator.
+  reviewed_at DateTime?
+  
+  /// Record creation time.
+  created_at DateTime
+  
+  /// Record update time.
+  updated_at DateTime
+  
+  /// Soft deletion time if record was removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  submitter recipe_sharing_regularusers @relation(fields: [submitted_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([submitted_by_user_id])
+  
+  @@unique([category_name, submitted_by_user_id], map: "recipe_sharing_category_approvals_category_name_submit_858abb9c")
+  @@index([approval_status, submitted_at], map: "recipe_sharing_category_approvals_approval_status_subm_9b854a89")
+}

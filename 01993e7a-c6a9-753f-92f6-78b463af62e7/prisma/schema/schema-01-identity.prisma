@@ -1,0 +1,140 @@
+/// Stores data for regular users of the recipe sharing platform. Includes
+/// identity, authentication details, and timestamps. Used for login and
+/// role-based access. No direct foreign keys. Supports soft deletion and
+/// audit timestamps.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_regularusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User's unique email address used for login and communication.
+  email String
+  
+  /// Hashed password for user authentication. Stored securely, never plain
+  /// text.
+  password_hash String
+  
+  /// Unique username chosen by the user for platform identification.
+  username String
+  
+  /// Timestamp when the user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the user account was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  recipe_sharing_recipes recipe_sharing_recipes[]
+  recipe_sharing_user_tags recipe_sharing_user_tags[]
+  recipe_sharing_user_followers_of_follower_user_id recipe_sharing_user_followers[] @relation("recipe_sharing_user_followers_of_follower_user_id")
+  recipe_sharing_user_followers_of_followee_user_id recipe_sharing_user_followers[] @relation("recipe_sharing_user_followers_of_followee_user_id")
+  recipe_sharing_personalized_feeds_of_user_id recipe_sharing_personalized_feeds[] @relation("recipe_sharing_personalized_feeds_of_user_id")
+  recipe_sharing_personalized_feeds_of_originator_user_id recipe_sharing_personalized_feeds[] @relation("recipe_sharing_personalized_feeds_of_originator_user_id")
+  recipe_sharing_ratings recipe_sharing_ratings[]
+  recipe_sharing_reviews recipe_sharing_reviews[]
+  recipe_sharing_review_votes recipe_sharing_review_votes[]
+  recipe_sharing_review_flags recipe_sharing_review_flags[]
+  recipe_sharing_collections recipe_sharing_collections[]
+  recipe_sharing_meal_plans recipe_sharing_meal_plans[]
+  recipe_sharing_recurring_meal_plans recipe_sharing_recurring_meal_plans[]
+  recipe_sharing_shopping_lists recipe_sharing_shopping_lists[]
+  recipe_sharing_flag_queues recipe_sharing_flag_queues[]
+  recipe_sharing_category_approvals recipe_sharing_category_approvals[]
+  
+  @@unique([email])
+  @@unique([username])
+}
+
+/// Stores data for premium users with enhanced access to advanced meal
+/// planning and cost tracking features. Extends regular user data with
+/// premium account flags and timestamps, supporting authentication and soft
+/// deletion.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_premiumusers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Premium user's unique email address for login and communication.
+  email String
+  
+  /// Hashed password for authentication. Stored securely.
+  password_hash String
+  
+  /// Unique username for premium user identification.
+  username String
+  
+  /// Timestamp marking when the user became premium. Used to track
+  /// subscription duration.
+  premium_since DateTime
+  
+  /// Timestamp when the premium user record was created.
+  created_at DateTime
+  
+  /// Timestamp when the premium user record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion of premium user account.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@unique([username])
+}
+
+/// Stores moderator user data responsible for content moderation, flag
+/// reviews, and category approvals. Identity and authentication details with
+/// audit timestamps and soft delete support.
+///
+/// @namespace Identity
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_moderators {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Moderator's unique email address used for login.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// Unique username for moderator identification.
+  username String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Timestamp for last update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  recipe_sharing_moderation_logs recipe_sharing_moderation_logs[]
+  recipe_sharing_moderator_actions recipe_sharing_moderator_actions[]
+  
+  @@unique([email])
+  @@unique([username])
+}

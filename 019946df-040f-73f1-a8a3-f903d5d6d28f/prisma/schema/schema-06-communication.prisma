@@ -1,0 +1,347 @@
+/// This model represents discussion forums within the enterprise LMS. Forums
+/// are tenant-scoped containers for discussion threads. Each forum has an
+/// owner (usually the organization or department admin) and supports soft
+/// deletes for archival. Forums enable structured conversations and
+/// community engagement within tenant boundaries.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_forums {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the forum. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Owner user of the forum (organization/department admin). {@link
+  /// enterprise_lms_organizationadmin.id}
+  owner_id String
+  
+  /// Name of the forum.
+  name String
+  
+  /// Optional description of the forum.
+  description String?
+  
+  /// Timestamp when the forum was created.
+  created_at DateTime
+  
+  /// Timestamp when the forum was last updated.
+  updated_at DateTime
+  
+  /// Optional timestamp for soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  owner enterprise_lms_organizationadmin @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_forum_threads enterprise_lms_forum_threads[]
+  
+  @@unique([tenant_id, name])
+  @@index([owner_id, created_at])
+}
+
+/// Represents discussion threads inside a forum. Threads belong to a forum
+/// and have an author. Threads support soft deletion and track their
+/// creation and update timestamps. This entity enables discussion grouping
+/// under forums.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_forum_threads {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Forum to which this thread belongs. {@link enterprise_lms_forums.id}
+  forum_id String
+  
+  /// User who created the thread (content creator/instructor). {@link
+  /// enterprise_lms_contentcreatorinstructor.id}
+  author_id String
+  
+  /// Title of the thread.
+  title String
+  
+  /// Initial post content or thread description.
+  body String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  forum enterprise_lms_forums @relation(fields: [forum_id], references: [id], onDelete: Cascade)
+  author enterprise_lms_contentcreatorinstructor @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_forum_posts enterprise_lms_forum_posts[]
+  
+  @@unique([forum_id, title])
+  @@index([author_id, created_at])
+}
+
+/// Individual posts within a forum thread. Posts contain the message
+/// content, author information, and support soft deletion. Posts belong to a
+/// forum thread and are ordered by creation time. Enables detailed
+/// conversations at the post level.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_forum_posts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Forum thread containing this post. {@link enterprise_lms_forum_threads.id}
+  thread_id String
+  
+  /// User who authored the post (corporate learner or instructor). {@link
+  /// enterprise_lms_corporatelearner.id}
+  author_id String
+  
+  /// Content body of the post.
+  body String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  thread enterprise_lms_forum_threads @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author enterprise_lms_corporatelearner @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  
+  @@index([author_id])
+  
+  @@index([thread_id, created_at])
+}
+
+/// Direct private messages exchanged between users. Each message has a
+/// sender, recipient, content, timestamp, and read status. Supports soft
+/// deletion to allow recovery and audit. Messages are tenant-scoped to
+/// ensure strict multi-tenant isolation.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_direct_messages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the message. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// User who sent the message (any user role). {@link
+  /// enterprise_lms_corporatelearner.id}
+  sender_id String
+  
+  /// Message recipient user. {@link enterprise_lms_corporatelearner.id}
+  recipient_id String
+  
+  /// Message content.
+  body String
+  
+  /// Timestamp when message was sent.
+  sent_at DateTime
+  
+  /// Timestamp when message was read.
+  read_at DateTime?
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  sender enterprise_lms_corporatelearner @relation("enterprise_lms_direct_messages_of_sender_id", fields: [sender_id], references: [id], onDelete: Cascade)
+  recipient enterprise_lms_corporatelearner @relation("enterprise_lms_direct_messages_of_recipient_id", fields: [recipient_id], references: [id], onDelete: Cascade)
+  
+  @@index([sender_id])
+  @@index([recipient_id])
+  
+  @@index([tenant_id, sender_id, recipient_id, sent_at], map: "enterprise_lms_direct_messages_tenant_id_sender_id_rec_9ba7c4e5")
+}
+
+/// Scheduled virtual classroom sessions for live training. Sessions belong
+/// to a tenant and are created by an instructor. Each session has a title,
+/// description, start and end timestamps, and soft delete support. Enables
+/// live, synchronous instruction within the enterprise LMS.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_virtual_classrooms {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the virtual classroom. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Session instructor (content creator/instructor). {@link
+  /// enterprise_lms_contentcreatorinstructor.id}
+  instructor_id String
+  
+  /// Title of the virtual classroom session.
+  title String
+  
+  /// Optional description of the session.
+  description String?
+  
+  /// Start timestamp of the session.
+  start_at DateTime
+  
+  /// End timestamp of the session.
+  end_at DateTime
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  instructor enterprise_lms_contentcreatorinstructor @relation(fields: [instructor_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, title, start_at])
+  @@index([instructor_id, start_at])
+}
+
+/// Group project entities representing collaborative workspaces within the
+/// LMS. Projects belong to a tenant and may be owned by single or multiple
+/// users. Each project has a title, description, start and end dates, and
+/// soft delete support. Enables teamwork and collaboration across enterprise
+/// learners.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_group_projects {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the project. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Owner user of the project (corporate learner or instructor). {@link
+  /// enterprise_lms_corporatelearner.id}
+  owner_id String
+  
+  /// Title of the group project.
+  title String
+  
+  /// Optional description of the project.
+  description String?
+  
+  /// Project start timestamp.
+  start_at DateTime
+  
+  /// Project end timestamp.
+  end_at DateTime
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  owner enterprise_lms_corporatelearner @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, title])
+  @@index([owner_id, start_at])
+}
+
+/// Announcement messages sent to groups within tenants. Announcements have a
+/// title, body, target audience description, and status tracking including
+/// delivery receipts. They support soft deletion and timestamps for creation
+/// and update. Announcements help communicate important information across
+/// the enterprise LMS ecosystem.
+///
+/// @namespace Communication
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_announcements {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant owning the announcement. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// User who created the announcement (organization/department admin). {@link
+  /// enterprise_lms_organizationadmin.id}
+  creator_id String
+  
+  /// Title of the announcement.
+  title String
+  
+  /// Content body of the announcement.
+  body String
+  
+  /// Description of the target audience for the announcement.
+  target_audience_description String?
+  
+  /// Current status of the announcement, e.g. 'draft', 'sent', 'archived'.
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  creator enterprise_lms_organizationadmin @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, title])
+  @@index([creator_id, status])
+}

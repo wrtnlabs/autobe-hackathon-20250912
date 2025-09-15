@@ -1,0 +1,97 @@
+/// Table storing detailed data about individual events including name, date,
+/// location, capacity, description, price, category reference, status, and
+/// temporal fields. Managed by event organizers and admins. Supports soft
+/// deletion and state tracking via timestamps.
+///
+/// @namespace Events
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_events {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Foreign key to the event category {@link
+  /// event_registration_event_categories.id}.
+  event_category_id String
+  
+  /// The name of the event.
+  name String
+  
+  /// The scheduled start date and time of the event in ISO 8601 format.
+  date DateTime
+  
+  /// The location where the event will take place.
+  location String
+  
+  /// The maximum number of attendees allowed for the event.
+  capacity Int
+  
+  /// Detailed description of the event; optional field.
+  description String?
+  
+  /// The ticket price for entry; zero indicates a free event.
+  ticket_price Float
+  
+  /// The current status of the event: scheduled, cancelled, or completed.
+  status String
+  
+  /// Timestamp when the event record was created.
+  created_at DateTime
+  
+  /// Timestamp when the event record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if the event is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  eventCategory event_registration_event_categories @relation(fields: [event_category_id], references: [id], onDelete: Cascade)
+  
+  event_registration_event_attendees event_registration_event_attendees[]
+  event_registration_event_waitlists event_registration_event_waitlists[]
+  event_registration_event_capacity_overrides event_registration_event_capacity_overrides?
+  event_registration_event_analytics event_registration_event_analytics[]
+  
+  @@unique([name, date])
+  @@index([event_category_id, date])
+}
+
+/// Categories classification table for events, e.g., workshop, seminar,
+/// social, and networking. This table allows efficient categorization and
+/// filtering of events. Managed independently by admins and organizers.
+///
+/// @namespace Events
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the event category, such as workshop or seminar.
+  name String
+  
+  /// Optional detailed description for the category.
+  description String?
+  
+  /// Timestamp when the category record was created.
+  created_at DateTime
+  
+  /// Timestamp when the category record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  event_registration_events event_registration_events[]
+  
+  @@unique([name])
+}

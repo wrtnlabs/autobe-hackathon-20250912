@@ -1,0 +1,326 @@
+/// Represents an enterprise learning path defining a sequence of training
+/// modules or courses for learners within a tenant organization. Organizes
+/// learning experiences and manages lifecycle states.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_learning_paths {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization this learning path belongs to. {@link
+  /// enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique code identifying this learning path within the tenant.
+  code String
+  
+  /// Title of the learning path.
+  title String
+  
+  /// Optional detailed description of the learning path.
+  description String?
+  
+  /// Current lifecycle status of the learning path (e.g., active, inactive,
+  /// archived).
+  status String
+  
+  /// Timestamp when the learning path record was created.
+  created_at DateTime
+  
+  /// Timestamp when the learning path was last updated.
+  updated_at DateTime
+  
+  /// Timestamp marking soft deletion of the record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_learning_path_items enterprise_lms_learning_path_items[]
+  enterprise_lms_enrollments enterprise_lms_enrollments[]
+  
+  @@unique([tenant_id, code])
+  @@index([tenant_id, status])
+}
+
+/// Modules or content items assigned within a learning path, sequencing
+/// training components to guide learner progress. Managed through the parent
+/// learning path.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_learning_path_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The parent learning path this item belongs to. {@link
+  /// enterprise_lms_learning_paths.id}.
+  learning_path_id String
+  
+  /// The type of the item (e.g., course, module, assessment).
+  item_type String
+  
+  /// The identifier of the actual content or assessment this item references.
+  item_id String
+  
+  /// The position of this item within the learning path sequence.
+  sequence_order Int
+  
+  /// Timestamp when the learning path item was created.
+  created_at DateTime
+  
+  /// Timestamp when the learning path item was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion of the learning path item.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  learningPath enterprise_lms_learning_paths @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_prerequisites_of_from_item_id enterprise_lms_prerequisites[] @relation("enterprise_lms_prerequisites_of_from_item_id")
+  enterprise_lms_prerequisites_of_to_item_id enterprise_lms_prerequisites[] @relation("enterprise_lms_prerequisites_of_to_item_id")
+  
+  @@unique([learning_path_id, item_type, item_id], map: "enterprise_lms_learning_path_items_learning_path_id_it_8e1519ef")
+  @@index([learning_path_id, sequence_order], map: "enterprise_lms_learning_path_items_learning_path_id_se_6be1b796")
+}
+
+/// Defines prerequisite relationships between learning path items, enforcing
+/// learner progression constraints and enrollment requirements.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_prerequisites {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The prerequisite item that must be completed before the dependent item.
+  /// {@link enterprise_lms_learning_path_items.id}.
+  from_item_id String
+  
+  /// The dependent item that requires the prerequisite completion. {@link
+  /// enterprise_lms_learning_path_items.id}.
+  to_item_id String
+  
+  /// Timestamp when this prerequisite relationship was created.
+  created_at DateTime
+  
+  /// Timestamp when this prerequisite relationship was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  fromItem enterprise_lms_learning_path_items @relation("enterprise_lms_prerequisites_of_from_item_id", fields: [from_item_id], references: [id], onDelete: Cascade)
+  toItem enterprise_lms_learning_path_items @relation("enterprise_lms_prerequisites_of_to_item_id", fields: [to_item_id], references: [id], onDelete: Cascade)
+  
+  @@index([to_item_id])
+  
+  @@unique([from_item_id, to_item_id])
+}
+
+/// Represents certifications offered to learners, with associated metadata
+/// and lifecycle management within a tenant organization.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_certifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization this certification belongs to. {@link
+  /// enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique code for this certification within the tenant.
+  code String
+  
+  /// Name of the certification program.
+  name String
+  
+  /// Detailed description about the certification.
+  description String?
+  
+  /// Lifecycle status of the certification (e.g., active, deprecated, retired).
+  status String
+  
+  /// Timestamp this certification record was created.
+  created_at DateTime
+  
+  /// Timestamp this certification record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_certification_expirations enterprise_lms_certification_expirations[]
+  enterprise_lms_certificate_issuances enterprise_lms_certificate_issuances[]
+  
+  @@unique([tenant_id, code])
+  @@index([tenant_id, status])
+}
+
+/// Stores expiration and renewal policies for certifications, enabling
+/// compliance enforcement.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_certification_expirations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Certification associated with this expiration policy. {@link
+  /// enterprise_lms_certifications.id}.
+  certification_id String
+  
+  /// Number of days after certification issuance when the certification will
+  /// expire.
+  expiration_period_days Int
+  
+  /// Indicates if renewal is required after certification expires.
+  renewal_required Boolean
+  
+  /// Number of days prior to expiration when notifications should be sent to
+  /// learners and administrators.
+  notification_period_days Int
+  
+  /// Timestamp when this expiration policy was created.
+  created_at DateTime
+  
+  /// Timestamp when this expiration policy was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  certification enterprise_lms_certifications @relation(fields: [certification_id], references: [id], onDelete: Cascade)
+  
+  @@index([certification_id])
+}
+
+/// Defines competencies and skill sets linked to learning objectives and
+/// certifications within the tenant context.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_competencies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization this competency belongs to. {@link
+  /// enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique code identifying this competency within the tenant.
+  code String
+  
+  /// Name of the competency skill or capability.
+  name String
+  
+  /// Detailed explanation of the competency.
+  description String?
+  
+  /// Timestamp the competency was created.
+  created_at DateTime
+  
+  /// Timestamp the competency was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, code])
+  @@index([tenant_id])
+}
+
+/// Represents blended learning sessions which may combine online and offline
+/// instructional activities with scheduling and status tracking in tenant
+/// context.
+///
+/// @namespace LearningPath
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_blended_learning_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization owning this session. {@link
+  /// enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Type of session (e.g., online, offline, hybrid).
+  session_type String
+  
+  /// Title or name of the blended learning session.
+  title String
+  
+  /// Detailed description of session activities and purpose.
+  description String?
+  
+  /// Current status of the session (e.g., scheduled, completed, cancelled).
+  status String
+  
+  /// Scheduled start date and time of the session.
+  scheduled_start_at DateTime
+  
+  /// Scheduled end date and time, if known.
+  scheduled_end_at DateTime?
+  
+  /// Actual start date and time.
+  actual_start_at DateTime?
+  
+  /// Actual end date and time.
+  actual_end_at DateTime?
+  
+  /// Timestamp when the record was created.
+  created_at DateTime
+  
+  /// Timestamp when the record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([tenant_id, session_type, title, scheduled_start_at], map: "enterprise_lms_blended_learning_sessions_tenant_id_ses_ac3a6dd4")
+  @@index([tenant_id, status])
+}

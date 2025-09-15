@@ -1,0 +1,115 @@
+/// Represents confirmed attendees registered for events. Each record
+/// associates a regular user with an event they attend. This prevents
+/// duplicate registrations and supports attendance tracking and audit
+/// logging.
+///
+/// @namespace Signups
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_attendees {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the {@link event_registration_events.id} of the attended event.
+  event_id String
+  
+  /// References the {@link event_registration_regular_users.id} of the
+  /// attendee.
+  regular_user_id String
+  
+  /// Timestamp when the attendee registered.
+  created_at DateTime
+  
+  /// Timestamp when the attendee registration was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  event event_registration_events @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  regularUser event_registration_regular_users @relation(fields: [regular_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([regular_user_id])
+  
+  @@unique([event_id, regular_user_id])
+  @@index([created_at])
+}
+
+/// Represents the waitlist for events that have reached full capacity. Each
+/// record links a regular user waiting for a spot in a specific event. The
+/// creation timestamp manages the FIFO order of the waitlist. This supports
+/// automated waitlist promotion and audit logging.
+///
+/// @namespace Signups
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_waitlists {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the {@link event_registration_events.id} of the event being
+  /// waited for.
+  event_id String
+  
+  /// References the {@link event_registration_regular_users.id} of the
+  /// waitlisted user.
+  regular_user_id String
+  
+  /// Timestamp when this waitlist entry was created, defining FIFO order.
+  created_at DateTime
+  
+  /// Timestamp when this waitlist entry was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  event event_registration_events @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  regularUser event_registration_regular_users @relation(fields: [regular_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([regular_user_id])
+  
+  @@unique([event_id, regular_user_id])
+  @@index([created_at])
+}
+
+/// Stores administrative overrides for the event capacity adjustments
+/// feature. Admins can enable or disable automatic capacity adjustments for
+/// specific events. This table enforces a unique one-to-one relationship
+/// with events. Tracks creation and update timestamps for audit and
+/// operational history.
+///
+/// @namespace Signups
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_event_capacity_overrides {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the {@link event_registration_events.id} of the event for this
+  /// capacity override.
+  event_id String
+  
+  /// Indicates if automatic capacity adjustments are overridden for this event.
+  is_override_enabled Boolean
+  
+  /// Timestamp when this capacity override record was created.
+  created_at DateTime
+  
+  /// Timestamp when this capacity override record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  event event_registration_events @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  
+  @@unique([event_id])
+  @@index([created_at])
+}

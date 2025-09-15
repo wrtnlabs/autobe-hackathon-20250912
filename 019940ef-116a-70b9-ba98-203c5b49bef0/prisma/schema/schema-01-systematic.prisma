@@ -1,0 +1,93 @@
+/// This table stores information about evaluation cycles used in the Job
+/// Performance Evaluation system. Each cycle defines a period for
+/// evaluations, including names, start and end dates, and implementation
+/// status. It includes timestamps for audit and supports soft deletion.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_evaluation_cycles {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code representing the evaluation cycle.
+  cycle_code String
+  
+  /// Descriptive name of the evaluation cycle.
+  cycle_name String
+  
+  /// Starting datetime of the evaluation cycle period.
+  start_date DateTime
+  
+  /// Ending datetime of the evaluation cycle period.
+  end_date DateTime
+  
+  /// Flag indicating whether this evaluation cycle is currently active.
+  is_active Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  job_performance_eval_self_evaluations job_performance_eval_self_evaluations[]
+  job_performance_eval_manager_evaluations job_performance_eval_manager_evaluations[]
+  job_performance_eval_employee_comments job_performance_eval_employee_comments[]
+  job_performance_eval_manager_comments job_performance_eval_manager_comments[]
+  job_performance_eval_evaluation_snapshots job_performance_eval_evaluation_snapshots[]
+  job_performance_eval_team_statistics job_performance_eval_team_statistics[]
+  
+  @@unique([cycle_code])
+  @@index([start_date, end_date])
+  @@index([created_at])
+  @@index([updated_at])
+}
+
+/// This table holds global system settings for the Job Performance
+/// Evaluation service, including parameters that control general behaviors
+/// and configurations. It tracks key-value pairs with descriptions and
+/// timestamps for auditing and soft deletion.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_system_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique key identifying the system setting.
+  setting_key String
+  
+  /// Value corresponding to the system setting key.
+  setting_value String
+  
+  /// Description providing context or notes about the system setting.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([setting_key])
+  @@index([created_at])
+  @@index([updated_at])
+}

@@ -1,0 +1,182 @@
+/// User-created collections to organize and categorize recipes. Collections
+/// belong to a user (owner_user_id), support soft deletion, and temporal
+/// auditing fields.
+///
+/// @namespace MealPlanningCollections
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_collections {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning user ID referencing recipe_sharing_regularusers.id or
+  /// recipe_sharing_premiumusers.id.
+  owner_user_id String
+  
+  /// Name of the collection for display and organization.
+  name String
+  
+  /// Optional textual description of the collection.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ownerUser recipe_sharing_regularusers @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([owner_user_id, name])
+  @@index([owner_user_id, created_at])
+}
+
+/// User-managed meal plans scheduling recipes to dates and meals. Owned by
+/// users, supporting soft deletion, temporal fields, and optional
+/// description.
+///
+/// @namespace MealPlanningCollections
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_meal_plans {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning user ID referencing recipe_sharing_regularusers.id or
+  /// recipe_sharing_premiumusers.id.
+  owner_user_id String
+  
+  /// Name of the meal plan for identification.
+  name String
+  
+  /// Optional description of the meal plan.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ownerUser recipe_sharing_regularusers @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  
+  recipe_sharing_meal_plan_entries recipe_sharing_meal_plan_entries[]
+  
+  @@unique([owner_user_id, name])
+  @@index([owner_user_id, created_at])
+}
+
+/// Entries of specific recipes assigned to meal plans at particular dates
+/// and meal slots. Entries belong to one meal plan and recipe. Supports
+/// quantity and soft deletion with timestamps.
+///
+/// @namespace MealPlanningCollections
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_meal_plan_entries {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the associated meal plan. {@link recipe_sharing_meal_plans.id}
+  meal_plan_id String
+  
+  /// Assigned recipe reference. {@link recipe_sharing_recipes.id}
+  recipe_id String
+  
+  /// Number of servings or repetitions for this entry.
+  quantity Int
+  
+  /// The date this recipe is planned for.
+  planned_date DateTime
+  
+  /// Designation of meal slot (e.g., breakfast, lunch, dinner).
+  meal_slot String
+  
+  /// Entry creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  mealPlan recipe_sharing_meal_plans @relation(fields: [meal_plan_id], references: [id], onDelete: Cascade)
+  recipe recipe_sharing_recipes @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_id])
+  
+  @@unique([meal_plan_id, recipe_id, planned_date, meal_slot], map: "recipe_sharing_meal_plan_entries_meal_plan_id_recipe_i_943a1205")
+  @@index([meal_plan_id, planned_date])
+}
+
+/// Configurations for recurring meal plans allowing repeated scheduling.
+/// Owned by users with recurrence pattern and active periods. Supports soft
+/// delete and temporal auditing.
+///
+/// @namespace MealPlanningCollections
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_recurring_meal_plans {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning user ID referencing recipe_sharing_regularusers.id or
+  /// recipe_sharing_premiumusers.id.
+  owner_user_id String
+  
+  /// Name of the recurring meal plan.
+  name String
+  
+  /// Optional textual description.
+  description String?
+  
+  /// Recurrence schedule pattern such as 'weekly', 'biweekly', or 'monthly'.
+  recurrence_pattern String
+  
+  /// Start date of the recurrence.
+  start_date DateTime
+  
+  /// End date of the recurrence; null if ongoing indefinitely.
+  end_date DateTime?
+  
+  /// Timestamp when record was created.
+  created_at DateTime
+  
+  /// Timestamp last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ownerUser recipe_sharing_regularusers @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([owner_user_id, name])
+  @@index([owner_user_id, start_date], map: "recipe_sharing_recurring_meal_plans_owner_user_id_star_77549e65")
+}

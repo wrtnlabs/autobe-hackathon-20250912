@@ -1,0 +1,218 @@
+/// Service-wide system policy registry. Stores all business, technical,
+/// feature toggle, and compliance rules as policy records for the StoryField
+/// AI platform. Provides versioned policy management for runtime enforcement
+/// and auditability. Used by service admin for global settings and
+/// operational toggles. Independent management and change history required.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_system_policies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique string code representing the policy for programmatic reference by
+  /// subsystems (e.g., 'INTEGRATION_TIMEOUT_LIMIT', 'MAINTENANCE_MODE').
+  policy_code String
+  
+  /// Human-friendly policy name for admin UI and documentation.
+  name String
+  
+  /// Full description of the policy's business intent, operational effect, or
+  /// compliance requirements.
+  description String
+  
+  /// The policy's current value. Can be stringified JSON for complex types or
+  /// scalar for simple toggles.
+  value String
+  
+  /// The policy's data type (e.g., 'boolean', 'int', 'duration', 'json'). For
+  /// informational/admin validation.
+  type String
+  
+  /// Whether this policy is currently enforced (true = in effect, false = not
+  /// enforced; allows for toggling).
+  active Boolean
+  
+  /// Creation datetime for audit trail.
+  created_at DateTime
+  
+  /// Last updated datetime for policy modification tracking.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null unless logically removed.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([policy_code])
+  @@index([active])
+  @@index([created_at])
+}
+
+/// Application environment settings audit log. Tracks key=value
+/// configuration for all distinct runtime environments (development,
+/// staging, production). Captures environment variable versioning, change
+/// origin, and historical context. Provides strong traceability for
+/// configuration drift, issue diagnosis, and rollback decisions.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_env_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Configuration key name. Matches a single environment variable or logical
+  /// config item (e.g., 'OPENAI_API_KEY').
+  env_key String
+  
+  /// Configuration value (mask sensitive data in UI).
+  env_value String
+  
+  /// Environment label (e.g., 'local', 'development', 'staging', 'production').
+  env_name String
+  
+  /// Identifier (username, email, or adminId) representing the actor who
+  /// introduced the change.
+  changed_by String
+  
+  /// Human-facing description of why this change was made (e.g., key rotation,
+  /// urgent bug fix).
+  change_reason String
+  
+  /// Datetime when this setting entry was created; marks effective date of
+  /// config.
+  created_at DateTime
+  
+  /// Datetime of last update (for correction or rollover).
+  updated_at DateTime
+  
+  /// Soft delete timestamp for audit log. Null unless deleted logically.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([env_key, env_name])
+  @@index([env_name])
+  @@index([created_at])
+}
+
+/// Deployment and rollback event log for system operations. Records all
+/// release, rollback, and hotfix actions for service version control, audit
+/// traceability, and incident response. Enables review of deployment
+/// outcome, initiator, timing, label, and associated summary for postmortems
+/// and compliance review.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_deployment_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Label identifying the deployment or rollback event. Should match the tag,
+  /// branch, or semantic version (e.g., 'v1.10.7', 'bugfix-hot-deploy').
+  deployment_label String
+  
+  /// Type of deployment action (e.g., 'deploy', 'rollback', 'hotfix',
+  /// 'config-change').
+  action_type String
+  
+  /// Deployment target environment (e.g., 'production', 'staging',
+  /// 'development').
+  environment String
+  
+  /// Identifier for the initiator (admin handle, CI/CD user, scriptID).
+  initiated_by String
+  
+  /// Outcome status (e.g., 'success', 'failed', 'in-progress', 'aborted'); for
+  /// workflow tracking and recovery.
+  status String
+  
+  /// Free-form summary of the deployment action and impact. Used for
+  /// compliance audit and operational history.
+  summary String
+  
+  /// Datetime when deployment/rollback started.
+  created_at DateTime
+  
+  /// Datetime of last modification/status update.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null unless logically removed from report view.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([deployment_label, environment])
+  @@index([environment])
+  @@index([status])
+  @@index([created_at])
+}
+
+/// Centralized service alert and event notification log. Stores technical
+/// event alerts (error, warning, info, recovery, anomaly, quota breach,
+/// etc.) for both real-time and historical monitoring. Enables systematic
+/// search by type, environment, resolution status, and content for incident
+/// response and analytics. Independent querying and search required for
+/// system health review.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_service_alerts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Categorical alert/event type (e.g., 'error', 'warning', 'info', 'quota',
+  /// 'incident', 'recovery').
+  alert_type String
+  
+  /// Optional structured alert code, for business logic and filtering (e.g.,
+  /// 'AUTH_401_012', 'S3_UPLOAD_FAIL').
+  alert_code String
+  
+  /// Detailed description of the alert or event for admin review and
+  /// downstream action. Used for analytics and audit.
+  content String
+  
+  /// Target environment for the alert/event (e.g., 'production', 'staging').
+  environment String
+  
+  /// Whether the alert/event has been resolved or closed (true = closed, false
+  /// = active).
+  resolved Boolean
+  
+  /// Human-facing note explaining how the alert/event was resolved or closed.
+  /// Null until event is resolved.
+  resolution_note String?
+  
+  /// Datetime when alert/event was recorded.
+  created_at DateTime
+  
+  /// Datetime of last update (e.g., resolution).
+  updated_at DateTime
+  
+  /// Soft delete timestamp. Null unless logically removed from view.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@index([alert_type])
+  @@index([environment])
+  @@index([resolved])
+  @@index([created_at])
+}

@@ -1,0 +1,174 @@
+/// This table captures self-evaluation data submitted by employees for each
+/// evaluation cycle. It stores scores for different evaluation categories
+/// and a mandatory comprehensive comment. It references the employee
+/// performing the evaluation and the specific evaluation cycle. Includes
+/// temporal fields for auditing and supports soft deletion for data
+/// lifecycle management.
+///
+/// @namespace Evaluations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_self_evaluations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The employee who submits the self-evaluation. {@link
+  /// job_performance_eval_employees.id}.
+  employee_id String
+  
+  /// The evaluation cycle to which this self-evaluation belongs. {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// The date when the self-evaluation is performed.
+  evaluation_date DateTime
+  
+  /// Score for Work Performance Level evaluation, in scale 1-5.
+  work_performance_score Int
+  
+  /// Score for Knowledge/Skill evaluation, in scale 1-5.
+  knowledge_skill_score Int
+  
+  /// Score for Problem Solving and Collaboration evaluation, in scale 1-5.
+  problem_solving_collab_score Int
+  
+  /// Score for Innovation evaluation, in scale 1-5.
+  innovation_score Int
+  
+  /// Comprehensive comment by the employee on the evaluation.
+  overall_comment String
+  
+  /// Creation timestamp of the record.
+  created_at DateTime
+  
+  /// Last update timestamp of the record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for the record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  employee job_performance_eval_employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  
+  job_performance_eval_evaluation_scores job_performance_eval_evaluation_scores[]
+  
+  @@index([evaluation_cycle_id])
+  
+  @@unique([employee_id, evaluation_cycle_id], map: "job_performance_eval_self_evaluations_employee_id_eval_61326986")
+  @@index([deleted_at, created_at])
+}
+
+/// This table records evaluations made by managers for employees in each
+/// evaluation cycle. It stores evaluation scores for various categories
+/// which may differ from self-evaluations, and includes a comprehensive
+/// comment by the manager. It references the manager, employee, and
+/// evaluation cycle. It supports auditing and soft deletion.
+///
+/// @namespace Evaluations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_manager_evaluations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The manager who performs the evaluation. {@link
+  /// job_performance_eval_managers.id}.
+  manager_id String
+  
+  /// The employee evaluated. {@link job_performance_eval_employees.id}.
+  employee_id String
+  
+  /// The evaluation cycle to which this manager evaluation belongs. {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// The date when the manager evaluation is performed.
+  evaluation_date DateTime
+  
+  /// Manager's score for Work Performance Level evaluation, scale 1-5.
+  work_performance_score Int
+  
+  /// Manager's score for Knowledge/Skill evaluation, scale 1-5.
+  knowledge_skill_score Int
+  
+  /// Manager's score for Problem Solving and Collaboration evaluation, scale
+  /// 1-5.
+  problem_solving_collab_score Int
+  
+  /// Manager's score for Innovation evaluation, scale 1-5.
+  innovation_score Int
+  
+  /// Comprehensive comment by the manager on the evaluation.
+  overall_comment String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp of the record.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  manager job_performance_eval_managers @relation(fields: [manager_id], references: [id], onDelete: Cascade)
+  employee job_performance_eval_employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  
+  @@index([employee_id])
+  @@index([evaluation_cycle_id], map: "job_performance_eval_manager_evaluations_evaluation_cy_37e317de")
+  
+  @@unique([manager_id, employee_id, evaluation_cycle_id], map: "job_performance_eval_manager_evaluations_manager_id_em_506f97d8")
+  @@index([deleted_at, created_at], map: "job_performance_eval_manager_evaluations_deleted_at_cr_bcc67555")
+}
+
+/// This table aggregates detailed evaluation scores for each evaluation
+/// entry, linking to either self-evaluation or manager evaluation records
+/// and storing individual category scores. This design supports flexible
+/// score management and historical tracking per cycle.
+///
+/// @namespace Evaluations
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_evaluation_scores {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to evaluation record. Could be either self or manager
+  /// evaluation. {@link job_performance_eval_self_evaluations.id} or {@link
+  /// job_performance_eval_manager_evaluations.id}.
+  evaluation_id String
+  
+  /// The evaluation category name, e.g., 'work_performance',
+  /// 'knowledge_skill', 'problem_solving_collab', 'innovation'.
+  category String
+  
+  /// The score given for the category, scale 1-5.
+  score Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  evaluation job_performance_eval_self_evaluations @relation(fields: [evaluation_id], references: [id], onDelete: Cascade)
+  
+  @@index([evaluation_id])
+  
+  @@index([category, score])
+}

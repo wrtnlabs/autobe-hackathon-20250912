@@ -1,0 +1,268 @@
+/// Represents the main assessment entity in the LMS, containing metadata
+/// about quizzes, surveys, peer reviews, and other assessment types. This
+/// table links to the tenant organizational context via tenant_id (existing
+/// table). It holds lifecycle and status information for assessment
+/// management, scheduling, and tracking. Related to questions ({@link
+/// enterprise_lms_assessment_questions}) and results ({@link
+/// enterprise_lms_assessment_results}).
+///
+/// @namespace AssessmentAnalytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_assessments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization owning this assessment. {@link
+  /// enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Unique business code identifying the assessment.
+  code String
+  
+  /// Title of the assessment.
+  title String
+  
+  /// Detailed description of the assessment content and purpose.
+  description String?
+  
+  /// Type of assessment, e.g., quiz, survey, peer review, practical assignment.
+  assessment_type String
+  
+  /// Maximum achievable score for this assessment.
+  max_score Float
+  
+  /// Minimum score required to pass this assessment.
+  passing_score Float
+  
+  /// Scheduled start datetime for the assessment.
+  scheduled_start_at DateTime?
+  
+  /// Scheduled end datetime for the assessment.
+  scheduled_end_at DateTime?
+  
+  /// Current status of the assessment such as planned, active, completed, or
+  /// cancelled.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_assessment_questions enterprise_lms_assessment_questions[]
+  enterprise_lms_assessment_results enterprise_lms_assessment_results[]
+  enterprise_lms_proctored_exams enterprise_lms_proctored_exams[]
+  
+  @@index([tenant_id])
+  
+  @@unique([code, tenant_id])
+  @@index([status, scheduled_start_at])
+}
+
+/// Stores individual questions belonging to assessments, supporting
+/// different question types and text content. It relates to the parent
+/// assessment ({@link enterprise_lms_assessments}) and can support question
+/// weighting and scoring.
+///
+/// @namespace AssessmentAnalytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_assessment_questions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent assessment reference. {@link enterprise_lms_assessments.id}
+  assessment_id String
+  
+  /// Text content of the question for display to learners.
+  question_text String
+  
+  /// Type of question such as multiple choice, true/false, essay, practical.
+  question_type String
+  
+  /// Weight or points this question contributes to total assessment score.
+  weight Float
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  assessment enterprise_lms_assessments @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  
+  @@index([assessment_id])
+}
+
+/// Captures the results of learner attempts on assessments, recording
+/// scores, completion timestamps, and status. Links to the assessment
+/// attempted and the learner (existing corporate learners table).
+///
+/// @namespace AssessmentAnalytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_assessment_results {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced assessment. {@link enterprise_lms_assessments.id}
+  assessment_id String
+  
+  /// Learner who took the assessment. {@link
+  /// enterprise_lms_corporatelearner.id}
+  learner_id String
+  
+  /// Score achieved in this assessment attempt.
+  score Float
+  
+  /// Timestamp when assessment was completed.
+  completed_at DateTime?
+  
+  /// Status of the attempt, e.g., pending, completed, failed.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  assessment enterprise_lms_assessments @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  learner enterprise_lms_corporatelearner @relation(fields: [learner_id], references: [id], onDelete: Cascade)
+  
+  @@index([assessment_id])
+  @@index([learner_id])
+  
+  @@index([status, completed_at])
+}
+
+/// Represents proctored exams integrated via third-party proctoring
+/// platforms, linked to assessments and scheduling details. Includes exam
+/// session details, proctor identifiers, and status.
+///
+/// @namespace AssessmentAnalytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_proctored_exams {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked assessment for this proctored exam. {@link
+  /// enterprise_lms_assessments.id}
+  assessment_id String
+  
+  /// Unique identifier for the proctored exam session from the third-party
+  /// provider.
+  exam_session_id String
+  
+  /// Identifier for the proctor overseeing the exam, if applicable.
+  proctor_id String?
+  
+  /// Scheduled timestamp for the proctored exam.
+  scheduled_at DateTime
+  
+  /// Current status of the proctored exam, e.g., scheduled, in_progress,
+  /// completed, cancelled.
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  assessment enterprise_lms_assessments @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  
+  @@index([assessment_id])
+  
+  @@unique([exam_session_id])
+  @@index([status, scheduled_at])
+}
+
+/// Stores precomputed analytics reports and summaries related to assessments
+/// and learner performance for efficient dashboard rendering and compliance
+/// reporting. Linked to tenant organizational context for scoped reporting.
+///
+/// @namespace AssessmentAnalytics
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_analytics_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization associated with this analytics report. {@link
+  /// enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Descriptive name of the analytics report.
+  report_name String
+  
+  /// Type of the report, e.g., completion, engagement, compliance.
+  report_type String
+  
+  /// JSON string containing filter and aggregation parameters for the report
+  /// generation.
+  parameters_json String
+  
+  /// Timestamp when the report was generated.
+  generated_at DateTime
+  
+  /// JSON string containing the full report content, data, and metadata.
+  content_json String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for the report.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([tenant_id])
+  
+  @@index([report_type, generated_at])
+}

@@ -1,0 +1,35 @@
+/// Storage of email verification tokens associated with user accounts. This
+/// table manages the lifecycle of unique tokens used for verifying user
+/// email addresses, referencing the users securely. Ensures auditability and
+/// data integrity through created timestamps and unique token constraints.
+///
+/// @namespace EmailVerification
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_email_verification_tokens {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged regular user that owns this token. {@link
+  /// event_registration_regular_users.id}.
+  event_registration_regular_user_id String
+  
+  /// Unique verification token for email validation.
+  token String
+  
+  /// Expiration timestamp of the token, after which it is invalid.
+  expires_at DateTime
+  
+  /// Timestamp when the token was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  regularUser event_registration_regular_users @relation(fields: [event_registration_regular_user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([token])
+  @@index([event_registration_regular_user_id], map: "event_registration_email_verification_tokens_event_reg_861a449b")
+}

@@ -1,0 +1,233 @@
+/// Technical Project Manager (TPM) information including login credentials
+/// and contact details. Independent business entity representing TPM users
+/// within the system with full CRUD capability and role-based
+/// authentication.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_tpm {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address used for login and contact, unique across TPM users.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Full name of the TPM user.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to enable recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  task_management_tasks task_management_tasks[]
+  task_management_task_assignments task_management_task_assignments[]
+  task_management_projects task_management_projects[]
+  task_management_boards task_management_boards[]
+  task_management_board_members task_management_board_members[]
+  task_management_project_members task_management_project_members[]
+  task_management_notifications task_management_notifications[]
+  task_management_notification_preferences task_management_notification_preferences?
+  
+  @@unique([email])
+}
+
+/// Project Manager (PM) information including login credentials and contact
+/// details. Independent business entity for PM users with full CRUD and
+/// authentication support.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_pm {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address used for login and contact, unique across PM users.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Full name of the PM user.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to enable recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// Project Management Officer (PMO) information including login credentials
+/// and contact details. Independent business entity representing PMO users
+/// with authentication and management capabilities.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_pmo {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address used for login and contact, unique across PMO users.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Full name of the PMO user.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp to enable recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// Developer user information including secure login credentials.
+/// Independent business entity representing developer users with full
+/// control for user management and authentication.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_developer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address used for login and contact, unique across developers.
+  email String
+  
+  /// Hashed password supporting secure login.
+  password_hash String
+  
+  /// Full name of the developer user.
+  name String
+  
+  /// Timestamp when the record was created.
+  created_at DateTime
+  
+  /// Timestamp when the record was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for recoverable deletions.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  task_management_task_comments task_management_task_comments[]
+  
+  @@unique([email])
+}
+
+/// Designer user information with authentication credentials and identity
+/// details. Core independent business entity for managing designer user
+/// accounts securely.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_designer {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique email address for designer login and communications.
+  email String
+  
+  /// Hashed password for secure authentication.
+  password_hash String
+  
+  /// Full name of the designer user.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp allowing recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}
+
+/// Quality Assurance (QA) user details including authentication data.
+/// Independent user entity supporting role-based management and secure login
+/// for QA team members.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_qa {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address unique to QA users for login and contact.
+  email String
+  
+  /// Hashed password ensuring authentication security.
+  password_hash String
+  
+  /// Full name of the QA user.
+  name String
+  
+  /// Timestamp for when the record was created.
+  created_at DateTime
+  
+  /// Timestamp for the latest update of the record.
+  updated_at DateTime
+  
+  /// Optional timestamp for soft deletion enabling recovery.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+}

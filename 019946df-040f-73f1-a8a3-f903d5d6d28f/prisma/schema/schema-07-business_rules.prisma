@@ -1,0 +1,275 @@
+/// This table records enrollment information for learners in courses and
+/// programs within the LMS. It links learners to learning paths or courses,
+/// enforcing prerequisite validations and status tracking. Includes soft
+/// deletion support, creation, and update timestamps.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_enrollments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged learner's enterprise_lms_corporatelearner.id.
+  learner_id String
+  
+  /// Belonged learning path's enterprise_lms_learning_paths.id.
+  learning_path_id String
+  
+  /// Current enrollment status such as 'active', 'completed', 'cancelled'.
+  status String
+  
+  /// Business workflow state for enrollment approvals or special states.
+  business_status String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null means active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  learner enterprise_lms_corporatelearner @relation(fields: [learner_id], references: [id], onDelete: Cascade)
+  learningPath enterprise_lms_learning_paths @relation(fields: [learning_path_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_enrollment_prerequisites enterprise_lms_enrollment_prerequisites[]
+  
+  @@index([learning_path_id])
+  
+  @@unique([learner_id, learning_path_id])
+  @@index([status, business_status])
+}
+
+/// This subsidiary table defines the prerequisite relationships between
+/// enrollments and the courses or modules that must be completed beforehand.
+/// It supports prerequisite enforcement and audit trails.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_enrollment_prerequisites {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged enrollment's enterprise_lms_enrollments.id.
+  enrollment_id String
+  
+  /// Prerequisite course's enterprise_lms_contents.id to be completed before
+  /// enrollment.
+  prerequisite_course_id String
+  
+  /// Creation time for this prerequisite link.
+  created_at DateTime
+  
+  /// Last update time for this record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  enrollment enterprise_lms_enrollments @relation(fields: [enrollment_id], references: [id], onDelete: Cascade)
+  prerequisiteCourse enterprise_lms_contents @relation(fields: [prerequisite_course_id], references: [id], onDelete: Cascade)
+  
+  @@index([prerequisite_course_id], map: "enterprise_lms_enrollment_prerequisites_prerequisite_c_dcd4dd49")
+  
+  @@index([enrollment_id, prerequisite_course_id], map: "enterprise_lms_enrollment_prerequisites_enrollment_id__cc812595")
+}
+
+/// Tracks issuance of certificates to learners upon successful course or
+/// certification track completion including validation of passing scores and
+/// expiration. Includes status and soft delete.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_certificate_issuances {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged learner's enterprise_lms_corporatelearner.id.
+  learner_id String
+  
+  /// Belonged certification's enterprise_lms_certifications.id.
+  certification_id String
+  
+  /// Date when certificate was issued.
+  issue_date DateTime
+  
+  /// Certificate expiration date, if any.
+  expiration_date DateTime?
+  
+  /// Certificate status such as 'valid', 'expired', 'revoked'.
+  status String
+  
+  /// Business state for certificate workflow, e.g., renewal process.
+  business_status String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; null means active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  learner enterprise_lms_corporatelearner @relation(fields: [learner_id], references: [id], onDelete: Cascade)
+  certification enterprise_lms_certifications @relation(fields: [certification_id], references: [id], onDelete: Cascade)
+  
+  @@index([certification_id])
+  
+  @@unique([learner_id, certification_id], map: "enterprise_lms_certificate_issuances_learner_id_certif_127c799c")
+  @@index([status, business_status])
+}
+
+/// Defines content access control rules assigning visibility and permissions
+/// to learners and user roles. It restricts content access by tenant,
+/// department, role, and individual learner with auditing timestamps.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_access_controls {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged content's enterprise_lms_contents.id.
+  content_id String
+  
+  /// Belonged tenant's enterprise_lms_tenants.id.
+  tenant_id String
+  
+  /// Comma-separated allowed roles like 'corporateLearner,externalLearner'.
+  allowed_roles String?
+  
+  /// Comma-separated specific learner IDs allowed.
+  allowed_learners String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  content enterprise_lms_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([content_id])
+  
+  @@index([tenant_id, content_id])
+}
+
+/// Stores detailed learner progress including time spent, assessment
+/// attempts, and engagement metrics per content item. Supports soft deletion
+/// and consistent timestamps.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_progress_tracking {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged learner's enterprise_lms_corporatelearner.id.
+  learner_id String
+  
+  /// Belonged content's enterprise_lms_contents.id.
+  content_id String
+  
+  /// Total time spent on content in seconds.
+  time_spent_seconds Int
+  
+  /// Number of assessment attempts made.
+  assessment_attempts Int
+  
+  /// Engagement level metric.
+  engagement_score Float
+  
+  /// Record creation time.
+  created_at DateTime
+  
+  /// Last update time.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  learner enterprise_lms_corporatelearner @relation(fields: [learner_id], references: [id], onDelete: Cascade)
+  content enterprise_lms_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  
+  @@index([content_id])
+  
+  @@unique([learner_id, content_id])
+  @@index([time_spent_seconds, assessment_attempts], map: "enterprise_lms_progress_tracking_time_spent_seconds_as_9fc140ec")
+}
+
+/// Records compliance audit logs and regulatory training validations for
+/// learners across tenants. Contains detailed tracking data and timestamps
+/// for audit and reporting purposes.
+///
+/// @namespace BusinessRules
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_compliance_records {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged learner's enterprise_lms_corporatelearner.id.
+  learner_id String
+  
+  /// Belonged tenant's enterprise_lms_tenants.id.
+  tenant_id String
+  
+  /// Type of compliance such as 'regulatory', 'internal audit',
+  /// 'certification'.
+  compliance_type String
+  
+  /// Current status of compliance like 'passed', 'failed', 'pending'.
+  compliance_status String
+  
+  /// Detailed compliance data and notes.
+  details String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  learner enterprise_lms_corporatelearner @relation(fields: [learner_id], references: [id], onDelete: Cascade)
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([learner_id])
+  @@index([tenant_id])
+  
+  @@index([compliance_type, compliance_status], map: "enterprise_lms_compliance_records_compliance_type_comp_bb61558f")
+}

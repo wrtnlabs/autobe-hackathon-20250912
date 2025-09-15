@@ -1,0 +1,192 @@
+/// Active authentication token/session registry. Tracks each unique issued
+/// token, maps it to the authenticated user (or admin), records
+/// device/fingerprint for session uniqueness, and manages timestamps for
+/// creation, last activity, and (optional) soft-deletion. Used to validate
+/// token presence for the full duration of session's allowed lifetime. Keys
+/// token value hashes (not plain value), user link, and session fingerprint.
+/// Critical for session verification and security audit.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_token_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged authenticated user's {@link storyfield_ai_authenticatedusers.id}.
+  authenticated_user_id String?
+  
+  /// Belonged system admin's {@link storyfield_ai_systemadmins.id}. Can be
+  /// null for end-users.
+  system_admin_id String?
+  
+  /// Hashed authentication token value used for session validation (never raw
+  /// token).
+  token_hash String
+  
+  /// Device or browser fingerprint for session uniqueness and frictioned
+  /// session control.
+  fingerprint String
+  
+  /// Timestamp when token was issued.
+  issued_at DateTime
+  
+  /// Timestamp when token will expire.
+  expires_at DateTime
+  
+  /// Most recent refresh timestamp for this session, or null if never
+  /// refreshed.
+  refreshed_at DateTime?
+  
+  /// Timestamp of last activity/proof of life for the session (token usage
+  /// event).
+  last_activity_at DateTime
+  
+  /// Creation timestamp of session record (may match issued_at).
+  created_at DateTime
+  
+  /// Last update timestamp for record lifecycle tracking.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null unless the session is explicitly
+  /// invalidated/closed prior to expiration.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [authenticated_user_id], references: [id], onDelete: Cascade)
+  systemAdmin storyfield_ai_systemadmins? @relation(fields: [system_admin_id], references: [id], onDelete: Cascade)
+  
+  storyfield_ai_token_revocations storyfield_ai_token_revocations[]
+  storyfield_ai_auth_audit_logs storyfield_ai_auth_audit_logs[]
+  
+  @@unique([token_hash])
+  @@unique([authenticated_user_id, fingerprint], map: "storyfield_ai_token_sessions_authenticated_user_id_fin_7cbe655a")
+  @@index([authenticated_user_id])
+  @@index([system_admin_id])
+  @@index([expires_at])
+  @@index([last_activity_at])
+}
+
+/// Registry of forcibly-revoked or blacklisted tokens for security response
+/// and audit. Each record logs a revoked token (by hash), context, related
+/// session or user where detectable, and permanent timestamps. Used to deny
+/// reused/compromised/invalid in-flight tokens regardless of their session
+/// status. Non-deletable, immutable audit source.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_token_revocations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Related session's {@link storyfield_ai_token_sessions.id} if known. Null
+  /// for external/sessionless revocations.
+  token_session_id String?
+  
+  /// Authenticated user's {@link storyfield_ai_authenticatedusers.id}.
+  /// Nullable for sessionless revocations.
+  authenticated_user_id String?
+  
+  /// System admin's {@link storyfield_ai_systemadmins.id}. Nullable for
+  /// userless admin or script-level actions.
+  system_admin_id String?
+  
+  /// Hash of revoked token (never store plain token) for future match and
+  /// deny-list operations.
+  token_hash String
+  
+  /// Administrative or automated reason for revocation (compromise, logout,
+  /// abuse, etc.).
+  revoked_reason String
+  
+  /// Source IP address from which revocation was requested/executed.
+  revoked_by_ip String?
+  
+  /// Time of revocation record creation.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tokenSession storyfield_ai_token_sessions? @relation(fields: [token_session_id], references: [id], onDelete: Cascade)
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [authenticated_user_id], references: [id], onDelete: Cascade)
+  systemAdmin storyfield_ai_systemadmins? @relation(fields: [system_admin_id], references: [id], onDelete: Cascade)
+  
+  @@index([system_admin_id])
+  
+  @@unique([token_hash])
+  @@index([authenticated_user_id])
+  @@index([token_session_id])
+}
+
+/// Immutable authentication and authorization audit/event log. Records every
+/// major token event (creation, validation attempt, refresh, expiration,
+/// failure, manual revoke, etc.) and includes actor, session, IP, and event
+/// meta context for compliance, forensics, and abuse detection. Append-only,
+/// never edited or deleted. Supports cross-user, cross-session, and
+/// time-range searches.
+///
+/// @namespace Auth
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_auth_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Session (if known) whose event is being audited. Nullable for failed or
+  /// unknown events. References {@link storyfield_ai_token_sessions.id}.
+  token_session_id String?
+  
+  /// User associated with the event if available. Nullable for
+  /// external/failure events. References {@link
+  /// storyfield_ai_authenticatedusers.id}.
+  authenticated_user_id String?
+  
+  /// System admin actor if event is triggered by administrative or automated
+  /// script action. Nullable otherwise. References {@link
+  /// storyfield_ai_systemadmins.id}.
+  system_admin_id String?
+  
+  /// High-level type of audit event: issued, validated, refreshed, expired,
+  /// revoked, denied, etc.
+  event_type String
+  
+  /// Result of event (success, failure, partial, etc.).
+  event_outcome String
+  
+  /// Additional human-readable message or context for event, for compliance
+  /// review.
+  event_message String?
+  
+  /// IP address from which the auth event was triggered.
+  source_ip String?
+  
+  /// Reported user-agent string or device for the triggering event.
+  user_agent String?
+  
+  /// Timestamp of the authentication/audit event.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tokenSession storyfield_ai_token_sessions? @relation(fields: [token_session_id], references: [id], onDelete: Cascade)
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [authenticated_user_id], references: [id], onDelete: Cascade)
+  systemAdmin storyfield_ai_systemadmins? @relation(fields: [system_admin_id], references: [id], onDelete: Cascade)
+  
+  @@index([token_session_id])
+  @@index([system_admin_id])
+  
+  @@index([created_at])
+  @@index([event_type])
+  @@index([authenticated_user_id])
+}

@@ -1,0 +1,38 @@
+/// Books catalog storing title, author, and uniquely validated ISBN
+/// information for the library. Supports guest user addition, viewing, and
+/// partial title search. Includes timestamps for creation and update with
+/// soft delete support. ISBN is unique to prevent duplicates.
+///
+/// @namespace Core
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model library_management_books {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Title of the book, must be a non-empty string.
+  title String
+  
+  /// Author of the book, must be a non-empty string.
+  author String
+  
+  /// Unique ISBN code of the book conforming to ISBN-10 or ISBN-13 format.
+  isbn String
+  
+  /// Timestamp when the book record was created.
+  created_at DateTime
+  
+  /// Timestamp when the book record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the book record was soft deleted, if applicable.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([isbn])
+  @@index([created_at])
+}

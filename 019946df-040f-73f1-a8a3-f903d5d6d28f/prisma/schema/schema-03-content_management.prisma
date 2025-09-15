@@ -1,0 +1,250 @@
+/// Main content entity managing diverse types of training content (video,
+/// documents, SCORM, xAPI). Supports tenant isolation, approval workflow
+/// status, lifecycle state, soft deletion, and auditing with timestamps.
+/// Connected to content versions, localizations, and approval workflows.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_contents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization owning this content. {@link enterprise_lms_tenants.id}
+  tenant_id String
+  
+  /// Content title for identification and display.
+  title String
+  
+  /// Brief description or overview of the content.
+  description String?
+  
+  /// Content format/type, e.g., video, document, SCORM, xAPI.
+  content_type String
+  
+  /// Approval workflow status: draft, pending, approved, rejected.
+  status String
+  
+  /// Lifecycle state: active, archived, deprecated.
+  business_status String
+  
+  /// Creation timestamp of the content record.
+  created_at DateTime
+  
+  /// Latest update timestamp to content metadata.
+  updated_at DateTime
+  
+  /// Soft delete timestamp, null means not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_content_versions enterprise_lms_content_versions[]
+  enterprise_lms_content_approval_workflows enterprise_lms_content_approval_workflows[]
+  enterprise_lms_content_localizations enterprise_lms_content_localizations[]
+  enterprise_lms_enrollment_prerequisites enterprise_lms_enrollment_prerequisites[]
+  enterprise_lms_content_access_controls enterprise_lms_content_access_controls[]
+  enterprise_lms_progress_tracking enterprise_lms_progress_tracking[]
+  
+  @@unique([tenant_id, title])
+  @@index([tenant_id, status, business_status])
+}
+
+/// Snapshots of content states representing historical versions for audit,
+/// rollback, and compliance. Stores full content metadata at snapshot time
+/// and version ordering. Related to primary content entity.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to primary content entity. {@link enterprise_lms_contents.id}
+  content_id String
+  
+  /// Sequenced version number of this snapshot.
+  version_number Int
+  
+  /// Title snapshot at version creation.
+  title String
+  
+  /// Description snapshot for this version.
+  description String?
+  
+  /// Content format/type at version time.
+  content_type String
+  
+  /// Approval status snapshot.
+  status String
+  
+  /// Business lifecycle state snapshot.
+  business_status String
+  
+  /// Timestamp when this version snapshot was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  content enterprise_lms_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  
+  @@unique([content_id, version_number])
+  @@index([content_id, created_at])
+}
+
+/// Approval workflow steps linked to content capturing review stages,
+/// reviewer roles, status flags, comments, and timestamps. Enables
+/// multi-stage approval process tracking and compliance audit workflow.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_approval_workflows {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated content entity. {@link enterprise_lms_contents.id}
+  content_id String
+  
+  /// Sequential approval step number.
+  step_number Int
+  
+  /// Role of reviewer responsible for this step, e.g., organizationAdmin,
+  /// contentCreatorInstructor.
+  reviewer_role String
+  
+  /// Status for this approval step: pending, approved, rejected.
+  status String
+  
+  /// Optional reviewer comments on this approval step.
+  comments String?
+  
+  /// Creation timestamp for this approval step record.
+  created_at DateTime
+  
+  /// Last updated timestamp for this approval step record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  content enterprise_lms_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  
+  @@index([content_id, step_number], map: "enterprise_lms_content_approval_workflows_content_id_s_6973b276")
+}
+
+/// Localized content properties supporting multi-language content
+/// management. Stores translations and locale-specific metadata per content
+/// item. Tied to primary content entries.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_localizations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to primary content entity. {@link enterprise_lms_contents.id}
+  content_id String
+  
+  /// ISO 639-1 language code, e.g., 'en' for English, 'fr' for French.
+  language_code String
+  
+  /// Localized version of the content title.
+  localized_title String?
+  
+  /// Localized description specific to language.
+  localized_description String?
+  
+  /// Timestamp when localization was created.
+  created_at DateTime
+  
+  /// Timestamp when localization was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  content enterprise_lms_contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  
+  @@unique([content_id, language_code], map: "enterprise_lms_content_localizations_content_id_langua_ca28b5da")
+  @@index([language_code])
+}
+
+/// Tags to classify and organize content materials. Tags are primary
+/// business entities with unique codes, descriptive names, and optional
+/// descriptions facilitating content discovery and filtering.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_tags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique identifying code for the tag.
+  code String
+  
+  /// Display name of the tag.
+  name String
+  
+  /// Optional descriptive information about the tag's purpose.
+  description String?
+  
+  //----
+  // RELATIONS
+  //----
+  enterprise_lms_content_tag_hierarchy_of_parent_tag_id enterprise_lms_content_tag_hierarchy[] @relation("enterprise_lms_content_tag_hierarchy_of_parent_tag_id")
+  enterprise_lms_content_tag_hierarchy_of_child_tag_id enterprise_lms_content_tag_hierarchy[] @relation("enterprise_lms_content_tag_hierarchy_of_child_tag_id")
+  
+  @@unique([code])
+  @@index([name])
+}
+
+/// Defines parent-child relationships between tags to form hierarchical tag
+/// structures. Enables tag inheritance and structured browsing. Supports
+/// administrative management of tag hierarchy.
+///
+/// @namespace ContentManagement
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_content_tag_hierarchy {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the parent tag entity. {@link enterprise_lms_content_tags.id}
+  parent_tag_id String
+  
+  /// Reference to the child tag entity. {@link enterprise_lms_content_tags.id}
+  child_tag_id String
+  
+  /// Timestamp when the parent-child relation was established.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  parentTag enterprise_lms_content_tags @relation("enterprise_lms_content_tag_hierarchy_of_parent_tag_id", fields: [parent_tag_id], references: [id], onDelete: Cascade)
+  childTag enterprise_lms_content_tags @relation("enterprise_lms_content_tag_hierarchy_of_child_tag_id", fields: [child_tag_id], references: [id], onDelete: Cascade)
+  
+  @@index([child_tag_id])
+  
+  @@index([parent_tag_id, child_tag_id], map: "enterprise_lms_content_tag_hierarchy_parent_tag_id_chi_fea1f090")
+}

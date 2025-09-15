@@ -1,0 +1,97 @@
+/// Authentication sessions data for users logged in via Snapchat social
+/// login, storing access and refresh tokens securely along with expiration
+/// timestamps and session metadata. This table supports secure, token-based
+/// OAuth2 authentication lifecycle management and session revocation.
+/// References the regular user in chat_app_regular_users. Implements soft
+/// delete functionality with deleted_at for session revocation tracking and
+/// audit purposes. Includes indexes to enforce unique active tokens per user
+/// and optimize query performance by user and expiration.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_authentication_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link chat_app_regular_users.id}.
+  chat_app_regular_user_id String
+  
+  /// OAuth2 access token string provided by Snapchat for authentication.
+  access_token String
+  
+  /// OAuth2 refresh token string to obtain new access tokens.
+  refresh_token String
+  
+  /// Timestamp when the access token expires.
+  expires_at DateTime
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp indicating revocation or expiry.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user chat_app_regular_users @relation(fields: [chat_app_regular_user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([access_token])
+  @@index([chat_app_regular_user_id, expires_at], map: "chat_app_authentication_sessions_chat_app_regular_user_3e5125d6")
+}
+
+/// Notification records for all system messages related to chat application
+/// users. Includes notification type, association to target user and
+/// message, read status, and timestamps for creation and updates. Enables
+/// system-wide prompt communication to users regarding new messages or
+/// system events. Supports marking notifications as read and soft deletion
+/// for historical audit and recovery.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_notifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Target user's {@link chat_app_regular_users.id} who will receive the
+  /// notification.
+  chat_app_regular_user_id String
+  
+  /// Associated message's {@link chat_app_messages.id} triggering this
+  /// notification.
+  chat_app_message_id String
+  
+  /// Type/category of the notification, e.g., 'message_received',
+  /// 'group_invite'.
+  notification_type String
+  
+  /// Flag indicating whether the user has read the notification.
+  is_read Boolean
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for notification archival or removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user chat_app_regular_users @relation(fields: [chat_app_regular_user_id], references: [id], onDelete: Cascade)
+  message chat_app_messages @relation(fields: [chat_app_message_id], references: [id], onDelete: Cascade)
+  
+  @@index([chat_app_regular_user_id, is_read])
+  @@index([chat_app_message_id])
+}

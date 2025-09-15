@@ -1,0 +1,205 @@
+/// Stores user ratings for recipes. Each rating is uniquely identified by
+/// user and recipe combination to prevent duplicate ratings. Ratings use a
+/// 5-star scale. Tracks creation and update timestamps.
+///
+/// @namespace RatingsReviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_ratings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's recipe_sharing_regularusers.id or
+  /// recipe_sharing_premiumusers.id
+  recipe_sharing_user_id String
+  
+  /// Belonged recipe's recipe_sharing_recipes.id
+  recipe_sharing_recipe_id String
+  
+  /// Star rating from 1 to 5.
+  rating Int
+  
+  /// Timestamp when the rating was created.
+  created_at DateTime
+  
+  /// Timestamp when the rating was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [recipe_sharing_user_id], references: [id], onDelete: Cascade)
+  recipe recipe_sharing_recipes @relation(fields: [recipe_sharing_recipe_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_sharing_recipe_id])
+  
+  @@unique([recipe_sharing_user_id, recipe_sharing_recipe_id], map: "recipe_sharing_ratings_recipe_sharing_user_id_recipe_s_d3c4c636")
+  @@index([created_at])
+}
+
+/// Captures detailed text reviews submitted by users for recipes. Review
+/// text supports up to 2000 characters. Allows edits and soft deletes.
+/// Linked to the authoring user and the reviewed recipe.
+///
+/// @namespace RatingsReviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Authoring user, can be regular or premium recipe_sharing_regularusers.id
+  recipe_sharing_user_id String
+  
+  /// Reviewed recipe's recipe_sharing_recipes.id
+  recipe_sharing_recipe_id String
+  
+  /// Detailed review text up to 2000 characters.
+  review_text String
+  
+  /// Timestamp when the review was created.
+  created_at DateTime
+  
+  /// Timestamp when the review was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp for reviews removed by users or moderators.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [recipe_sharing_user_id], references: [id], onDelete: Cascade)
+  recipe recipe_sharing_recipes @relation(fields: [recipe_sharing_recipe_id], references: [id], onDelete: Cascade)
+  
+  recipe_sharing_review_votes recipe_sharing_review_votes[]
+  recipe_sharing_review_flags recipe_sharing_review_flags[]
+  recipe_sharing_moderation_logs recipe_sharing_moderation_logs[]
+  recipe_sharing_flag_queues recipe_sharing_flag_queues[]
+  
+  @@index([recipe_sharing_user_id])
+  @@index([recipe_sharing_recipe_id])
+  
+  @@index([created_at])
+}
+
+/// Submissions of helpfulness votes on reviews by users. Each user can vote
+/// once per review and can change their vote. Votes are binary: helpful or
+/// not helpful.
+///
+/// @namespace RatingsReviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_review_votes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Voting user from recipe_sharing_regularusers.id
+  recipe_sharing_user_id String
+  
+  /// Targeted review recipe_sharing_reviews.id
+  recipe_sharing_review_id String
+  
+  /// Whether the vote marks the review as helpful or not.
+  helpful Boolean
+  
+  /// Timestamp when the vote was created.
+  created_at DateTime
+  
+  /// Timestamp when the vote was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [recipe_sharing_user_id], references: [id], onDelete: Cascade)
+  review recipe_sharing_reviews @relation(fields: [recipe_sharing_review_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_sharing_review_id])
+  
+  @@unique([recipe_sharing_user_id, recipe_sharing_review_id], map: "recipe_sharing_review_votes_recipe_sharing_user_id_rec_bdabb96a")
+  @@index([created_at])
+}
+
+/// Flags raised by users on reviews for inappropriate content. Each flag
+/// records the user who flagged, the review flagged, the reason, and
+/// timestamp. Facilitates moderation queues.
+///
+/// @namespace RatingsReviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_review_flags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User who flagged the review recipe_sharing_regularusers.id
+  recipe_sharing_user_id String
+  
+  /// Flagged review recipe_sharing_reviews.id
+  recipe_sharing_review_id String
+  
+  /// Reason selected by the user for flagging (e.g., spam, offensive language).
+  reason String
+  
+  /// Timestamp when the flag was created.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [recipe_sharing_user_id], references: [id], onDelete: Cascade)
+  review recipe_sharing_reviews @relation(fields: [recipe_sharing_review_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_sharing_user_id])
+  @@index([recipe_sharing_review_id])
+  
+  @@index([created_at])
+}
+
+/// Audit trail logging all moderation actions taken on flagged reviews,
+/// including hides, unhides, moderator identity, timestamp, and comments.
+/// Essential for compliance and transparency.
+///
+/// @namespace RatingsReviews
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_moderation_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reviewed flagged content recipe_sharing_reviews.id
+  recipe_sharing_review_id String
+  
+  /// Moderator who performed action recipe_sharing_moderators.id
+  recipe_sharing_moderator_id String
+  
+  /// Moderation action taken (e.g., hide, unhide).
+  action String
+  
+  /// Optional comment explaining the moderation decision.
+  comment String?
+  
+  /// Timestamp when moderation action was logged.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  review recipe_sharing_reviews @relation(fields: [recipe_sharing_review_id], references: [id], onDelete: Cascade)
+  moderator recipe_sharing_moderators @relation(fields: [recipe_sharing_moderator_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_sharing_review_id])
+  @@index([recipe_sharing_moderator_id])
+  
+  @@index([created_at])
+}

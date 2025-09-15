@@ -1,0 +1,10 @@
+export * as sessions from "./sessions/index";
+export * as rolePermissions from "./rolePermissions/index";
+export * as contents from "./contents/index";
+export * as contentTags from "./contentTags/index";
+export * as learningPaths from "./learningPaths/index";
+export * as blendedLearningSessions from "./blendedLearningSessions/index";
+export * as assessments from "./assessments/index";
+export * as analyticsReports from "./analyticsReports/index";
+export * as forums from "./forums/index";
+export * as virtualClassrooms from "./virtualClassrooms/index";

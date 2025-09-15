@@ -1,0 +1,317 @@
+/// Stores user-created recipes including basic details, status, and
+/// timestamps. Related to users through existing tables and linked to
+/// categories and tags. Supports soft delete for recovery.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_recipes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged user's {@link recipe_sharing_regularusers.id}.
+  created_by_id String
+  
+  /// Unique recipe title per user.
+  title String
+  
+  /// Detailed description of the recipe.
+  description String?
+  
+  /// Current workflow status of the recipe (e.g., draft, published).
+  status String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  createdBy recipe_sharing_regularusers @relation(fields: [created_by_id], references: [id], onDelete: Cascade)
+  
+  recipe_sharing_personalized_feeds recipe_sharing_personalized_feeds[]
+  recipe_sharing_ratings recipe_sharing_ratings[]
+  recipe_sharing_reviews recipe_sharing_reviews[]
+  recipe_sharing_meal_plan_entries recipe_sharing_meal_plan_entries[]
+  
+  @@unique([created_by_id, title])
+  @@index([status, created_at])
+}
+
+/// Master list of ingredients used in recipes, including optional brand
+/// information and timestamps for audit.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_ingredients {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Name of the ingredient.
+  name String
+  
+  /// Optional brand information for the ingredient.
+  brand String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  recipe_sharing_nutrition_facts recipe_sharing_nutrition_facts[]
+  recipe_sharing_ingredient_substitutions_of_ingredient_id recipe_sharing_ingredient_substitutions[] @relation("recipe_sharing_ingredient_substitutions_of_ingredient_id")
+  recipe_sharing_ingredient_substitutions_of_substitute__0365da32 recipe_sharing_ingredient_substitutions[] @relation("recipe_sharing_ingredient_substitutions_of_substitute__0365da32")
+  recipe_sharing_ingredient_search_terms recipe_sharing_ingredient_search_terms[]
+  recipe_sharing_shopping_list_items recipe_sharing_shopping_list_items[]
+  recipe_sharing_store_ingredient_prices recipe_sharing_store_ingredient_prices[]
+  
+  @@unique([name])
+}
+
+/// Detailed nutritional information associated with ingredients or recipes.
+/// Supports calories, macros, fiber, sodium, sugar, vitamins, and minerals.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_nutrition_facts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked ingredient {@link recipe_sharing_ingredients.id}.
+  ingredient_id String
+  
+  /// Calories per serving or unit.
+  calories Float
+  
+  /// Protein content in grams.
+  protein Float
+  
+  /// Carbohydrates in grams.
+  carbohydrates Float
+  
+  /// Fat content in grams.
+  fat Float
+  
+  /// Fiber content in grams.
+  fiber Float
+  
+  /// Sodium content in milligrams.
+  sodium Float
+  
+  /// Sugar content in grams.
+  sugar Float
+  
+  /// Vitamin A content in micrograms.
+  vitamin_a Float?
+  
+  /// Vitamin C content in milligrams.
+  vitamin_c Float?
+  
+  /// Vitamin D content in micrograms.
+  vitamin_d Float?
+  
+  /// Iron content in milligrams.
+  iron Float?
+  
+  /// Calcium content in milligrams.
+  calcium Float?
+  
+  //----
+  // RELATIONS
+  //----
+  ingredient recipe_sharing_ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+  
+  @@index([ingredient_id])
+}
+
+/// Supports ingredient substitutions with conversion ratios. Allows 3-5
+/// substitutes per ingredient, tracks audit timestamps, and status for
+/// moderation.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_ingredient_substitutions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Original ingredient {@link recipe_sharing_ingredients.id}.
+  ingredient_id String
+  
+  /// Ingredient substitute {@link recipe_sharing_ingredients.id}.
+  substitute_ingredient_id String
+  
+  /// Conversion ratio from original to substitute ingredient.
+  conversion_ratio Float
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Moderation status of substitution (e.g., pending, approved, rejected).
+  status String
+  
+  //----
+  // RELATIONS
+  //----
+  ingredient recipe_sharing_ingredients @relation("recipe_sharing_ingredient_substitutions_of_ingredient_id", fields: [ingredient_id], references: [id], onDelete: Cascade)
+  substituteIngredient recipe_sharing_ingredients @relation("recipe_sharing_ingredient_substitutions_of_substitute__0365da32", fields: [substitute_ingredient_id], references: [id], onDelete: Cascade)
+  
+  @@index([substitute_ingredient_id], map: "recipe_sharing_ingredient_substitutions_substitute_ing_6a3f2e97")
+  
+  @@index([ingredient_id, substitute_ingredient_id], map: "recipe_sharing_ingredient_substitutions_ingredient_id__a306a9d7")
+}
+
+/// Predefined recipe categories such as cuisine, diet, and difficulty
+/// levels. Managed for tagging recipes appropriately.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_recipe_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Type of category (e.g., cuisine, diet, difficulty).
+  category_type String
+  
+  /// Category name.
+  name String
+  
+  /// Detailed description of the category.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([category_type, name])
+}
+
+/// Master tag list used for categorizing or labeling recipes. Tags may be
+/// user or system generated.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_tags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tag name for labeling recipes.
+  name String
+  
+  /// Optional description of the tag.
+  description String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  recipe_sharing_user_tags recipe_sharing_user_tags[]
+  
+  @@unique([name])
+}
+
+/// User suggested tags pending moderator approval for public use. Supports
+/// audit information and moderation status.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_user_tags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Submitting user {@link recipe_sharing_regularusers.id}.
+  user_id String
+  
+  /// Referenced approved tag {@link recipe_sharing_tags.id}.
+  tag_id String?
+  
+  /// Suggested tag name by user.
+  suggested_name String
+  
+  /// Moderation status (pending, approved, rejected).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  tag recipe_sharing_tags? @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([tag_id])
+}
+
+/// Search terms for ingredients to facilitate ingredient-based search and
+/// partial matching.
+///
+/// @namespace Recipes
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_ingredient_search_terms {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked ingredient {@link recipe_sharing_ingredients.id}.
+  ingredient_id String
+  
+  /// Search term variant for the ingredient to support partial and fuzzy
+  /// matching.
+  search_term String
+  
+  //----
+  // RELATIONS
+  //----
+  ingredient recipe_sharing_ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+  
+  @@index([ingredient_id])
+}

@@ -1,0 +1,364 @@
+/// System Administrator users with full access across all organizations
+/// including system maintenance, global analytics, integrations, and API
+/// administration. Tenant-aware for multi-tenant data isolation.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_systemadmin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the system administrator.
+  first_name String
+  
+  /// Last name of the system administrator.
+  last_name String
+  
+  /// Current status of the system administrator account (e.g., active,
+  /// suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_sessions enterprise_lms_sessions[]
+  enterprise_lms_role_permissions enterprise_lms_role_permissions[]
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// Organization Administrator users who manage users, roles, content
+/// approvals, configurations, and billing within their own organization.
+/// Tenant-isolated for data security.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_organizationadmin {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the organization administrator.
+  first_name String
+  
+  /// Last name of the organization administrator.
+  last_name String
+  
+  /// Current status of the organization administrator account (e.g., active,
+  /// suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_forums enterprise_lms_forums[]
+  enterprise_lms_announcements enterprise_lms_announcements[]
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// Department Manager users who manage users, content assignments, and
+/// budgets within their department. Tenant-aware with departmental scope.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_departmentmanager {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the department manager.
+  first_name String
+  
+  /// Last name of the department manager.
+  last_name String
+  
+  /// Current status of the department manager account (e.g., active,
+  /// suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// Content Creator / Instructor users who create and manage course content
+/// and learner progress. Tenant-isolated and limited to owned content scope.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_contentcreatorinstructor {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the content creator or instructor.
+  first_name String
+  
+  /// Last name of the content creator or instructor.
+  last_name String
+  
+  /// Current status of the content creator/instructor account (e.g., active,
+  /// suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_forum_threads enterprise_lms_forum_threads[]
+  enterprise_lms_virtual_classrooms enterprise_lms_virtual_classrooms[]
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// Corporate Learner users who enroll and complete courses, track progress,
+/// and access dashboards. Tenant-isolated and limited in permissions.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_corporatelearner {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the corporate learner.
+  first_name String
+  
+  /// Last name of the corporate learner.
+  last_name String
+  
+  /// Current status of the corporate learner account (e.g., active, suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  enterprise_lms_assessment_results enterprise_lms_assessment_results[]
+  enterprise_lms_forum_posts enterprise_lms_forum_posts[]
+  enterprise_lms_direct_messages_of_sender_id enterprise_lms_direct_messages[] @relation("enterprise_lms_direct_messages_of_sender_id")
+  enterprise_lms_direct_messages_of_recipient_id enterprise_lms_direct_messages[] @relation("enterprise_lms_direct_messages_of_recipient_id")
+  enterprise_lms_group_projects enterprise_lms_group_projects[]
+  enterprise_lms_enrollments enterprise_lms_enrollments[]
+  enterprise_lms_certificate_issuances enterprise_lms_certificate_issuances[]
+  enterprise_lms_progress_tracking enterprise_lms_progress_tracking[]
+  enterprise_lms_compliance_records enterprise_lms_compliance_records[]
+  enterprise_lms_payment_transactions enterprise_lms_payment_transactions[]
+  enterprise_lms_security_audit_logs enterprise_lms_security_audit_logs[]
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// External Learner users with access to public and paid courses, payment
+/// processing, and community features. Tenant-isolated for data security.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_externallearner {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for login and communications.
+  email String
+  
+  /// Hashed password for authentication.
+  password_hash String
+  
+  /// First name of the external learner.
+  first_name String
+  
+  /// Last name of the external learner.
+  last_name String
+  
+  /// Current status of the external learner account (e.g., active, suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}
+
+/// Guest users with browse-only access to public course catalogs. Limited
+/// permissions, tenant-aware for data isolation. No enrollment or creation
+/// rights.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_guest {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant organization identifier. {@link enterprise_lms_tenants.id}.
+  tenant_id String
+  
+  /// Unique email address for identification and communication. No enrollment
+  /// rights.
+  email String
+  
+  /// Hashed password for guest authentication. Even guests require login.
+  password_hash String
+  
+  /// First name of the guest user.
+  first_name String
+  
+  /// Last name of the guest user.
+  last_name String
+  
+  /// Current status of the guest account (e.g., active, suspended).
+  status String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Optional soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@unique([email])
+  @@index([tenant_id, status])
+}

@@ -1,0 +1,91 @@
+/// Chat messages sent by users, representing individual pieces of
+/// communication in one-on-one or group chats. Each message is associated
+/// with either a sender, a target group or target user, with timestamps for
+/// creation and update. Soft deletable for audit and compliance. Integrates
+/// with media attachments and notifications.
+///
+/// @namespace Messaging
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_messages {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Sender user's chat_app_regular_users.id.
+  sender_id String
+  
+  /// Target group chat_app_groups.id. Nullable for one-on-one chats.
+  group_id String?
+  
+  /// Recipient user for one-on-one chats, chat_app_regular_users.id. Nullable
+  /// because either group or recipient is required.
+  recipient_id String?
+  
+  /// Text content of the message.
+  content String
+  
+  /// Type of the message content: 'text', 'image', or 'video'.
+  message_type String
+  
+  /// Timestamp when message was created.
+  created_at DateTime
+  
+  /// Timestamp when message was last updated.
+  updated_at DateTime
+  
+  /// Soft delete timestamp. If set, message is considered deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  sender chat_app_regular_users @relation("chat_app_messages_of_sender_id", fields: [sender_id], references: [id], onDelete: Cascade)
+  group chat_app_groups? @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  recipient chat_app_regular_users? @relation("chat_app_messages_of_recipient_id", fields: [recipient_id], references: [id], onDelete: Cascade)
+  
+  chat_app_notifications chat_app_notifications[]
+  chat_app_media_attachments chat_app_media_attachments[]
+  
+  @@index([sender_id, created_at])
+  @@index([group_id, created_at])
+  @@index([recipient_id, created_at])
+}
+
+/// Media files attached to chat messages supporting images and videos.
+/// Linked to messages and stored with metadata including file URI, type, and
+/// timestamps. Supports audit with creation timestamps and soft deletion for
+/// compliance.
+///
+/// @namespace Messaging
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_media_attachments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated message chat_app_messages.id.
+  message_id String
+  
+  /// Type of media: 'image' or 'video'.
+  media_type String
+  
+  /// URI of the media file stored in the system.
+  uri String
+  
+  /// Timestamp when the media was uploaded.
+  created_at DateTime
+  
+  /// Soft delete timestamp. If set, media is considered deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  message chat_app_messages @relation(fields: [message_id], references: [id], onDelete: Cascade)
+  
+  @@index([message_id])
+}

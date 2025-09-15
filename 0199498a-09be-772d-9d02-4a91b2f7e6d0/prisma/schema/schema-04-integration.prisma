@@ -1,0 +1,228 @@
+/// Integration event and audit trail logs for all cross-system actions
+/// within the service. Records essential events such as API calls, connector
+/// triggers, recovery events, and business actions tied to external system
+/// interactions. Enables system-wide monitoring, troubleshooting, and
+/// operational auditing. Standalone independent events reviewed by system
+/// admin and engineering personnel. May reference users or stories via
+/// optional foreign key but is operated as an independent business event
+/// log. Designed for high-throughput insertions and fast event filtering.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_integration_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Optional reference to the authenticated user associated with this
+  /// integration event. {@link storyfield_ai_authenticatedusers.id}.
+  storyfield_ai_authenticateduser_id String?
+  
+  /// Optional reference to the story entity associated with this integration
+  /// event. {@link storyfield_ai_stories.id}.
+  storyfield_ai_story_id String?
+  
+  /// Type of integration event (ex: API_CALL, CONNECTOR_TRIGGER, RECOVERY,
+  /// S3_UPLOAD, ERROR, RETRY, etc.). Business event category for filtering and
+  /// audit.
+  event_type String
+  
+  /// Subsystem or third-party connector involved in this event (e.g., s3,
+  /// spring_backend, openai, tts_engine, etc.).
+  subsystem String
+  
+  /// Human-friendly description or status code of the integration event
+  /// outcome (SUCCESS, FAILURE, PARTIAL, etc.).
+  status String
+  
+  /// Detailed description/message or error context for this event. Can include
+  /// error messages from external systems, stack traces, or summary
+  /// information.
+  message String?
+  
+  /// Optional: Correlation ID or unique request trace for distributed event
+  /// linking. Enables cross-system root cause tracing.
+  request_id String?
+  
+  /// Timestamp of integration event log creation.
+  created_at DateTime
+  
+  /// Timestamp when the log record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp when the log record was soft deleted. Null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [storyfield_ai_authenticateduser_id], references: [id], onDelete: Cascade)
+  story storyfield_ai_stories? @relation(fields: [storyfield_ai_story_id], references: [id], onDelete: Cascade)
+  
+  @@index([storyfield_ai_authenticateduser_id], map: "storyfield_ai_integration_logs_storyfield_ai_authentic_1977f82e")
+  @@index([storyfield_ai_story_id])
+  
+  @@unique([request_id])
+  @@index([event_type, created_at])
+  @@index([subsystem, created_at])
+  @@index([status])
+}
+
+/// Records the detailed histories of S3 upload attempts for all integration
+/// uploads performed through the Spring backend. Captures file upload events
+/// required for troubleshooting, SLA measurement, failed upload analysis,
+/// and regulatory audits. Standalone per-attempt, per-file business event
+/// history. Each record holds the filename, size, related resource type,
+/// upload status, error context, and timestamps. Key for tracking
+/// reliability and providing clear root cause analysis of media delivery
+/// failures.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_s3_upload_histories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Optional reference to the user who initiated the media upload. {@link
+  /// storyfield_ai_authenticatedusers.id}.
+  storyfield_ai_authenticateduser_id String?
+  
+  /// Optional reference to the story associated with this upload. {@link
+  /// storyfield_ai_stories.id}.
+  storyfield_ai_story_id String?
+  
+  /// Name of the file being uploaded (original or system-generated filename).
+  filename String
+  
+  /// File size in bytes when submitted for upload. Helps audit upload policy
+  /// enforcement.
+  file_size Int
+  
+  /// The type of media resource being uploaded (e.g., story_image, tts_audio,
+  /// asr_audio, etc.).
+  media_type String
+  
+  /// Result of the upload attempt (SUCCESS, FAILURE, RETRY, PARTIAL, etc.).
+  upload_status String
+  
+  /// Descriptive error or diagnostic message related to upload failure if any
+  /// occurred during this upload event.
+  error_message String?
+  
+  /// Spring backend upload endpoint used in this upload event (full URI for
+  /// traceability).
+  spring_upload_url String
+  
+  /// Resulting S3 object URL provided by the Spring service, if successful.
+  /// Null if upload did not return a valid S3 URL.
+  s3_object_url String?
+  
+  /// Timestamp of the upload record creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to this upload record.
+  updated_at DateTime
+  
+  /// Timestamp if the upload record was soft deleted. Null otherwise.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [storyfield_ai_authenticateduser_id], references: [id], onDelete: Cascade)
+  story storyfield_ai_stories? @relation(fields: [storyfield_ai_story_id], references: [id], onDelete: Cascade)
+  
+  @@index([storyfield_ai_authenticateduser_id], map: "storyfield_ai_s3_upload_histories_storyfield_ai_authen_20d11e56")
+  @@index([storyfield_ai_story_id])
+  
+  @@unique([filename, created_at])
+  @@index([upload_status, created_at])
+  @@index([filename, media_type])
+}
+
+/// Tracks integration failures, exceptions, and error events for all
+/// external API communications (ASR, TTS, OpenAI, Spring backend, payment,
+/// etc.). Logs actionable business incidents, API-specific error codes,
+/// exception stack, user/session trace. Each record stands independently for
+/// error review, postmortem analysis, and quality assurance. Helps drive SLA
+/// monitoring, platform reliability, and incident response.
+///
+/// @namespace Integration
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model storyfield_ai_external_api_failures {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Optional reference to the user involved in the failed request if
+  /// applicable. {@link storyfield_ai_authenticatedusers.id}.
+  storyfield_ai_authenticateduser_id String?
+  
+  /// Optional reference to the story related to the API failure event if any.
+  /// {@link storyfield_ai_stories.id}.
+  storyfield_ai_story_id String?
+  
+  /// Type of external API where the failure was detected (e.g., openai, asr,
+  /// tts, spring_backend, s3, payment, etc.).
+  api_type String
+  
+  /// API endpoint or resource path that triggered the failure event.
+  endpoint String
+  
+  /// HTTP method used for the failed request (GET, POST, PUT, DELETE, etc.).
+  http_method String
+  
+  /// API/system specific error code or HTTP status associated with this
+  /// failure event.
+  error_code String
+  
+  /// Detailed description or exception message for analysis. Allows full-text
+  /// search for troubleshooting.
+  error_message String?
+  
+  /// Request payload (usually JSON) sent to the API which caused the failure.
+  /// Can be omitted for privacy/security if not allowed.
+  request_payload String?
+  
+  /// Response body returned with the error/failure. Can be omitted for
+  /// privacy/security if not allowed.
+  response_payload String?
+  
+  /// How many retries attempted for this failed operation, including the
+  /// initial request.
+  retry_count Int
+  
+  /// Optional business/session group or distributed trace for associating
+  /// failures across services.
+  session_id String?
+  
+  /// Timestamp of API failure event record creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to this record.
+  updated_at DateTime
+  
+  /// Null unless the failure record is soft deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  authenticatedUser storyfield_ai_authenticatedusers? @relation(fields: [storyfield_ai_authenticateduser_id], references: [id], onDelete: Cascade)
+  story storyfield_ai_stories? @relation(fields: [storyfield_ai_story_id], references: [id], onDelete: Cascade)
+  
+  @@index([storyfield_ai_authenticateduser_id], map: "storyfield_ai_external_api_failures_storyfield_ai_auth_10c6fc65")
+  @@index([storyfield_ai_story_id])
+  
+  @@unique([session_id, api_type, created_at], map: "storyfield_ai_external_api_failures_session_id_api_typ_e7ff2d7f")
+  @@index([api_type, created_at])
+  @@index([http_method, api_type])
+  @@index([error_code])
+}

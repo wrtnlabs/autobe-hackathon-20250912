@@ -1,0 +1,104 @@
+/// Community groups in the chatting application. Represents a group entity
+/// that users can create, join, and manage. Contains group metadata
+/// including unique name, description, and status fields. Groups are
+/// independently managed core business entities with lifecycle states and
+/// soft deletion support. Related to group memberships via
+/// chat_app_group_memberships. Enables group admins to organize and control
+/// membership and group settings.
+///
+/// @namespace Groups
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_groups {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique name of the community group, used for identification and display.
+  name String
+  
+  /// Optional detailed description of the community group.
+  description String?
+  
+  /// Current status of the group for workflow management, e.g., 'active',
+  /// 'inactive', 'archived'.
+  status String
+  
+  /// Additional business-specific status information, optional.
+  business_status String?
+  
+  /// Timestamp when the group was created.
+  created_at DateTime
+  
+  /// Timestamp when the group was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion of the group; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  chat_app_group_memberships chat_app_group_memberships[]
+  chat_app_messages chat_app_messages[]
+  
+  @@unique([name])
+  @@index([status, business_status])
+}
+
+/// Memberships represent the association between users and community groups
+/// in the chatting application. Stores membership roles (e.g., member,
+/// admin), join timestamps, and membership lifecycle status including soft
+/// delete. Membership entities ensure proper role-based access control
+/// within groups and facilitate management operations by group admins. Each
+/// membership links a user and a group with unique constraints to prevent
+/// duplicate memberships.
+///
+/// @namespace Groups
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model chat_app_group_memberships {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged community group's chat_app_groups.id.
+  chat_app_group_id String
+  
+  /// Belonged regular user's chat_app_regular_users.id.
+  chat_app_regular_user_id String
+  
+  /// Role of the member within the group, e.g., 'member', 'admin'.
+  role String
+  
+  /// Timestamp when the user joined the group.
+  joined_at DateTime
+  
+  /// Current membership status, e.g., 'active', 'banned', 'pending'.
+  status String
+  
+  /// Additional business-specific membership status, optional.
+  business_status String?
+  
+  /// Timestamp when membership record was created.
+  created_at DateTime
+  
+  /// Timestamp when membership record was last updated.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion of the membership; null if not deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  group chat_app_groups @relation(fields: [chat_app_group_id], references: [id], onDelete: Cascade)
+  member chat_app_regular_users @relation(fields: [chat_app_regular_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([chat_app_regular_user_id])
+  
+  @@unique([chat_app_group_id, chat_app_regular_user_id], map: "chat_app_group_memberships_chat_app_group_id_chat_app__a3b7cfaa")
+  @@index([role, status, business_status])
+}

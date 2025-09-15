@@ -1,0 +1,620 @@
+/// System-wide superuser administrators responsible for platform management,
+/// cross-organization configuration, integrations, operational monitoring,
+/// and global audit. These users have highest privileges and are subject to
+/// highest audit standards. Assignment is strictly controlled; linked to
+/// organizations and audit/event logs via separate assignment and audit
+/// tables.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_systemadmins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Email address for login and notifications. Must be unique; business-only,
+  /// no personal domains allowed.
+  email String
+  
+  /// Full legal name of the system admin.
+  full_name String
+  
+  /// Business phone number for contact and MFA challenges.
+  phone String?
+  
+  /// Timestamp when admin account was created.
+  created_at DateTime
+  
+  /// Last update timestamp for this account.
+  updated_at DateTime
+  
+  /// Soft delete marker; indicates if the admin record is deactivated/retired.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_user_org_assignments healthcare_platform_user_org_assignments[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Organization-level administrators responsible for managing users,
+/// policies, configuration, billing, reporting, and compliance for an
+/// individual healthcare tenant. Role-limited to specific organizations and
+/// referenced from org assignment table. Subject to audit and strict
+/// workflow constraints.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_organizationadmins {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Business email for organization admin login. Must be unique within
+  /// platform.
+  email String
+  
+  /// Full legal name of organization admin.
+  full_name String
+  
+  /// Contact number for notifications and security events.
+  phone String?
+  
+  /// Timestamp when admin account was created.
+  created_at DateTime
+  
+  /// Timestamp when admin account was last updated.
+  updated_at DateTime
+  
+  /// Soft deletion marker indicating org admin is deactivated.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_patient_privacy_flags healthcare_platform_patient_privacy_flags[]
+  healthcare_platform_patient_consents healthcare_platform_patient_consents[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Clinical or operational department heads within organizations,
+/// responsible for staff/resource management, analytics, scheduling, and
+/// internal approvals. Each department head is linked to an organization and
+/// may be referenced in department assignment tables. Direct permissions
+/// scoped to department context.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_departmentheads {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Business email used for login and escalations. Must be unique across all
+  /// department heads.
+  email String
+  
+  /// Full legal name of department head.
+  full_name String
+  
+  /// Business phone for alerts and access confirmation.
+  phone String?
+  
+  /// Timestamp for account creation date.
+  created_at DateTime
+  
+  /// Last update timestamp for this record.
+  updated_at DateTime
+  
+  /// Soft delete marker indicating deactivation or transfer.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_record_amendments healthcare_platform_record_amendments[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Licensed medical professionals responsible for patient care, diagnosis,
+/// order entry, prescriptions, and care coordination within an organization.
+/// Each doctor may be referenced from assignments and credential
+/// verification tables. Extensive audit obligations.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_medicaldoctors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique business email for system login and clinical communication.
+  email String
+  
+  /// Full legal name as registered for licensure and clinical privilege.
+  full_name String
+  
+  /// National Provider Identifier (NPI) for credential verification; must be
+  /// unique for each doctor.
+  npi_number String
+  
+  /// Clinical specialty (e.g., Cardiology, Pediatrics).
+  specialty String?
+  
+  /// Contact number for notifications and emergency alerts.
+  phone String?
+  
+  /// Timestamp of account creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to doctor record.
+  updated_at DateTime
+  
+  /// Soft deletion; null unless this doctor account is archived/inactive.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_ehr_encounters healthcare_platform_ehr_encounters[]
+  healthcare_platform_ehr_versions healthcare_platform_ehr_versions[]
+  healthcare_platform_record_audit_trails healthcare_platform_record_audit_trails[]
+  
+  @@unique([email])
+  @@unique([npi_number])
+  @@index([created_at])
+}
+
+/// Clinical nursing staff responsible for patient care, monitoring,
+/// medication administration, and supporting clinical workflows. Nurses have
+/// distinct scope and privilege and undergo credential verification. Each
+/// nurse is referenced by assignments and audit logs. Audit trails required
+/// for all patient-related activity.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_nurses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Business email for login and staff communication. Must be unique among
+  /// nurses.
+  email String
+  
+  /// Full legal name of nurse, as used for credentials and patient-facing
+  /// activity.
+  full_name String
+  
+  /// State-issued license/certification for clinical practice. Must be unique
+  /// for auditing.
+  license_number String
+  
+  /// Primary clinical area of nursing (optional, e.g., ICU, Med/Surg).
+  specialty String?
+  
+  /// Work/personal phone for shift notifications and alerts.
+  phone String?
+  
+  /// Timestamp when nurse account was created.
+  created_at DateTime
+  
+  /// Timestamp for last modification to nurse record.
+  updated_at DateTime
+  
+  /// Soft deletion/archival status field.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_record_amendments healthcare_platform_record_amendments[]
+  healthcare_platform_vitals healthcare_platform_vitals[]
+  
+  @@unique([email])
+  @@unique([license_number])
+  @@index([created_at])
+}
+
+/// Technical clinical staff involved in diagnostics, imaging, equipment
+/// management, and lab processing. Techs have separate credential validation
+/// and have access limited to technical orders. Referenced from assignment
+/// and audit logs.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_technicians {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Business email for login and shift notification. Unique among all
+  /// technicians.
+  email String
+  
+  /// Full legal name for credentialing purposes.
+  full_name String
+  
+  /// Technical/professional license for role (state or registry). Must be
+  /// unique.
+  license_number String
+  
+  /// Field of technical expertise (Radiology, Phlebotomy, etc).
+  specialty String?
+  
+  /// Contact number for scheduling, emergencies.
+  phone String?
+  
+  /// When technician account was created.
+  created_at DateTime
+  
+  /// Date/time when technician data last updated.
+  updated_at DateTime
+  
+  /// Soft deletion / archive marker.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_medical_images healthcare_platform_medical_images[]
+  healthcare_platform_image_annotations healthcare_platform_image_annotations[]
+  
+  @@unique([email])
+  @@unique([license_number])
+  @@index([created_at])
+}
+
+/// Reception/admin users who schedule appointments, manage check-in/out,
+/// update patient basic info. No clinical privileges. May be referenced from
+/// assignment and workflow/lifecycle tables.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_receptionists {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Receptionist login and business email. Unique for this table.
+  email String
+  
+  /// Full name of the receptionist for identification and messaging.
+  full_name String
+  
+  /// Business or organizational contact number.
+  phone String?
+  
+  /// Creation timestamp of receptionist record.
+  created_at DateTime
+  
+  /// Timestamp for last update to this account.
+  updated_at DateTime
+  
+  /// Soft deletion field; receptionist account is deactivated.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Patient/consumer users of the system. Patients can self-register or be
+/// registered by staff, manage personal health info and records,
+/// appointments, and billing. All personal health information (PHI) managed
+/// under regulatory obligations. No direct references to department,
+/// assignment, or staff tables here; handled via relationships. Consent,
+/// privacy flag, and record assignments handled via separate tables.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_patients {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Personal or organizational email for login and portal notifications. Must
+  /// be unique for all patients.
+  email String
+  
+  /// Legal full name as used in identity or insurance documents.
+  full_name String
+  
+  /// Date of birth for patient identity, required for matching and legal
+  /// compliance.
+  date_of_birth DateTime
+  
+  /// Contact number for reminders and portal communications.
+  phone String?
+  
+  /// Account creation timestamp.
+  created_at DateTime
+  
+  /// Last update time for patient profile.
+  updated_at DateTime
+  
+  /// Soft deletion/closure marking, if account is closed or deregistered.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_patient_records healthcare_platform_patient_records?
+  healthcare_platform_appointments healthcare_platform_appointments[]
+  healthcare_platform_appointment_waitlists healthcare_platform_appointment_waitlists[]
+  healthcare_platform_billing_invoices healthcare_platform_billing_invoices[]
+  healthcare_platform_billing_payments healthcare_platform_billing_payments[]
+  healthcare_platform_insurance_policies healthcare_platform_insurance_policies[]
+  healthcare_platform_compliance_consents healthcare_platform_compliance_consents[]
+  healthcare_platform_compliance_agreements healthcare_platform_compliance_agreements[]
+  healthcare_platform_notifications_of_recipient_user_id healthcare_platform_notifications[] @relation("healthcare_platform_notifications_of_recipient_user_id")
+  healthcare_platform_notifications_of_sender_user_id healthcare_platform_notifications[] @relation("healthcare_platform_notifications_of_sender_user_id")
+  healthcare_platform_notification_preferences healthcare_platform_notification_preferences?
+  healthcare_platform_escalation_events healthcare_platform_escalation_events[]
+  healthcare_platform_reminders healthcare_platform_reminders[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Authentication records supporting login via email/password, SSO, or
+/// federated provider for any user entity (reference by actor type). Stores
+/// hashed credentials, provider keys, SSO tokens, and authentication method.
+/// Used for login, session validation, and audit. Strictly subsidiary,
+/// managed by system APIs.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_user_authentications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// UUID of the user this authentication record belongs to (cross-table
+  /// reference by user/actor type).
+  user_id String
+  
+  /// Indicates which actor table this refers to (systemadmin, orgadmin, etc).
+  /// Used for business logic and query purposes.
+  user_type String
+  
+  /// The authentication provider (local, saml, oauth2, ad).
+  provider String
+  
+  /// Provider-specific user or session key (may be SSO subject, user_id, etc).
+  provider_key String
+  
+  /// Bcrypt hash for local credentials (optional for SSO providers).
+  password_hash String?
+  
+  /// When this user last successfully authenticated via this record/provider.
+  last_authenticated_at DateTime?
+  
+  /// Timestamp when auth record was created.
+  created_at DateTime
+  
+  /// Last modification to this authentication record.
+  updated_at DateTime
+  
+  /// Soft delete field for rotation/retire.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([user_type, provider, provider_key], map: "healthcare_platform_user_authentications_user_type_pro_640fc095")
+  @@index([user_id, user_type])
+}
+
+/// Authentication session records, tracking issued tokens (JWT, refresh),
+/// session state, expiry, revocation, and business context for all user
+/// types (referenced by user_id/user_type). Used for permissions,
+/// revocation, audit. Sessions can be forcibly terminated by business or
+/// security rules. Strict subsidiary stance.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_auth_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Reference to the user associated with this session. Cross-table reference.
+  user_id String
+  
+  /// Table/type discriminator for the user (systemadmin/orgadmin/etc).
+  user_type String
+  
+  /// Opaque session token or JWT; unique value for session management.
+  session_token String
+  
+  /// Refresh token for session extension; null for some SSO providers.
+  refresh_token String?
+  
+  /// Timestamp for session start/issue.
+  issued_at DateTime
+  
+  /// Session planned expiration. Subject to renewal or rotation policies.
+  expires_at DateTime
+  
+  /// When the session was forcibly terminated/expired; null if still active.
+  revoked_at DateTime?
+  
+  /// User agent/browser/device info for session security/audit.
+  user_agent String?
+  
+  /// IP address for session source logging.
+  ip_address String?
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([session_token])
+  @@index([user_id, user_type])
+}
+
+/// Multi-factor authentication factor records for users, including TOTP,
+/// SMS, email challenge, or security keys. Used for MFA enforcement and
+/// account recovery. Each factor is scoped per user and user type, and only
+/// one of each factor type is active at a time per user. Strictly
+/// subsidiary; managed by system APIs.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_user_mfa_factors {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The user to whom this MFA factor belongs. Cross-table reference.
+  user_id String
+  
+  /// Table/type discriminator for user (systemadmin, etc).
+  user_type String
+  
+  /// Type of MFA factor (totp, sms, email, webauthn, backup). Supports type
+  /// inference in application.
+  factor_type String
+  
+  /// Encoded value or key for the MFA factor (encrypted, as appropriate for
+  /// type).
+  factor_value String
+  
+  /// Sort priority/order for use during challenge (lower is primary factor).
+  priority Int
+  
+  /// Indicates whether this factor is enabled for challenge.
+  is_active Boolean
+  
+  /// Create time for this MFA factor record.
+  created_at DateTime
+  
+  /// Last modification to MFA configuration.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([user_id, user_type, factor_type], map: "healthcare_platform_user_mfa_factors_user_id_user_type_d069ea28")
+  @@index([user_id, user_type])
+}
+
+/// Credential archive and metadata for user authentication events and
+/// password state history (e.g., previous password hashes, SSO credential
+/// history, rotation). Used for audit, rollback, and security. Archived
+/// credentials are never active after rotation. Strictly subsidiary stance.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_user_credentials {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The associated user record for these credentials. Cross-table reference.
+  user_id String
+  
+  /// User table/type discriminator for credentials (systemadmin, etc).
+  user_type String
+  
+  /// Type of credential archived (password, sso, certificate, webauthn, etc).
+  credential_type String
+  
+  /// Hash or encoded credential value (historical, not active).
+  credential_hash String
+  
+  /// Time when credential became inactive or was rotated.
+  archived_at DateTime
+  
+  /// Timestamp when credential was first active.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([user_id, user_type, credential_type, credential_hash], map: "healthcare_platform_user_credentials_user_id_user_type_f5b8723d")
+  @@index([user_id, user_type])
+}
+
+/// Professional license/NPI/status check records for users who require
+/// licensure (doctors, nurses, technicians). Reflects compliance with NPI
+/// registry or state agency and tracks last check, status, failures, and
+/// audit compliance. May be referenced from automated or manual review
+/// processes. Strictly subsidiary table.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_user_license_verifications {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The actor undergoing credential/license check (doctor/nurse/tech).
+  /// Cross-table reference.
+  user_id String
+  
+  /// Discriminator for user/actor type (medicaldoctor/nurse/technician).
+  user_type String
+  
+  /// License or registration number being checked. Invariant per user.
+  license_number String
+  
+  /// Type of license/credential (medical, nurse, tech, etc).
+  license_type String
+  
+  /// Result of current/most recent check (valid/expired/suspended/pending).
+  verification_status String
+  
+  /// Last time verification was attempted/recorded.
+  last_verified_at DateTime
+  
+  /// Reason for suspension or problem, if applicable.
+  suspend_reason String?
+  
+  /// Record creation timestamp for initial check event.
+  created_at DateTime
+  
+  /// Last update timestamp (may include failure, renewal, or audit event).
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([user_id, user_type, license_number], map: "healthcare_platform_user_license_verifications_user_id_607ae20b")
+  @@index([last_verified_at], map: "healthcare_platform_user_license_verifications_last_ve_f09323fb")
+}

@@ -1,0 +1,785 @@
+/// Primary entity representing a billing invoice issued by the healthcare
+/// organization to a patient and/or payer, referencing clinical encounters
+/// and aggregating billable service items. Connected to organization,
+/// patient, billing items, payments, and claims. Uniquely identified by
+/// invoice_number per organization. Includes audit and status metadata for
+/// compliance and workflow tracking.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_invoices {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Patient associated {@link healthcare_platform_patients.id}.
+  patient_id String
+  
+  /// Clinical encounter associated {@link
+  /// healthcare_platform_ehr_encounters.id}.
+  encounter_id String?
+  
+  /// Business invoice number, unique per organization for financial tracking
+  /// and reconciliation. Required for billing and audit.
+  invoice_number String
+  
+  /// Description or purpose of the invoice. May summarize bundled services,
+  /// visit, or care episode.
+  description String?
+  
+  /// Current invoice status (e.g., draft, sent, paid, overdue, canceled).
+  /// Supports billing workflow, status transitions, and analytics.
+  status String
+  
+  /// Total amount due on the invoice, before adjustments and after all
+  /// itemization. In base currency units (e.g., USD).
+  total_amount Float
+  
+  /// Invoice currency code (e.g., USD, EUR). Used for multi-currency support
+  /// in multi-national deployments.
+  currency String
+  
+  /// Date and time when payment is due. Used for reminders and overdue status
+  /// logic.
+  due_date DateTime?
+  
+  /// Invoice creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp for invoice. Updated on each material change.
+  updated_at DateTime
+  
+  /// Soft-delete marker. When non-null, invoice is logically deleted but
+  /// preserved for compliance audit.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  patient healthcare_platform_patients @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  encounter healthcare_platform_ehr_encounters? @relation(fields: [encounter_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_billing_items healthcare_platform_billing_items[]
+  healthcare_platform_billing_adjustments healthcare_platform_billing_adjustments[]
+  healthcare_platform_billing_payment_plans healthcare_platform_billing_payment_plans[]
+  healthcare_platform_billing_payments healthcare_platform_billing_payments[]
+  healthcare_platform_insurance_claims healthcare_platform_insurance_claims[]
+  healthcare_platform_financial_audit_logs healthcare_platform_financial_audit_logs[]
+  
+  @@index([encounter_id])
+  
+  @@unique([organization_id, invoice_number], map: "healthcare_platform_billing_invoices_organization_id_i_07998414")
+  @@index([created_at])
+  @@index([patient_id, status])
+}
+
+/// Individual itemization of services or products billed on each
+/// invoice—e.g., procedures, medications, supplies. References an invoice
+/// and a billing code for audit and claim support. Amounts reflect
+/// pre-adjustment business value. Managed in the context of an invoice, not
+/// directly by end users.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_items {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent invoice's {@link healthcare_platform_billing_invoices.id}.
+  invoice_id String
+  
+  /// Billing/catalog code's {@link healthcare_platform_billing_codes.id}.
+  billing_code_id String
+  
+  /// Description of the billed item or service (free text), for clarity and
+  /// downstream claim mapping.
+  description String
+  
+  /// Quantity of the billed unit/service (e.g., '3 x lab test').
+  quantity Int
+  
+  /// Business price per unit for the item/service before adjustments or
+  /// discounts. Used to compute line total.
+  unit_price Float
+  
+  /// Extended line total (quantity * unit_price). Computed at entry, never
+  /// pre-aggregated beyond item level. For snapshot/audit trace.
+  total_amount Float
+  
+  /// Creation timestamp for the billing item row.
+  created_at DateTime
+  
+  /// Last billing item update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete. Null unless item removed from invoice. Retained for audit.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  invoice healthcare_platform_billing_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  billingCode healthcare_platform_billing_codes @relation(fields: [billing_code_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_billing_adjustments healthcare_platform_billing_adjustments[]
+  
+  @@index([billing_code_id])
+  
+  @@index([invoice_id])
+}
+
+/// Catalog of billable codes used in invoices/items—supports
+/// ICD-10/CPT/HCPCS mapping, internal and external code management. Not
+/// modified by general users; referenced by items and claims for price,
+/// compliance, and traceability.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_codes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Business or regulatory billing code (e.g., CPT, ICD-10, service code).
+  /// Unique catalog key.
+  code String
+  
+  /// Defines the type/origin of the code (e.g., CPT, ICD-10, internal, HCPCS,
+  /// DRG, revenue code, etc).
+  code_system String
+  
+  /// Human-readable name or summary for this code.
+  name String
+  
+  /// Detailed business/clinical description for auditors and claim mapping.
+  description String?
+  
+  /// Whether this code may be used in future invoices or claims. Not deleted
+  /// for audit history.
+  active Boolean
+  
+  /// Creation timestamp for the code row.
+  created_at DateTime
+  
+  /// Timestamp for last catalog update.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_billing_items healthcare_platform_billing_items[]
+  
+  @@unique([code, code_system])
+  @@index([code])
+}
+
+/// Represents adjustments or write-offs applied to invoices or specific
+/// billing items. Can be positive (increase) or negative (discount/waiver).
+/// Used for business policy compliance, error correction, charity care, or
+/// insurance remittance difference. Linked to invoices or billing items.
+/// Managed centrally by billing staff/admins; not directly by clinical
+/// staff.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_adjustments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Invoice on which adjustment is applied. May be null if applied to item
+  /// only. {@link healthcare_platform_billing_invoices.id}.
+  invoice_id String?
+  
+  /// If applicable, the specific item adjusted. {@link
+  /// healthcare_platform_billing_items.id}.
+  item_id String?
+  
+  /// Business logic or financial category for adjustment (e.g., insurance,
+  /// write-off, charity, coding error, patient satisfaction, etc).
+  adjustment_type String
+  
+  /// Description/reason for adjustment. Required for audit trail and
+  /// compliance justification.
+  description String
+  
+  /// Adjustment numeric value—positive or negative. Audited independently from
+  /// invoice total.
+  amount Float
+  
+  /// Timestamp for adjustment creation.
+  created_at DateTime
+  
+  /// Adjustment last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-delete logic; null unless adjustment reversed or retracted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  invoice healthcare_platform_billing_invoices? @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  item healthcare_platform_billing_items? @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  
+  @@index([item_id])
+  
+  @@index([invoice_id, item_id])
+  @@index([adjustment_type])
+}
+
+/// Defines named discount, charity, or business policy for discounts that
+/// may be applied to invoices or items. Used to enforce consistency and
+/// approval flows; linked to actual adjustments. Only managed by
+/// organization admins.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_discount_policies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization to which discount policy belongs. {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Business-facing display name for this discount policy (e.g., Charity,
+  /// Employee, Hardship).
+  policy_name String
+  
+  /// Type/logic for discount (e.g., percentage, fixed, sliding scale, policy
+  /// code). Used in business rules to automate discounting.
+  discount_type String
+  
+  /// Detailed description of the policy rationale. Used for transparency with
+  /// auditors and staff.
+  description String?
+  
+  /// Whether the policy is active/available for use. Historical entries are
+  /// never deleted.
+  is_active Boolean
+  
+  /// Timestamp for creation.
+  created_at DateTime
+  
+  /// Last update timestamp (e.g., rules changed).
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([organization_id, policy_name], map: "healthcare_platform_billing_discount_policies_organiza_cc3b5693")
+}
+
+/// Payment installment arrangement for invoices, supporting patient
+/// self-pay, insurance payment schedules, or internal staff agreements.
+/// Links to invoice, includes plan logic/terms and status. Managed by
+/// billing staff, visible to patients.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_payment_plans {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Invoice for which plan is established. {@link
+  /// healthcare_platform_billing_invoices.id}.
+  invoice_id String
+  
+  /// Installment or payment plan type (e.g., self-pay, insurance, payment
+  /// deferral, promissory).
+  plan_type String
+  
+  /// Human-readable description of payment terms (e.g., amount per period,
+  /// number of payments).
+  terms_description String
+  
+  /// Current status (e.g., active, completed, defaulted, cancelled, expired).
+  status String
+  
+  /// Total plan amount—typically matches invoice amount to be paid via
+  /// schedule.
+  total_amount Float
+  
+  /// Plan inception/start date.
+  start_date DateTime
+  
+  /// Planned or actual end date of payment plan.
+  end_date DateTime?
+  
+  /// Timestamp for payment plan creation.
+  created_at DateTime
+  
+  /// Payment plan last updated timestamp.
+  updated_at DateTime
+  
+  /// Soft delete marker for plan archival. Null unless plan is retired/deleted
+  /// from workflows.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  invoice healthcare_platform_billing_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  
+  @@unique([invoice_id])
+}
+
+/// Represents actual payments received against invoices—by patients, payers,
+/// or third parties. Links to invoice, payer, payment method. Tracks
+/// reconciliation status, amount, memo, audit trail. Used for financial
+/// reporting and patient account balances.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_payments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Invoice to which payment was applied. {@link
+  /// healthcare_platform_billing_invoices.id}.
+  invoice_id String
+  
+  /// User/entity who made the payment (patient, org, payer, other staff).
+  /// {@link healthcare_platform_patients.id} or external entity. For direct
+  /// payment attribution.
+  payee_id String?
+  
+  /// Payment method used (card, bank, external API, insurance remittance,
+  /// etc). {@link healthcare_platform_billing_payment_methods.id}.
+  payment_method_id String?
+  
+  /// Actual payment amount recorded. Must never exceed invoice total unless
+  /// corrected via adjustment.
+  amount Float
+  
+  /// Transaction currency (should match invoice, but required for
+  /// reporting/audit).
+  currency String
+  
+  /// External transaction, check, or remittance reference (bank or
+  /// payer-specific). Used for reconciliation.
+  reference_number String?
+  
+  /// Date/time when payment was received/recorded (may be backdated for
+  /// offline payments).
+  payment_date DateTime
+  
+  /// Free text for payment note, payer memo, or reconciliation reference.
+  memo String?
+  
+  /// Current payment status (e.g., posted, pending, voided, returned,
+  /// disputed, refunded). Used in revenue/accounting workflows.
+  status String
+  
+  /// Payment creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp for payment entry (including reconciliation or
+  /// dispute status change).
+  updated_at DateTime
+  
+  /// Soft-delete/archival field; null unless deleted for audit.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  invoice healthcare_platform_billing_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  payee healthcare_platform_patients? @relation(fields: [payee_id], references: [id], onDelete: Cascade)
+  paymentMethod healthcare_platform_billing_payment_methods? @relation(fields: [payment_method_id], references: [id], onDelete: Cascade)
+  
+  @@index([payee_id])
+  @@index([payment_method_id])
+  
+  @@index([invoice_id])
+  @@index([payment_date])
+}
+
+/// Catalog of accepted payment methods (card, ACH, insurance, check,
+/// in-person, custom 3rd party) assignable to payments. Organization admins
+/// control available options; required for payment acceptance logic and
+/// reconciliation. Not modifiable by patients/end users.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_billing_payment_methods {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization that accepts this payment method. {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Kind of method (e.g., credit_card, ach, insurance, check, cash,
+  /// bank_transfer, external_service, other).
+  method_type String
+  
+  /// External or internal provider label (e.g., Visa, Stripe, Aetna, Company
+  /// payroll).
+  provider_name String?
+  
+  /// Serialized details/settings for integration (e.g., JSON params for
+  /// gateways or insurance API config).
+  details_json String?
+  
+  /// If true, method is offered for current payments; not deleted to preserve
+  /// audit trail.
+  is_active Boolean
+  
+  /// Method creation timestamp.
+  created_at DateTime
+  
+  /// Last updated timestamp (for configuration, branding, or status changes).
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_billing_payments healthcare_platform_billing_payments[]
+  
+  @@unique([organization_id, method_type, provider_name], map: "healthcare_platform_billing_payment_methods_organizati_8f268ef3")
+}
+
+/// Represents insurance policy information associated with a patient,
+/// tracked for eligibility, claim processing, and billing. Links to patient
+/// and payer entities. Used for insurance workflow and regulatory
+/// compliance. Patients may have multiple policies
+/// (primary/secondary/tertiary). Managed by organization/billing/admin
+/// staff.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_insurance_policies {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Policyholder (patient/user) entity. {@link
+  /// healthcare_platform_patients.id}.
+  patient_id String
+  
+  /// Owning organization for this policy (required for tenancy/data
+  /// isolation). {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// External/business policy number as provided by payer/insurer.
+  policy_number String
+  
+  /// Insurance company/payer name (Aetna, BlueCross, etc).
+  payer_name String
+  
+  /// Payer group/panel number. Used for batch eligibility or claims where
+  /// applicable.
+  group_number String?
+  
+  /// Coverage effective date. Business use for eligibility logic.
+  coverage_start_date DateTime
+  
+  /// Coverage end/expiration date; null if still active as of record.
+  coverage_end_date DateTime?
+  
+  /// Type/kind of insurance (e.g., commercial, medicare, medicaid, self-pay,
+  /// worker_comp, auto, etc).
+  plan_type String
+  
+  /// Status of the policy (e.g., active, inactive, expired, pending
+  /// verification).
+  policy_status String
+  
+  /// Creation timestamp for policy record.
+  created_at DateTime
+  
+  /// Most recent update/verification of this policy.
+  updated_at DateTime
+  
+  /// Soft-deletion field; retained for data retention and compliance. Null if
+  /// active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  patient healthcare_platform_patients @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_insurance_eligibility_checks healthcare_platform_insurance_eligibility_checks[]
+  healthcare_platform_insurance_claims healthcare_platform_insurance_claims[]
+  
+  @@unique([policy_number, payer_name, organization_id], map: "healthcare_platform_insurance_policies_policy_number_p_862daad1")
+  @@index([patient_id])
+  @@index([organization_id])
+}
+
+/// Represents an eligibility check transaction against a payer/insurer to
+/// verify active coverage for a patient and policy. Used for compliance
+/// prior to billing, encounter, or appointment workflows. Tracks API or
+/// manual responses and audit data. Important for appeals and claim status
+/// tracking. Managed by staff, not patient.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_insurance_eligibility_checks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Insurance policy checked. {@link
+  /// healthcare_platform_insurance_policies.id}.
+  insurance_policy_id String
+  
+  /// User or staff responsible for the check/entry. {@link
+  /// healthcare_platform_user_org_assignments.id} or other staff id.
+  performed_by_id String?
+  
+  /// Date/time eligibility was checked (when request sent, API called, or form
+  /// submitted).
+  check_timestamp DateTime
+  
+  /// Outcome of eligibility (e.g., verified, not_covered, expired, pending,
+  /// error, partial).
+  status String
+  
+  /// Code returned by payer/clearinghouse; reflects eligibility check business
+  /// outcome.
+  payer_response_code String?
+  
+  /// Human-readable description/response from payer or integration API. Used
+  /// for downstream audit or appeals.
+  payer_response_description String?
+  
+  /// Eligibility check creation timestamp (system entry/audit trail).
+  created_at DateTime
+  
+  /// Last update (may reflect appeals, corrections, supplemental
+  /// documentation).
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  insurancePolicy healthcare_platform_insurance_policies @relation(fields: [insurance_policy_id], references: [id], onDelete: Cascade)
+  performedBy healthcare_platform_user_org_assignments? @relation(fields: [performed_by_id], references: [id], onDelete: Cascade)
+  
+  @@index([performed_by_id], map: "healthcare_platform_insurance_eligibility_checks_perfo_1af7a7b2")
+  
+  @@index([insurance_policy_id], map: "healthcare_platform_insurance_eligibility_checks_insur_715bcd20")
+  @@index([check_timestamp], map: "healthcare_platform_insurance_eligibility_checks_check_eeb36592")
+}
+
+/// Represents principal insurance claim submission and lifecycle/updates for
+/// an invoice or encounter under a patient's insurance policy. Tracks payer,
+/// submission/ref num, claim status, and links to billing codes. Used in
+/// appeals, financial reconciliation, and compliance audits. Managed by
+/// billing staff and org admins.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_insurance_claims {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Policy under which claim was submitted. {@link
+  /// healthcare_platform_insurance_policies.id}.
+  insurance_policy_id String
+  
+  /// Invoice to which claim relates. {@link
+  /// healthcare_platform_billing_invoices.id}.
+  invoice_id String
+  
+  /// Unique business/clearinghouse reference for claim submission.
+  claim_number String
+  
+  /// Date service(s) started — for payer coverage logic and audit.
+  service_start_date DateTime
+  
+  /// Date service(s) ended — for payer logic (may match start for single-day).
+  service_end_date DateTime?
+  
+  /// Total amount claimed on the invoice after adjustments, in base currency.
+  total_claimed_amount Float
+  
+  /// Status in payer/claim workflow (e.g., submitted, received, accepted,
+  /// denied, pending, needs_info, paid, rejected, cancelled).
+  submission_status String
+  
+  /// Last payer/clearinghouse status code or response indicating claim
+  /// disposition/status.
+  last_payer_response_code String?
+  
+  /// Full text (or summary) of last payer/clearinghouse/status response; used
+  /// for diagnostic, appeals, audit.
+  last_payer_response_description String?
+  
+  /// Claim record creation timestamp.
+  created_at DateTime
+  
+  /// Claim record last update (may be status, response, doc upload,
+  /// resubmission).
+  updated_at DateTime
+  
+  /// Soft-deletion field for compliance. Null unless removed from standard
+  /// workflows but always retained for audit.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  insurancePolicy healthcare_platform_insurance_policies @relation(fields: [insurance_policy_id], references: [id], onDelete: Cascade)
+  invoice healthcare_platform_billing_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_insurance_claim_statuses healthcare_platform_insurance_claim_statuses[]
+  
+  @@unique([claim_number])
+  @@index([insurance_policy_id])
+  @@index([invoice_id])
+}
+
+/// Captures status updates, result codes, and documentation of claim status
+/// changes through the payer, clearinghouse, or internal workflows. Supports
+/// multi-step status tracking for claims, appeals, and compliance review.
+/// Linked to insurance_claim. Not directly managed by end users. Created and
+/// updated by staff actions, payer API responses, or scripts.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_insurance_claim_statuses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Main claim being tracked. {@link healthcare_platform_insurance_claims.id}.
+  claim_id String
+  
+  /// Org user/staff who recorded the status event. {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  updated_by_id String?
+  
+  /// Payer, clearinghouse, or internal status code associated with this claim
+  /// status update. Critical for audit/compliance.
+  status_code String
+  
+  /// Detailed description or free text for current claim status reason. Used
+  /// for user workflow, remediation, or appeals.
+  status_description String
+  
+  /// Amount (if any) paid at this status (e.g., partial payment, adjustment,
+  /// supplemental).
+  payment_amount Float?
+  
+  /// When this claim status was recorded/received (payer API or staff action).
+  status_timestamp DateTime
+  
+  /// Claim status tracking entry creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  claim healthcare_platform_insurance_claims @relation(fields: [claim_id], references: [id], onDelete: Cascade)
+  updatedBy healthcare_platform_user_org_assignments? @relation(fields: [updated_by_id], references: [id], onDelete: Cascade)
+  
+  @@index([updated_by_id])
+  
+  @@index([claim_id])
+  @@index([status_code])
+}
+
+/// Comprehensive audit logging for all financial/billing/insurance events,
+/// recording the who/when/what/why for regulatory, SOC 2, and HIPAA
+/// compliance. Tracks all user/payment/adjustment/claim/invoice edits,
+/// status changes, and access events. Never deleted or modified except by
+/// compliance admin per retention policy. Not user-editable.
+///
+/// @namespace BillingInsurance
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_financial_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization context for audit log. {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// ID of the business entity affected (invoice/item/payment/claim/etc). May
+  /// be null for generic audit events.
+  entity_id String?
+  
+  /// User performing or triggering the audited event. {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  user_id String?
+  
+  /// Type of business entity affected (e.g., invoice, payment, claim, item,
+  /// adjustment, policy, etc).
+  entity_type String
+  
+  /// Nature of the audited action (e.g., create, update, delete, access,
+  /// payment_post, claim_submit, refund, adjustment, status_change,
+  /// compliance_export, etc).
+  audit_action String
+  
+  /// Human-readable explanation and context for the audit log; may include
+  /// rationale, business context, before/after values as applicable.
+  action_description String?
+  
+  /// Date/time when event occurred (may differ from created_at if backfilled
+  /// or imported for legacy audit log).
+  action_timestamp DateTime
+  
+  /// Timestamp when audit log entry was created (system entry).
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  affectedEntity healthcare_platform_billing_invoices? @relation(fields: [entity_id], references: [id], onDelete: Cascade)
+  user healthcare_platform_user_org_assignments? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([entity_id])
+  
+  @@index([organization_id])
+  @@index([entity_type])
+  @@index([user_id])
+}

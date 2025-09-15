@@ -1,0 +1,170 @@
+/// Represents predefined recipe category configurations used for tagging and
+/// classification in the recipe sharing platform. Enables structured
+/// cuisine-type categorization such as Italian, Mexican, Asian, and supports
+/// hierarchical grouping for easy management and user selection.
+///
+/// @namespace SystematicConfig
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_recipe_categories_config {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code identifier for the recipe category.
+  code String
+  
+  /// Human-readable name of the recipe category.
+  name String
+  
+  /// Optional detailed description of the recipe category.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+}
+
+/// Defines dietary preference categories such as vegan, keto, gluten-free,
+/// and paleo. This table supports classification of recipes and user dietary
+/// preferences for filtering and substitution prioritization.
+///
+/// @namespace SystematicConfig
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_diet_categories {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique code for the diet category.
+  code String
+  
+  /// Name of the diet category.
+  name String
+  
+  /// Optional description providing details about the diet category.
+  description String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+}
+
+/// Lists levels of difficulty for recipes to classify user effort and skill
+/// required, ranging from beginner to advanced. Used for filtering and
+/// guidance in meal planning and recipe selection.
+///
+/// @namespace SystematicConfig
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_difficulty_levels {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique difficulty level code.
+  code String
+  
+  /// Name describing the difficulty level.
+  name String
+  
+  /// Optional detailed description of the difficulty level.
+  description String?
+  
+  /// Creation timestamp for the difficulty level record.
+  created_at DateTime
+  
+  /// Last updated timestamp for the difficulty level record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+}
+
+/// Stores units of measure applicable to ingredients such as cups, grams,
+/// tablespoons, including standardized abbreviations for display
+/// consistency.
+///
+/// @namespace SystematicConfig
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_units {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique unit code, e.g., 'cups' or 'g'.
+  code String
+  
+  /// Full descriptive name of the unit.
+  name String
+  
+  /// Optional abbreviated symbol for the unit.
+  abbreviation String?
+  
+  /// Timestamp for when the unit record was created.
+  created_at DateTime
+  
+  /// Timestamp for last update of the unit record.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([code])
+}
+
+/// Contains global system-wide configuration data for the recipe sharing
+/// platform, including key-value pairs for configurable settings and
+/// application flags.
+///
+/// @namespace SystematicConfig
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_system_config {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique configuration key identifier.
+  key String
+  
+  /// Associated value for the configuration key.
+  value String
+  
+  /// Optional explanation or notes about the configuration setting.
+  description String?
+  
+  /// Timestamp of when the configuration entry was created.
+  created_at DateTime
+  
+  /// Timestamp of the last update to the configuration entry.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([key])
+}

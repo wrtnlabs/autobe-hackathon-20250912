@@ -1,0 +1,323 @@
+/// Comprehensive, immutable forensic record of all auditable user/system
+/// actions across the platform. Contains fine-grained details for access,
+/// modifications, privilege changes, and business logic triggers exclusively
+/// for internal and compliance review, supporting high-volume, append-only
+/// event storage. Used for full lifecycle audit, security investigation, and
+/// regulatory reporting. Foreign keys may reference users, roles,
+/// organizations as context.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Actor's {@link healthcare_platform_user_org_assignments.id} who triggered
+  /// the event (nullable for system/anonymous actions).
+  user_id String?
+  
+  /// Organization context {@link healthcare_platform_organizations.id} where
+  /// action occurred (nullable for global/system events).
+  organization_id String?
+  
+  /// Type of action (e.g., 'LOGIN', 'RECORD_UPDATE', 'CONSENT_CHANGE',
+  /// 'SECURITY_EVENT').
+  action_type String
+  
+  /// Structured JSON or descriptive context for this event.
+  event_context String?
+  
+  /// IP address associated with the event, for traceability.
+  ip_address String?
+  
+  /// Optional business entity type affected (e.g., 'PATIENT_RECORD',
+  /// 'CONSENT', 'APPOINTMENT').
+  related_entity_type String?
+  
+  /// Optional business entity ID affected (matches the referenced entity UUID).
+  related_entity_id String?
+  
+  /// Timestamp of audit log creation.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_user_org_assignments? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id, created_at])
+  @@index([organization_id, created_at])
+  @@index([action_type, created_at])
+}
+
+/// Detailed append-only record of user, staff, or system resource access
+/// events (read/view actions). Tracks access to patient records, EHR, and
+/// other sensitive data for HIPAA compliance and internal monitoring.
+/// Supports security analysis, breach detection, and data access reporting.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_access_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Actor's {@link healthcare_platform_user_org_assignments.id} initiating
+  /// the access.
+  user_id String
+  
+  /// Organization whose data was accessed {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Type of resource accessed (e.g., 'EHR', 'PATIENT_RECORD', 'IMAGING',
+  /// 'CONFIG').
+  resource_type String
+  
+  /// Primary key of referenced resource (if applicable).
+  resource_id String?
+  
+  /// Legal/business justification for access (role, consent, emergency, audit,
+  /// etc.).
+  access_purpose String?
+  
+  /// IP address of access event.
+  ip_address String?
+  
+  /// Access timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_user_org_assignments @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([organization_id, resource_type, created_at], map: "healthcare_platform_access_logs_organization_id_resour_78094f10")
+  @@index([user_id, created_at])
+}
+
+/// Append-only log recording every export/transfer of PHI or sensitive data
+/// (internal and external). Tracks the requesting user, justification,
+/// export type, size, and destination. Used for compliance, breach
+/// investigations, and regulatory reporting. Links to related
+/// organization/user for isolation and auditability.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_data_export_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Initiating user's {@link healthcare_platform_user_org_assignments.id} of
+  /// export event.
+  user_id String
+  
+  /// Owning organization {@link healthcare_platform_organizations.id} of
+  /// exported data.
+  organization_id String
+  
+  /// Nature of export (e.g., 'REPORT', 'EHR_BULK', 'DATA_DUMP').
+  export_type String
+  
+  /// Description or scope of data exported (e.g., department, patient cohort,
+  /// full org, resource class).
+  exported_data_scope String
+  
+  /// Business/legal justification (consent, audit, emergency, patient request,
+  /// etc.).
+  justification String
+  
+  /// Destination of export (e.g., 'USER_DOWNLOAD', 'EXTERNAL_API',
+  /// 'PATIENT_PORTAL').
+  destination String
+  
+  /// If a file is produced, storage URI for post-facto retrieval or review.
+  file_uri String?
+  
+  /// Size of exported file/data in bytes.
+  file_size Float?
+  
+  /// Status tracking ('REQUESTED', 'IN_PROGRESS', 'COMPLETED', 'FAILED').
+  status String
+  
+  /// Export log creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_user_org_assignments @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@index([organization_id, status, created_at], map: "healthcare_platform_data_export_logs_organization_id_s_9007029e")
+}
+
+/// Logs production security violations, anomalies, and incident events—such
+/// as failed authentication, privileged misuse, policy breaches, and anomaly
+/// triggers. Includes incident status, summary/description, classification,
+/// and incident review/closure tracking. Supports compliance, forensic
+/// investigation, and escalation workflows.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_security_incidents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User who reported or triggered the security incident event {@link
+  /// healthcare_platform_user_org_assignments.id} (nullable for
+  /// automated/system-detected).
+  opened_by_user_id String?
+  
+  /// Organization scope in which the incident occurred {@link
+  /// healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Classification of incident (e.g., 'FAILED_LOGIN', 'PHI_EXFIL',
+  /// 'ROLE_ESCALATION', 'CONFIG_CHANGE', 'BREACH_SUSPECTED').
+  incident_type String
+  
+  /// Brief summary/subject of incident.
+  summary String
+  
+  /// Optional extended incident description/context (redacted as needed for
+  /// PHI compliance).
+  details String?
+  
+  /// Incident status (e.g., 'OPEN', 'INVESTIGATING', 'RESOLVED', 'ESCALATED',
+  /// 'ARCHIVED').
+  status String
+  
+  /// Incident severity (e.g., 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL').
+  severity String
+  
+  /// Incident opened timestamp.
+  opened_at DateTime
+  
+  /// Incident closure time, if resolved.
+  closed_at DateTime?
+  
+  /// When this incident record was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  openedByUser healthcare_platform_user_org_assignments? @relation(fields: [opened_by_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([opened_by_user_id])
+  
+  @@index([organization_id, incident_type, opened_at], map: "healthcare_platform_security_incidents_organization_id_5f4bb0c6")
+  @@index([status, severity, opened_at], map: "healthcare_platform_security_incidents_status_severity_a44e181b")
+}
+
+/// Audit log of all break-the-glass and emergency access overrides in the
+/// system. Tracks user identity, purpose/reason, access window,
+/// entities/data accessed, and post-event compliance review. Supports
+/// immediate compliance reporting, monitoring usages, and triggers mandatory
+/// post-incident investigation.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_emergency_access_overrides {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User who performed the emergency override {'@link
+  /// healthcare_platform_user_org_assignments.id'}.
+  user_id String
+  
+  /// Organization affected {'@link healthcare_platform_organizations.id'}.
+  organization_id String
+  
+  /// Business justification given for emergency override.
+  reason String
+  
+  /// Data/entities accessed in this override (e.g., 'EHR_ALL',
+  /// 'PATIENT_RECORD_123', 'SYSTEM_SETTINGS').
+  override_scope String
+  
+  /// When emergency override period commenced.
+  override_start_at DateTime
+  
+  /// When emergency override was revoked/expired (null if still open).
+  override_end_at DateTime?
+  
+  /// User responsible for compliance review after the override (nullable if
+  /// not yet reviewed).
+  reviewed_by_user_id String?
+  
+  /// When review was performed.
+  reviewed_at DateTime?
+  
+  /// Recording timestamp for audit.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user healthcare_platform_user_org_assignments @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@index([organization_id, user_id, override_start_at], map: "healthcare_platform_emergency_access_overrides_organiz_97124cbd")
+}
+
+/// Tracks archive/retention management for log and audit tables (e.g.,
+/// offsite storage, data cycling). Not directly queried except for system
+/// operations and external audits. Includes archive storage metadata and
+/// retention windows. Used when old logs are moved to cold storage for
+/// long-term regulatory compliance.
+///
+/// @namespace AuditLogs
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_audit_log_archives {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning organization {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Which audit table this archive covers.
+  archive_type String
+  
+  /// Storage location of archive in cold storage or offsite.
+  archive_file_uri String
+  
+  /// Date/time the archive can be scheduled for permanent deletion as per
+  /// policy/law.
+  retention_expiry_at DateTime
+  
+  /// Archive creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  @@index([organization_id, archive_type, created_at], map: "healthcare_platform_audit_log_archives_organization_id_b0e393d2")
+}

@@ -1,0 +1,464 @@
+/// Stores all individual appointment events scheduled between providers and
+/// patients. Connects org, department, provider, patient, room, equipment,
+/// and appointment status.
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_appointments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Belonged department's {@link healthcare_platform_departments.id}
+  /// (nullable for org-level bookings).
+  healthcare_platform_department_id String?
+  
+  /// Scheduled provider's user assignment {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  provider_id String
+  
+  /// Scheduled patient's {@link healthcare_platform_patients.id}.
+  patient_id String
+  
+  /// Appointment's status {@link healthcare_platform_appointment_statuses.id}.
+  status_id String
+  
+  /// Linked room reservation (uuid; not a strict FK in schema—references a
+  /// room from resource registry or external table).
+  room_id String?
+  
+  /// Linked equipment reservation (uuid; not a strict FK—external to this
+  /// schema file for cross-domain use).
+  equipment_id String?
+  
+  /// Type of appointment (e.g., in-person, telemedicine).
+  appointment_type String
+  
+  /// Start time (ISO 8601).
+  start_time DateTime
+  
+  /// End time (ISO 8601).
+  end_time DateTime
+  
+  /// Appointment title.
+  title String?
+  
+  /// Notes and instructions.
+  description String?
+  
+  /// Recurrence rule if repeating (RRULE).
+  recurrence_rule String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [healthcare_platform_department_id], references: [id], onDelete: Cascade)
+  provider healthcare_platform_user_org_assignments @relation(fields: [provider_id], references: [id], onDelete: Cascade)
+  patient healthcare_platform_patients @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  status healthcare_platform_appointment_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_telemedicine_sessions healthcare_platform_telemedicine_sessions?
+  healthcare_platform_appointment_reminders healthcare_platform_appointment_reminders[]
+  healthcare_platform_appointment_waitlists healthcare_platform_appointment_waitlists[]
+  
+  @@index([healthcare_platform_department_id], map: "healthcare_platform_appointments_healthcare_platform_d_9e4cf304")
+  
+  @@unique([provider_id, start_time, end_time], map: "healthcare_platform_appointments_provider_id_start_tim_19260c26")
+  @@unique([patient_id, start_time, end_time], map: "healthcare_platform_appointments_patient_id_start_time_e0c6288b")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_appointments_healthcare_platform_o_e70c379c")
+  @@index([start_time])
+  @@index([status_id])
+}
+
+/// Defines possible appointment states (scheduled, cancelled, confirmed,
+/// no-show, etc).
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_appointment_statuses {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique status code (e.g., scheduled, cancelled).
+  status_code String
+  
+  /// Human label.
+  display_name String
+  
+  /// Workflow grouping (e.g., active/closed).
+  business_status String?
+  
+  /// For UI/business sorting.
+  sort_order Int
+  
+  //----
+  // RELATIONS
+  //----
+  healthcare_platform_appointments healthcare_platform_appointments[]
+  
+  @@unique([status_code])
+  @@index([sort_order])
+}
+
+/// Master resource availability for scheduling (provider, room, equipment)
+/// using resource_type (as string) and resource_id (uuid, not strictly a FK
+/// to a model in this file; instead a polymorphic external pointer).
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_resource_schedules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Type/category of resource (provider, room, equipment).
+  resource_type String
+  
+  /// Polymorphic resource uuid – not foriegnKey in this schema. Points out to
+  /// external resource (room, provider, equipment, etc.) table.
+  resource_id String
+  
+  /// Start of daily slot (e.g., 09:00, 24h/ISO time).
+  available_start_time String
+  
+  /// End of daily slot (e.g., 18:00, 24h/ISO time).
+  available_end_time String
+  
+  /// Recurrence pattern (iCal, JSON or custom).
+  recurrence_pattern String?
+  
+  /// Blackout (holiday, maintenance) dates as string or JSON.
+  exception_dates String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([resource_type, resource_id, available_start_time, available_end_time], map: "healthcare_platform_resource_schedules_resource_type_r_3538975d")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_resource_schedules_healthcare_plat_4e9c6d78")
+}
+
+/// Room reservations for physical rooms. Each reservation is tied to an org
+/// and a room_id uuid, which points to a resource registry or external model
+/// (not represented as a FK here).
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_room_reservations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Room id (uuid only; not a FK in this component – links to room registry).
+  room_id String
+  
+  /// Reservation start time.
+  reservation_start DateTime
+  
+  /// Reservation end time.
+  reservation_end DateTime
+  
+  /// Reason: appointment, admin, cleaning, maintenance, etc.
+  reservation_type String
+  
+  /// Optionally link to appointment (nullable for admin blocks).
+  appointment_id String?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([room_id, reservation_start, reservation_end], map: "healthcare_platform_room_reservations_room_id_reservat_a3f727d6")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_room_reservations_healthcare_platf_ac22b073")
+}
+
+/// Equipment bookings or maintenance blocks. Each reservation references an
+/// org and equipment_id uuid (external device/resource); not a FK in this
+/// schema.
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_equipment_reservations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Equipment resource id (uuid only; not a FK in this schema).
+  equipment_id String
+  
+  /// Reservation start timestamp.
+  reservation_start DateTime
+  
+  /// Reservation end timestamp.
+  reservation_end DateTime
+  
+  /// Linked appointment if equipment scheduled; nullable otherwise.
+  appointment_id String?
+  
+  /// Reason: scheduled, blocked, maintenance, etc.
+  reservation_type String
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([equipment_id, reservation_start, reservation_end], map: "healthcare_platform_equipment_reservations_equipment_i_91ce6f94")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_equipment_reservations_healthcare__38d09b74")
+}
+
+/// Stores scheduling, calendar and booking rules; may be org-wide or
+/// per-resource with resource_type (string) and resource_id (uuid, not a
+/// FK).
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_calendar_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization reference {@link healthcare_platform_organizations.id}.
+  healthcare_platform_organization_id String
+  
+  /// Type of resource (org-wide, provider, room, equipment).
+  resource_type String
+  
+  /// Resource id for whom the settings apply (uuid; not a FK in this schema).
+  /// Nullable for org-wide.
+  resource_id String?
+  
+  /// Business open days (e.g., '["Mon","Tue"]'), JSON string.
+  business_days String
+  
+  /// Standard window (e.g., '08:00-18:00').
+  availability_hours String
+  
+  /// Min advance booking (minutes).
+  min_lead_time_minutes Int
+  
+  /// Min allowed cancellation notice (minutes).
+  min_cancel_window_minutes Int
+  
+  /// Blackout (holiday, etc.) dates as string/JSON.
+  blackout_dates String?
+  
+  /// Enable auto-survey after visit.
+  post_appointment_survey_enabled Boolean
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [healthcare_platform_organization_id], references: [id], onDelete: Cascade)
+  
+  @@unique([resource_type, resource_id], map: "healthcare_platform_calendar_settings_resource_type_re_5c78efee")
+  @@index([healthcare_platform_organization_id], map: "healthcare_platform_calendar_settings_healthcare_platf_0cee9256")
+}
+
+/// Manages join link, session times and attendance for virtual appointments.
+/// 1:1 with appointment if used.
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_telemedicine_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Appointment reference {@link healthcare_platform_appointments.id}.
+  appointment_id String
+  
+  /// Virtual session secure link.
+  join_link String
+  
+  /// Session start (scheduled).
+  session_start DateTime
+  
+  /// Session end (actual/closed).
+  session_end DateTime
+  
+  /// Provider join time.
+  provider_joined_at DateTime?
+  
+  /// Patient join time.
+  patient_joined_at DateTime?
+  
+  /// If recording enabled.
+  session_recorded Boolean
+  
+  /// Created.
+  created_at DateTime
+  
+  /// Updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  appointment healthcare_platform_appointments @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+  
+  @@unique([appointment_id])
+}
+
+/// Tracks reminder notifications sent as part of the appointment lifecycle,
+/// for SLA/notification audits. Subsidiary under appointment. Not directly
+/// user-managed; joins the linked appointment.
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_appointment_reminders {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Appointment reference {@link healthcare_platform_appointments.id}.
+  appointment_id String
+  
+  /// Send time for notice.
+  reminder_time DateTime
+  
+  /// Recipient (patient, provider, both).
+  recipient_type String
+  
+  /// Recipient user id.
+  recipient_id String
+  
+  /// Delivery channel: email, sms, in-app, etc.
+  delivery_channel String
+  
+  /// Notification status (sent, failed, etc).
+  delivery_status String
+  
+  /// Created.
+  created_at DateTime
+  
+  /// Updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  appointment healthcare_platform_appointments @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+  
+  @@unique([appointment_id, recipient_type, recipient_id, reminder_time], map: "healthcare_platform_appointment_reminders_appointment__2bb77d44")
+  @@index([delivery_status])
+}
+
+/// Tracks users awaiting slot on already-filled appointments; processed
+/// within the appointment's lifecycle, not independently user-managed.
+///
+/// @namespace Scheduling
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_appointment_waitlists {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Linked appointment {@link healthcare_platform_appointments.id}.
+  appointment_id String
+  
+  /// Waitlisted patient's reference {@link healthcare_platform_patients.id}.
+  patient_id String
+  
+  /// When user requested waitlist join.
+  join_time DateTime
+  
+  /// Current status (active, promoted, removed, etc).
+  status String
+  
+  /// Created.
+  created_at DateTime
+  
+  /// Updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  appointment healthcare_platform_appointments @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+  patient healthcare_platform_patients @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  
+  @@index([patient_id])
+  
+  @@unique([appointment_id, patient_id], map: "healthcare_platform_appointment_waitlists_appointment__640b3028")
+  @@index([status])
+}

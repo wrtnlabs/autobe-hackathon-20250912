@@ -1,0 +1,131 @@
+/// Historical snapshots of job performance evaluations capturing both
+/// employee self-evaluation and manager evaluation data for audit trail and
+/// reporting purposes. References evaluation cycles and employees, stores
+/// scores and comments point-in-time data with created and updated
+/// timestamps. Immutable snapshot data used for historical queries and
+/// analysis.
+///
+/// @namespace Reports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_evaluation_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced evaluation cycle's {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// Referenced employee's {@link job_performance_eval_employees.id}.
+  employee_id String
+  
+  /// Employee's self-evaluated job performance score (1-5 scale).
+  performance_score Int
+  
+  /// Employee's self-evaluated knowledge and skills score (1-5 scale).
+  knowledge_score Int
+  
+  /// Employee's self-evaluated problem solving and collaboration score (1-5
+  /// scale).
+  problem_solving_score Int
+  
+  /// Employee's self-evaluated innovation score (1-5 scale).
+  innovation_score Int
+  
+  /// Manager's evaluation of job performance score (1-5 scale).
+  manager_performance_score Int?
+  
+  /// Manager's evaluation of knowledge and skills score (1-5 scale).
+  manager_knowledge_score Int?
+  
+  /// Manager's evaluation of problem solving and collaboration score (1-5
+  /// scale).
+  manager_problem_solving_score Int?
+  
+  /// Manager's evaluation of innovation score (1-5 scale).
+  manager_innovation_score Int?
+  
+  /// Employee's comprehensive comment about the evaluation.
+  employee_comment String?
+  
+  /// Manager's comprehensive comment about the employee's evaluation.
+  manager_comment String?
+  
+  /// Snapshot creation timestamp.
+  created_at DateTime
+  
+  /// Snapshot last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for logical record removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  employee job_performance_eval_employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  
+  @@unique([evaluation_cycle_id, employee_id], map: "job_performance_eval_evaluation_snapshots_evaluation_c_48790a8c")
+  @@index([employee_id, created_at], map: "job_performance_eval_evaluation_snapshots_employee_id__67d24fe6")
+  @@index([evaluation_cycle_id, created_at], map: "job_performance_eval_evaluation_snapshots_evaluation_c_c64454a5")
+}
+
+/// Aggregated team-level statistics summarizing job performance evaluation
+/// results per evaluation cycle and organizational team unit. Supports
+/// reporting and analytics for management reviews and HR insights. Maintains
+/// counts, averages, and score distributions with temporal metadata.
+///
+/// @namespace Reports
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_team_statistics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced evaluation cycle's {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// Organizational team identifier referenced from team master data.
+  team_id String
+  
+  /// Average job performance score for the team during the evaluation cycle.
+  average_performance_score Float
+  
+  /// Average knowledge and skills score for the team during the evaluation
+  /// cycle.
+  average_knowledge_score Float
+  
+  /// Average problem solving and collaboration score for the team during the
+  /// evaluation cycle.
+  average_problem_solving_score Float
+  
+  /// Average innovation score for the team during the evaluation cycle.
+  average_innovation_score Float
+  
+  /// Number of individual evaluations included in the team's statistics.
+  evaluation_count Int
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for logical record removal.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  
+  @@unique([evaluation_cycle_id, team_id], map: "job_performance_eval_team_statistics_evaluation_cycle__bbf445af")
+  @@index([team_id, created_at])
+  @@index([evaluation_cycle_id, created_at], map: "job_performance_eval_team_statistics_evaluation_cycle__838aa37d")
+}

@@ -1,0 +1,192 @@
+/// Primary table representing the core tasks in the system, including title,
+/// description, status, priority, due date, creator info, and timestamps.
+/// Tasks have independent lifecycle management and relate to statuses,
+/// priorities, projects, and boards via foreign keys. Supports soft delete
+/// and audit fields.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_tasks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Referenced task status. {@link task_management_task_statuses.id}.
+  status_id String
+  
+  /// Referenced task priority level. {@link task_management_priorities.id}.
+  priority_id String
+  
+  /// Task creator user ID. References one of the user roles. {@link
+  /// task_management_tpm.id}, etc.
+  creator_id String
+  
+  /// Project this task belongs to. {@link task_management_projects.id}.
+  project_id String?
+  
+  /// Board this task belongs to. {@link task_management_boards.id}.
+  board_id String?
+  
+  /// Title of the task, mandatory and non-empty.
+  title String
+  
+  /// Detailed description of the task, optional.
+  description String?
+  
+  /// Name of status (denormalized for easy querying). Usually synced with
+  /// status table.
+  status_name String?
+  
+  /// Name of priority level for easier display, optional.
+  priority_name String?
+  
+  /// Optional due date and time for task deadline.
+  due_date DateTime?
+  
+  /// Timestamp of record creation.
+  created_at DateTime
+  
+  /// Timestamp of last update.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp if the task is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  status task_management_task_statuses @relation(fields: [status_id], references: [id], onDelete: Cascade)
+  priority task_management_priorities @relation(fields: [priority_id], references: [id], onDelete: Cascade)
+  creator task_management_tpm @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  project task_management_projects? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  board task_management_boards? @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  
+  task_management_task_assignments task_management_task_assignments[]
+  task_management_task_comments task_management_task_comments[]
+  task_management_task_status_changes task_management_task_status_changes[]
+  task_management_notifications task_management_notifications[]
+  
+  @@index([status_id])
+  @@index([priority_id])
+  @@index([project_id])
+  @@index([board_id])
+  
+  @@unique([title, project_id])
+  @@index([creator_id, created_at])
+  @@index([due_date, status_id])
+}
+
+/// Records assignments of users to tasks, allowing multiple assignees per
+/// task. Supports auditing of assignment changes with timestamps. Users can
+/// be TPMs, PMs, Developers, Designers, or QA roles referenced via user
+/// foreign keys.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_task_assignments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// References the assigned task. {@link task_management_tasks.id}.
+  task_id String
+  
+  /// User assigned to the task. References user role tables such as {@link
+  /// task_management_tpm.id}, {@link task_management_pm.id}, etc.
+  assignee_id String
+  
+  /// Timestamp when assignment occurred.
+  assigned_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  task task_management_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  assignee task_management_tpm @relation(fields: [assignee_id], references: [id], onDelete: Cascade)
+  
+  @@unique([task_id, assignee_id])
+  @@index([assignee_id, assigned_at])
+}
+
+/// Stores comments made by users on tasks. Each comment references the task
+/// and commenting user. Supports soft delete and auditing timestamps.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_task_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Commented task reference. {@link task_management_tasks.id}.
+  task_id String
+  
+  /// User who made the comment. References user role tables such as {@link
+  /// task_management_developer.id}, {@link task_management_designer.id}, etc.
+  commenter_id String
+  
+  /// Content of the comment.
+  comment_body String
+  
+  /// Timestamp of comment creation.
+  created_at DateTime
+  
+  /// Timestamp of last update to comment.
+  updated_at DateTime
+  
+  /// Soft delete timestamp if comment is deleted.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  task task_management_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  commenter task_management_developer @relation(fields: [commenter_id], references: [id], onDelete: Cascade)
+  
+  @@index([commenter_id])
+  
+  @@index([task_id, created_at])
+}
+
+/// Logs changes to a task's status over time for auditing and history
+/// tracking. Each record references a task and the new status applied.
+/// Includes timestamp of change and optional comments explaining status
+/// transition.
+///
+/// @namespace Tasks
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model task_management_task_status_changes {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Task whose status changed. {@link task_management_tasks.id}.
+  task_id String
+  
+  /// New status set on the task. {@link task_management_task_statuses.id}.
+  new_status_id String
+  
+  /// Timestamp when the status was changed.
+  changed_at DateTime
+  
+  /// Optional comment explaining the reason for status change.
+  comment String?
+  
+  //----
+  // RELATIONS
+  //----
+  task task_management_tasks @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  newStatus task_management_task_statuses @relation(fields: [new_status_id], references: [id], onDelete: Cascade)
+  
+  @@index([new_status_id])
+  
+  @@index([task_id, changed_at])
+}

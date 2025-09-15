@@ -1,0 +1,444 @@
+/// Tracks all explicit, time-stamped, versioned consents given by patients
+/// or staff members for compliance-sensitive actions, policies, or data
+/// processing. References the organization, subject (e.g., patient or
+/// staff), the matching policy version, and records full consent/revocation
+/// lifecycle for audit. Can cover any consented business area (e.g.,
+/// privacy, treatment, data use). Distinct from agreements—consents are
+/// narrowly scoped, explicitly granted, and can be revoked.
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_compliance_consents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// ID of the consenting subject (user or patient). References patients or
+  /// staff depending on context. Foreign key to either {@link
+  /// healthcare_platform_patients.id} or {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  subject_id String?
+  
+  /// Associated policy version's {@link
+  /// healthcare_platform_policy_versions.id}. Captures which version of the
+  /// policy this consent applies to.
+  policy_version_id String
+  
+  /// Type/category of consent (e.g., privacy, treatment, research, data
+  /// processing).
+  consent_type String
+  
+  /// Whether consent is currently granted (true) or revoked (false).
+  granted Boolean
+  
+  /// Timestamp when consent was explicitly granted.
+  consent_at DateTime
+  
+  /// Timestamp when consent was explicitly revoked, if applicable; null if
+  /// still active.
+  revoked_at DateTime?
+  
+  /// Reason for revocation, if provided (required for audit if consent is
+  /// revoked).
+  revocation_reason String?
+  
+  /// Expiration timestamp if consent is time-bound (e.g., research). Optional.
+  expires_at DateTime?
+  
+  /// Consent record creation timestamp (for audit trail).
+  created_at DateTime
+  
+  /// Last update timestamp for this consent record. Required for audit.
+  updated_at DateTime
+  
+  /// Timestamp for soft deletion (for compliance recovery, not physical
+  /// deletion).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  subject healthcare_platform_patients? @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  policyVersion healthcare_platform_policy_versions @relation(fields: [policy_version_id], references: [id], onDelete: Cascade)
+  
+  @@index([policy_version_id])
+  
+  @@unique([organization_id, subject_id, policy_version_id, consent_type], map: "healthcare_platform_compliance_consents_organization_i_c743c43e")
+  @@index([created_at])
+  @@index([subject_id])
+}
+
+/// Logs all one-time or periodic signed compliance/legal agreements (e.g.,
+/// user terms, business associate agreements, HIPAA acknowledgments) by
+/// staff or patients. Includes versioned agreement to specific policies and
+/// captures agreement status, method, and sign-off details for
+/// audit/compliance, distinct from narrowly scoped dynamic consents.
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_compliance_agreements {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// ID of user or patient signing the agreement (references staff or patient).
+  signer_id String?
+  
+  /// Versioned policy's {@link healthcare_platform_policy_versions.id} for the
+  /// agreement.
+  policy_version_id String
+  
+  /// Type of compliance agreement (e.g., HIPAA, data use, terms of service,
+  /// research agreement).
+  agreement_type String
+  
+  /// Current status (e.g., signed, pending, withdrawn, expired, rejected).
+  status String
+  
+  /// When the agreement was signed. Required for completed agreements.
+  signed_at DateTime?
+  
+  /// How agreement was captured/acknowledged (e.g., digital signature,
+  /// checkbox, wet signature, etc.).
+  method String?
+  
+  /// Optional expiration if the agreement is not perpetual.
+  expires_at DateTime?
+  
+  /// Agreement record creation timestamp.
+  created_at DateTime
+  
+  /// Agreement record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp (for audit/recovery purposes).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  signer healthcare_platform_patients? @relation(fields: [signer_id], references: [id], onDelete: Cascade)
+  policyVersion healthcare_platform_policy_versions @relation(fields: [policy_version_id], references: [id], onDelete: Cascade)
+  
+  @@index([signer_id])
+  @@index([policy_version_id], map: "healthcare_platform_compliance_agreements_policy_versi_48a3941c")
+  
+  @@unique([organization_id, signer_id, policy_version_id, agreement_type], map: "healthcare_platform_compliance_agreements_organization_bb101612")
+  @@index([created_at])
+  @@index([status])
+}
+
+/// Maintains a full change history of compliance policy documents (e.g.,
+/// privacy, terms, risk procedures). Each row is a specific, immutable
+/// version of a policy, used as a reference by consents and agreements for
+/// legal/audit traceability. Contains policy type, effective/expire
+/// timestamps, and policy document content/URI references. Modified only via
+/// explicit version update actions.
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_policy_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Policy category (e.g., privacy, HIPAA, risk management, data retention).
+  policy_type String
+  
+  /// Policy version label (semantic or document version). E.g., 'v2.1',
+  /// '2024-06', etc.
+  version String
+  
+  /// Policy version's effective start timestamp.
+  effective_at DateTime
+  
+  /// Policy version's expiration, if any, else null.
+  expires_at DateTime?
+  
+  /// Human-readable policy/document title or headline.
+  title String
+  
+  /// URI or external link to canonical policy document (PDF, HTML).
+  document_uri String
+  
+  /// Optional hash of the document for immutability/audit purposes.
+  document_hash String?
+  
+  /// Policy version record creation timestamp.
+  created_at DateTime
+  
+  /// Policy version record last update timestamp.
+  updated_at DateTime
+  
+  /// Policy version soft deletion timestamp (for legal retention, not physical
+  /// removal).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_compliance_consents healthcare_platform_compliance_consents[]
+  healthcare_platform_compliance_agreements healthcare_platform_compliance_agreements[]
+  
+  @@unique([organization_id, policy_type, version], map: "healthcare_platform_policy_versions_organization_id_po_3c052658")
+  @@index([effective_at])
+}
+
+/// Tracks all required and periodic risk assessments conducted by
+/// organizations or departments for compliance (HIPAA, SOC2, internal). Each
+/// record contains who assessed, scope, method, risk level, status, window,
+/// and resulting recommendations. Supports scheduling and audit linkage.
+/// Assessment reviews are stored separately for independence and audit
+/// granularity.
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_risk_assessments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Conducting staff member's {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  assessor_id String?
+  
+  /// Scoped department's {@link healthcare_platform_departments.id} if
+  /// applicable.
+  department_id String?
+  
+  /// Type of risk assessment (e.g., annual, incident, ad hoc, post-breach).
+  assessment_type String
+  
+  /// Assessment status (e.g., scheduled, in_progress, completed, approved,
+  /// rejected).
+  status String
+  
+  /// Description of assessment methodology/process followed (e.g., NIST CSF,
+  /// HIPAA Security Rule, etc.).
+  methodology String
+  
+  /// Risk level determined (e.g., low, moderate, high, critical).
+  risk_level String
+  
+  /// Assessment period start timestamp.
+  window_start DateTime
+  
+  /// Assessment period end timestamp.
+  window_end DateTime
+  
+  /// Summary of key findings and recommendations.
+  recommendations String?
+  
+  /// Assessment record creation timestamp (for audit).
+  created_at DateTime
+  
+  /// Assessment record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for assessment record.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  assessor healthcare_platform_user_org_assignments? @relation(fields: [assessor_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_compliance_reviews healthcare_platform_compliance_reviews[]
+  
+  @@index([assessor_id])
+  @@index([department_id])
+  
+  @@unique([organization_id, window_start, assessment_type], map: "healthcare_platform_risk_assessments_organization_id_w_44d01827")
+  @@index([created_at])
+  @@index([status])
+}
+
+/// Captures legal/compliance holds placed on patient or organizational data
+/// for regulatory, investigational, or litigation reasons (e.g., eDiscovery,
+/// legal lock, audit). Records scope, subject(s), reason, method, effective
+/// and release dates, and status. Links to responsible organizational units
+/// or staff as needed. Each hold is independently tracked, auditable, and
+/// managed for duration and compliance review. Hold outcome/reviews stored
+/// separately.
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_legal_holds {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Staff/user who imposed the hold (@link
+  /// healthcare_platform_user_org_assignments.id).
+  imposed_by_id String?
+  
+  /// Department scope for the hold, if any (@link
+  /// healthcare_platform_departments.id).
+  department_id String?
+  
+  /// Held subject type (e.g., patient_data, org_data, audit_trail,
+  /// external_document).
+  subject_type String
+  
+  /// Subject record/entity under legal hold (ID type varies by subject_type),
+  /// enables external record linkage. Nullable if scope is broad.
+  subject_id String?
+  
+  /// Explicit hold reason/justification (required for compliance/audit).
+  reason String
+  
+  /// How the hold was imposed (e.g., system, legal request, investigation,
+  /// manual).
+  method String
+  
+  /// Hold status (e.g., active, released, denied, expired).
+  status String
+  
+  /// Datetime the hold was imposed/took effect.
+  effective_at DateTime
+  
+  /// Datetime the hold was released or intended to be lifted; null if still
+  /// active.
+  release_at DateTime?
+  
+  /// Hold record creation timestamp.
+  created_at DateTime
+  
+  /// Hold record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for the hold record (never physical unless legal
+  /// clearance).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  imposedBy healthcare_platform_user_org_assignments? @relation(fields: [imposed_by_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_compliance_reviews healthcare_platform_compliance_reviews[]
+  
+  @@index([imposed_by_id])
+  @@index([department_id])
+  
+  @@unique([organization_id, subject_type, subject_id, effective_at], map: "healthcare_platform_legal_holds_organization_id_subjec_9705090e")
+  @@index([status])
+  @@index([created_at])
+}
+
+/// Records independent review outcomes and logs for legal holds or risk
+/// assessments. Each review is associated with a parent hold or risk
+/// assessment and documents reviewer, method, status, outcome,
+/// recommendations, timestamp, and comments. Used for compliance audit
+/// trail, but not independently managed outside parent workflow (subsidiary
+/// stance).
+///
+/// @namespace ComplianceConsents
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_compliance_reviews {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Parent legal hold if review is for a hold, else null. {@link
+  /// healthcare_platform_legal_holds.id}
+  hold_id String?
+  
+  /// Parent risk assessment if review is for assessment, else null. {@link
+  /// healthcare_platform_risk_assessments.id}
+  risk_assessment_id String?
+  
+  /// Responsible reviewer's {@link
+  /// healthcare_platform_user_org_assignments.id}.
+  reviewer_id String?
+  
+  /// Type of review (e.g., periodic, incident, escalation, external_audit).
+  review_type String
+  
+  /// Review methodology or process (e.g., manual audit, compliance workflow,
+  /// external review).
+  method String
+  
+  /// Current review status (scheduled, in_progress, completed, approved,
+  /// rejected, followup_required).
+  status String
+  
+  /// Summary outcome or result (e.g., compliant, noncompliant,
+  /// recommended_action).
+  outcome String?
+  
+  /// Detailed reviewer recommendations or follow-up actions.
+  recommendations String?
+  
+  /// Review completion timestamp.
+  reviewed_at DateTime?
+  
+  /// Reviewer notes or commentary.
+  comments String?
+  
+  /// Review record creation timestamp.
+  created_at DateTime
+  
+  /// Review record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp for the review record (audit recovery, not
+  /// physical delete).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  legalHold healthcare_platform_legal_holds? @relation(fields: [hold_id], references: [id], onDelete: Cascade)
+  riskAssessment healthcare_platform_risk_assessments? @relation(fields: [risk_assessment_id], references: [id], onDelete: Cascade)
+  reviewer healthcare_platform_user_org_assignments? @relation(fields: [reviewer_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_record_locks_of_set_by_user_id healthcare_platform_record_locks[] @relation("healthcare_platform_record_locks_of_set_by_user_id")
+  healthcare_platform_record_locks_of_released_by_user_id healthcare_platform_record_locks[] @relation("healthcare_platform_record_locks_of_released_by_user_id")
+  
+  @@index([hold_id])
+  @@index([risk_assessment_id])
+  
+  @@unique([organization_id, hold_id, risk_assessment_id, review_type, created_at], map: "healthcare_platform_compliance_reviews_organization_id_5abbe4d1")
+  @@index([created_at])
+  @@index([reviewer_id])
+}

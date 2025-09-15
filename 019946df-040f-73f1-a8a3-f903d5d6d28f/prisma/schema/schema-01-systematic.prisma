@@ -1,0 +1,265 @@
+/// Tenant organizations representing distinct enterprise customers with
+/// isolated data and configurations. Serves as the core multi-tenant entity
+/// governing data isolation and customization.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_tenants {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Unique tenant code used as business identifier for the organization.
+  code String
+  
+  /// Full name of the tenant organization.
+  name String
+  
+  /// Timestamp when the tenant was registered.
+  created_at DateTime
+  
+  /// Timestamp when the tenant last updated information.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp, null means active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  enterprise_lms_tenant_settings enterprise_lms_tenant_settings[]
+  enterprise_lms_audit_logs enterprise_lms_audit_logs[]
+  enterprise_lms_sessions enterprise_lms_sessions[]
+  enterprise_lms_systemadmin enterprise_lms_systemadmin[]
+  enterprise_lms_organizationadmin enterprise_lms_organizationadmin[]
+  enterprise_lms_departmentmanager enterprise_lms_departmentmanager[]
+  enterprise_lms_contentcreatorinstructor enterprise_lms_contentcreatorinstructor[]
+  enterprise_lms_corporatelearner enterprise_lms_corporatelearner[]
+  enterprise_lms_externallearner enterprise_lms_externallearner[]
+  enterprise_lms_guest enterprise_lms_guest[]
+  enterprise_lms_contents enterprise_lms_contents[]
+  enterprise_lms_learning_paths enterprise_lms_learning_paths[]
+  enterprise_lms_certifications enterprise_lms_certifications[]
+  enterprise_lms_competencies enterprise_lms_competencies[]
+  enterprise_lms_blended_learning_sessions enterprise_lms_blended_learning_sessions[]
+  enterprise_lms_assessments enterprise_lms_assessments[]
+  enterprise_lms_analytics_reports enterprise_lms_analytics_reports[]
+  enterprise_lms_forums enterprise_lms_forums[]
+  enterprise_lms_direct_messages enterprise_lms_direct_messages[]
+  enterprise_lms_virtual_classrooms enterprise_lms_virtual_classrooms[]
+  enterprise_lms_group_projects enterprise_lms_group_projects[]
+  enterprise_lms_announcements enterprise_lms_announcements[]
+  enterprise_lms_content_access_controls enterprise_lms_content_access_controls[]
+  enterprise_lms_compliance_records enterprise_lms_compliance_records[]
+  enterprise_lms_payment_transactions enterprise_lms_payment_transactions[]
+  enterprise_lms_notification_logs enterprise_lms_notification_logs[]
+  enterprise_lms_integration_settings enterprise_lms_integration_settings[]
+  enterprise_lms_performance_metrics enterprise_lms_performance_metrics[]
+  enterprise_lms_security_audit_logs enterprise_lms_security_audit_logs[]
+  
+  @@unique([code])
+  @@index([created_at, deleted_at])
+}
+
+/// Configuration and branding settings specific to each tenant organization.
+/// Includes branding, CSS overrides, custom domains, and localization.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_tenant_settings {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged tenant organization. {@link enterprise_lms_tenants.id}
+  enterprise_lms_tenant_id String
+  
+  /// URI to the tenant's custom branding logo image.
+  branding_logo_uri String?
+  
+  /// Primary branding color in HEX format.
+  branding_color_primary String?
+  
+  /// Secondary branding color in HEX format.
+  branding_color_secondary String?
+  
+  /// Custom domain name for the tenant organization.
+  custom_domain String?
+  
+  /// Raw CSS overrides applied for tenant-specific branding.
+  css_overrides String?
+  
+  /// Timestamp when the settings were created.
+  created_at DateTime
+  
+  /// Timestamp when the settings were last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [enterprise_lms_tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([enterprise_lms_tenant_id, custom_domain], map: "enterprise_lms_tenant_settings_enterprise_lms_tenant_i_d6701894")
+}
+
+/// Global system configuration settings affecting all tenants and
+/// platform-wide behavior. Includes feature flags, maintenance modes, and
+/// integrations.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_system_configurations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Configuration key identifier.
+  key String
+  
+  /// Serialized value of the configuration setting.
+  value String
+  
+  /// Description explaining the meaning and usage of this configuration.
+  description String?
+  
+  /// Timestamp when the configuration was created.
+  created_at DateTime
+  
+  /// Timestamp when the configuration was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  @@unique([key])
+}
+
+/// Audit logs capturing system-wide events and user activities for
+/// compliance and traceability. Supports multi-tenant event tracking with
+/// detailed metadata.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_audit_logs {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated tenant organization, if any. {@link enterprise_lms_tenants.id}
+  enterprise_lms_tenant_id String?
+  
+  /// Action performed, such as login, content_upload, enrollment.
+  action String
+  
+  /// Detailed description or metadata of the event.
+  description String?
+  
+  /// User who performed the action, if applicable.
+  user_id String?
+  
+  /// Timestamp when the event occurred.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants? @relation(fields: [enterprise_lms_tenant_id], references: [id], onDelete: Cascade)
+  
+  @@index([enterprise_lms_tenant_id, created_at], map: "enterprise_lms_audit_logs_enterprise_lms_tenant_id_cre_77a3d85a")
+}
+
+/// Tracks active user sessions for authentication, authorization, and audit.
+/// Includes session tokens, expiry, and device metadata.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_sessions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Tenant to which the session belongs. {@link enterprise_lms_tenants.id}
+  enterprise_lms_tenant_id String
+  
+  /// User who owns the session.
+  user_id String
+  
+  /// Secure opaque session token.
+  session_token String
+  
+  /// IP address of the client.
+  ip_address String?
+  
+  /// Device and browser information.
+  device_info String?
+  
+  /// Session creation timestamp.
+  created_at DateTime
+  
+  /// Session last updated timestamp.
+  updated_at DateTime
+  
+  /// Session expiry timestamp.
+  expires_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  tenant enterprise_lms_tenants @relation(fields: [enterprise_lms_tenant_id], references: [id], onDelete: Cascade)
+  user enterprise_lms_systemadmin @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  
+  @@unique([session_token])
+  @@index([enterprise_lms_tenant_id, user_id])
+}
+
+/// Role-based permission settings defining access rights for system roles.
+/// Enables granular control over operations and API authorization.
+///
+/// @namespace Systematic
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model enterprise_lms_role_permissions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// ID of the associated role.
+  role_id String
+  
+  /// Unique key identifying the permission.
+  permission_key String
+  
+  /// Human-readable description of the permission.
+  description String?
+  
+  /// Flag indicating if the permission is granted (true) or denied (false).
+  is_allowed Boolean
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  role enterprise_lms_systemadmin @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  
+  @@unique([role_id, permission_key])
+  @@index([role_id, permission_key, is_allowed], map: "enterprise_lms_role_permissions_role_id_permission_key_44a44a47")
+}

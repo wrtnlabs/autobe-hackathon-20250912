@@ -1,0 +1,490 @@
+/// Analytics dashboard definitions. Represents user- or organization-saved
+/// dashboard configurations for analytics. Defines layout, selected widgets,
+/// settings, and sharing (public, private, org, department). Users and
+/// departments are linked for access/ownership. Used to render web
+/// dashboards and store configurations over time.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_analytics_dashboards {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Dashboard owner's {@link healthcare_platform_user_org_assignments.id}.
+  owner_user_id String
+  
+  /// Organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Optional department's {@link healthcare_platform_departments.id} for
+  /// department-scoped dashboards.
+  department_id String?
+  
+  /// Dashboard title for display/search. User-friendly name.
+  title String
+  
+  /// Detailed description of dashboard purpose/configuration.
+  description String?
+  
+  /// Serialized dashboard widgets/layout/settings (JSON string).
+  config_json String
+  
+  /// Whether the dashboard is public to the organization/department or only to
+  /// the owner.
+  is_public Boolean
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  ownerUser healthcare_platform_user_org_assignments @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_dashboard_preferences healthcare_platform_dashboard_preferences[]
+  
+  @@index([department_id])
+  
+  @@unique([organization_id, title], map: "healthcare_platform_analytics_dashboards_organization__8d32bd4a")
+  @@index([owner_user_id, created_at], map: "healthcare_platform_analytics_dashboards_owner_user_id_43d37d43")
+  @@index([organization_id, department_id], map: "healthcare_platform_analytics_dashboards_organization__87536c5c")
+}
+
+/// Analytics report templates and saved report definitions. Used for
+/// building, customizing, and running parameterized
+/// organization/department/user-scoped analytics reports, including
+/// clinical, operational, and compliance dashboards. Includes search
+/// metadata and links to dashboard/catalogs.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_analytics_reports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// User's {@link healthcare_platform_user_org_assignments.id} who created
+  /// the report.
+  created_by_user_id String
+  
+  /// Organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Optional department's {@link healthcare_platform_departments.id} for
+  /// department-scoped reports.
+  department_id String?
+  
+  /// Report template name (unique per org).
+  name String
+  
+  /// Report description and usage context.
+  description String?
+  
+  /// Parameter/model/configuration for rendering this report (JSON).
+  template_config_json String
+  
+  /// Whether this template is currently active (available to users).
+  is_active Boolean
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  createdByUser healthcare_platform_user_org_assignments @relation(fields: [created_by_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  @@index([department_id])
+  
+  @@unique([organization_id, name])
+  @@index([created_by_user_id, created_at], map: "healthcare_platform_analytics_reports_created_by_user__16e82bf9")
+  @@index([organization_id, department_id], map: "healthcare_platform_analytics_reports_organization_id__d49a3ddd")
+}
+
+/// Saved preferences for dashboard settings per user per dashboard. Supports
+/// theme/layout/display customizations and last-view state for returning
+/// sessions. Used for restoring user context and personalization.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_dashboard_preferences {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Dashboard's {@link healthcare_platform_analytics_dashboards.id}.
+  dashboard_id String
+  
+  /// User's {@link healthcare_platform_user_org_assignments.id} who owns these
+  /// preferences.
+  user_id String
+  
+  /// Serialized preferences (theme, layout, filters, widget state, etc, JSON
+  /// string).
+  preferences_json String
+  
+  /// Most recent dashboard view date/time.
+  last_viewed_at DateTime?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  dashboard healthcare_platform_analytics_dashboards @relation(fields: [dashboard_id], references: [id], onDelete: Cascade)
+  user healthcare_platform_user_org_assignments @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([dashboard_id, user_id], map: "healthcare_platform_dashboard_preferences_dashboard_id_0de72034")
+  @@index([user_id, last_viewed_at], map: "healthcare_platform_dashboard_preferences_user_id_last_23dc0565")
+}
+
+/// Catalog of clinical decision support (CDS) logic rules. Each record
+/// represents a single best-practice, clinical alert, or guideline rule,
+/// supporting real-time patient safety and operational logic (e.g., drug
+/// interaction check, critical lab value alert, documentation prompt). Used
+/// at runtime for CDS execution and supports status/disabling.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_decision_support_rules {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning organization's {@link healthcare_platform_organizations.id} for
+  /// organization-specific rules.
+  organization_id String
+  
+  /// Unique code/identifier for this rule within the org.
+  rule_code String
+  
+  /// Name/title of decision support rule (user-friendly).
+  title String
+  
+  /// Detailed description of rule logic and intent.
+  description String?
+  
+  /// What system event or data change triggers this rule (e.g.,
+  /// 'medication_prescribed', 'lab_result_posted').
+  trigger_event String
+  
+  /// Serialized logic or expression for evaluation (JSON/DSL, never store code
+  /// here).
+  expression_json String
+  
+  /// Controls whether rule is currently being executed by CDS engine.
+  is_enabled Boolean
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_clinical_alerts healthcare_platform_clinical_alerts[]
+  
+  @@unique([organization_id, rule_code], map: "healthcare_platform_decision_support_rules_organizatio_32b99182")
+  @@index([organization_id, is_enabled], map: "healthcare_platform_decision_support_rules_organizatio_07e47702")
+}
+
+/// Generated clinical decision support (CDS) alerts, events, and
+/// notifications for patient care, compliance, or workflow outcomes. Tracks
+/// lifecycle (new, viewed, acknowledged, resolved), links to originating CDS
+/// rule and relevant user(s), supports alert assignment, status,
+/// acknowledgments, and timestamps. Used for patient safety and audit
+/// workflows.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_clinical_alerts {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Originating CDS rule's {@link
+  /// healthcare_platform_decision_support_rules.id}.
+  decision_support_rule_id String
+  
+  /// User's {@link healthcare_platform_user_org_assignments.id} who triggered
+  /// this alert or is responsible for response.
+  triggered_by_user_id String?
+  
+  /// Alert's organization {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Alert's department, if relevant, {@link
+  /// healthcare_platform_departments.id}.
+  department_id String?
+  
+  /// Type of alert/event (e.g., warning, error, recommendation, info,
+  /// compliance).
+  alert_type String
+  
+  /// Short summary of what this alert is about (may reference patient, event,
+  /// or process).
+  subject_summary String
+  
+  /// Detailed alert content/body/message.
+  detail String?
+  
+  /// Workflow state of this alert (e.g., new, viewed, acknowledged, resolved,
+  /// escalated).
+  status String
+  
+  /// Timestamp when user acknowledged this alert.
+  acknowledged_at DateTime?
+  
+  /// Timestamp alert was resolved/closed.
+  resolved_at DateTime?
+  
+  /// Alert creation timestamp.
+  created_at DateTime
+  
+  /// Last update.
+  updated_at DateTime
+  
+  /// Soft-deletion marker for alert archiving.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  decisionSupportRule healthcare_platform_decision_support_rules @relation(fields: [decision_support_rule_id], references: [id], onDelete: Cascade)
+  triggeredByUser healthcare_platform_user_org_assignments? @relation(fields: [triggered_by_user_id], references: [id], onDelete: Cascade)
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  @@index([decision_support_rule_id], map: "healthcare_platform_clinical_alerts_decision_support_r_9387abea")
+  @@index([department_id])
+  
+  @@index([organization_id, department_id, status], map: "healthcare_platform_clinical_alerts_organization_id_de_a4fe275e")
+  @@index([triggered_by_user_id, created_at], map: "healthcare_platform_clinical_alerts_triggered_by_user__73ca56ca")
+}
+
+/// Organization/cohort/department outcome metrics time-series registry.
+/// Captures outcome variable (name, configuration, cohort/department),
+/// timestamps, and metric value for targeted/benchmarking analytics and
+/// quality improvement. Used for longitudinal performance and quality
+/// tracking in outcomes dashboards.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_outcome_metrics {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Target department's {@link healthcare_platform_departments.id} (optional
+  /// for cross-department or org-level metrics).
+  department_id String?
+  
+  /// Outcome metric/variable name (e.g., readmission_rate, infection_rate).
+  metric_name String
+  
+  /// Outcome metric definition and inclusion rules.
+  description String?
+  
+  /// Serialized cohort inclusion definition (JSON or similar).
+  cohort_definition_json String
+  
+  /// Observed value for this metric and timepoint.
+  observed_value Float
+  
+  /// Timepoint this metric value was observed or recorded.
+  observed_at DateTime
+  
+  /// Creation timestamp for this record.
+  created_at DateTime
+  
+  /// Last update.
+  updated_at DateTime
+  
+  /// Soft delete marker for this row.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  
+  @@unique([organization_id, metric_name, observed_at], map: "healthcare_platform_outcome_metrics_organization_id_me_842e4d8b")
+  @@index([department_id, observed_at], map: "healthcare_platform_outcome_metrics_department_id_obse_051a3f99")
+}
+
+/// Reference table for analytic benchmarks and standard performance
+/// thresholds (e.g., national, regional, payer, or custom-defined). Used to
+/// normalize and compare outcome metrics/KPIs across organizations or time
+/// periods. Populated by admins or via integration for benchmarking
+/// dashboards. Typically referenced from outcome_metrics or KPI snapshots.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_benchmark_definitions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning organization's {@link healthcare_platform_organizations.id}, or
+  /// null if globally defined.
+  organization_id String?
+  
+  /// Short programmatic code for this benchmark (e.g., 'NAT_AVG_23').
+  benchmark_code String
+  
+  /// Human-friendly label for this benchmark (e.g., '2023 National Average').
+  label String
+  
+  /// Detailed description of what this benchmark represents, scenario, or data
+  /// source.
+  description String?
+  
+  /// Benchmark value (target or average).
+  value Float
+  
+  /// Measurement unit for normalization (e.g., percent, per_1000, score,
+  /// seconds).
+  unit String
+  
+  /// When this benchmark becomes active/valid.
+  effective_start_at DateTime
+  
+  /// When this benchmark is no longer valid.
+  effective_end_at DateTime?
+  
+  /// Creation timestamp.
+  created_at DateTime
+  
+  /// Last update timestamp.
+  updated_at DateTime
+  
+  /// Soft-deletion marker.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_kpi_snapshots healthcare_platform_kpi_snapshots[]
+  
+  @@unique([organization_id, benchmark_code], map: "healthcare_platform_benchmark_definitions_organization_8f458088")
+  @@index([label, effective_start_at], map: "healthcare_platform_benchmark_definitions_label_effect_1d4fcf1d")
+}
+
+/// Materialized time-series of KPI (key performance indicator) calculations
+/// per organization/department for analytics dashboards. Each record
+/// represents a computed value for a KPI at a given time, with
+/// configuration, reference/benchmark links, and metadata. Supports trend
+/// analysis and dashboard rendering.
+///
+/// @namespace AnalyticsDecisionSupport
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_kpi_snapshots {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Target department's {@link healthcare_platform_departments.id} (nullable
+  /// for organization-level KPIs).
+  department_id String?
+  
+  /// Reference's {@link healthcare_platform_benchmark_definitions.id}; the
+  /// benchmark to compare against (optional).
+  benchmark_id String?
+  
+  /// Programmatic name/identifier for the KPI (unique per org).
+  kpi_name String
+  
+  /// Display label for KPI (shown in dashboards).
+  label String
+  
+  /// KPI calculation logic/meaning.
+  description String?
+  
+  /// Serialized detail of calculation method, filter, cohort, and
+  /// normalization parameters (JSON string).
+  calculation_config_json String
+  
+  /// Observed KPI value at this timepoint.
+  value Float
+  
+  /// Timestamp this snapshot represents (may be start, end, or point in
+  /// reporting period).
+  recorded_at DateTime
+  
+  /// Row creation timestamp.
+  created_at DateTime
+  
+  /// Row last update timestamp.
+  updated_at DateTime
+  
+  /// Soft deletion timestamp.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  benchmark healthcare_platform_benchmark_definitions? @relation(fields: [benchmark_id], references: [id], onDelete: Cascade)
+  
+  @@index([benchmark_id])
+  
+  @@unique([organization_id, kpi_name, recorded_at], map: "healthcare_platform_kpi_snapshots_organization_id_kpi__8e3800b4")
+  @@index([department_id, recorded_at])
+}

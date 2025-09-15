@@ -1,0 +1,674 @@
+/// Central patient record entity representing the unique profile and
+/// clinical record anchor for a patient within the healthcare organization.
+/// This holds core patient metadata, life-cycle status, demographic data,
+/// and foreign references to the organization, department, and patient user.
+/// All EHR encounters, amendments, audit trails, and privacy controls hang
+/// off this entity. It is the root for longitudinal clinical history and
+/// compliance workflows. Searchable independently, supports soft-delete and
+/// privacy enforcement.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_patient_records {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged organization's {@link healthcare_platform_organizations.id}.
+  organization_id String
+  
+  /// Belonged department's {@link healthcare_platform_departments.id}.
+  department_id String?
+  
+  /// Belonged patient's user record {@link healthcare_platform_patients.id}.
+  patient_user_id String
+  
+  /// External or legacy medical record number for reconciliation with upstream
+  /// EMRs.
+  external_patient_number String?
+  
+  /// Patient's legal full name for search and display. Used for GIN search.
+  full_name String
+  
+  /// Date of birth of the patient.
+  dob DateTime
+  
+  /// Patient's gender identity (self-identified, can be blank or
+  /// 'undisclosed').
+  gender String?
+  
+  /// Business status (active, inactive, deceased, transferred, etc).
+  status String
+  
+  /// JSON blob for extensible structured demographic fields (race, ethnicity,
+  /// language, etc).
+  demographics_json String?
+  
+  /// Record creation datetime.
+  created_at DateTime
+  
+  /// Record update datetime.
+  updated_at DateTime
+  
+  /// Soft delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  organization healthcare_platform_organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  department healthcare_platform_departments? @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  patient healthcare_platform_patients @relation(fields: [patient_user_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_ehr_encounters healthcare_platform_ehr_encounters[]
+  healthcare_platform_record_amendments healthcare_platform_record_amendments[]
+  healthcare_platform_record_audit_trails healthcare_platform_record_audit_trails[]
+  healthcare_platform_legacy_ehr_imports healthcare_platform_legacy_ehr_imports[]
+  healthcare_platform_patient_privacy_flags healthcare_platform_patient_privacy_flags[]
+  healthcare_platform_record_locks healthcare_platform_record_locks[]
+  healthcare_platform_patient_consents healthcare_platform_patient_consents[]
+  
+  @@index([department_id])
+  
+  @@unique([patient_user_id])
+  @@index([organization_id, department_id], map: "healthcare_platform_patient_records_organization_id_de_23f97ace")
+  @@index([deleted_at])
+}
+
+/// Clinical care encounter events for a given patient record. This table
+/// captures each discrete clinical or administrative event: admission,
+/// consult, outpatient visit, telehealth, etc. Each encounter is linked to a
+/// patient record and supporting metadata fields, and independently audited
+/// for compliance. Allows direct search and filter. Entry point for attached
+/// clinical data, lab results, medical images, etc.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_ehr_encounters {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated patient record {@link healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// Primary provider's user id for this encounter {@link
+  /// healthcare_platform_medicaldoctors.id}.
+  provider_user_id String
+  
+  /// Type of the encounter (e.g., office_visit, inpatient_admission,
+  /// telemedicine, emergency, etc).
+  encounter_type String
+  
+  /// Datetime when encounter started.
+  encounter_start_at DateTime
+  
+  /// Datetime when encounter ended (or null if ongoing).
+  encounter_end_at DateTime?
+  
+  /// Status of the encounter (planned, active, completed, cancelled, etc).
+  status String
+  
+  /// Free text encounter summary for clinical documentation.
+  notes String?
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp (null if active).
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  providerUser healthcare_platform_medicaldoctors @relation(fields: [provider_user_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_ehr_versions healthcare_platform_ehr_versions[]
+  healthcare_platform_record_amendments healthcare_platform_record_amendments[]
+  healthcare_platform_medical_images healthcare_platform_medical_images[]
+  healthcare_platform_lab_results healthcare_platform_lab_results[]
+  healthcare_platform_vitals healthcare_platform_vitals[]
+  healthcare_platform_billing_invoices healthcare_platform_billing_invoices[]
+  
+  @@index([patient_record_id, encounter_type], map: "healthcare_platform_ehr_encounters_patient_record_id_e_e3a04906")
+  @@index([provider_user_id])
+  @@index([encounter_start_at])
+}
+
+/// Snapshot table holding all historical versions of a patient's EHR record
+/// at encounter level. Each EHR version captures a point-in-time clinical
+/// state for audit, compliance, and rollback. Append-only, created at each
+/// save or amendment. Includes composite foreign keys to parent encounter
+/// and submitter, and contains the full EHR JSON payload as submitted for
+/// clinical operations, audit, and regulatory review.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_ehr_versions {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent encounter's {@link healthcare_platform_ehr_encounters.id}.
+  ehr_encounter_id String
+  
+  /// User who submitted/created this version {@link
+  /// healthcare_platform_medicaldoctors.id}.
+  submitted_by_user_id String
+  
+  /// Sequence number for versioning within encounter.
+  version_number Int
+  
+  /// JSON payload of structured EHR content at this version (immutable).
+  snapshot_json String
+  
+  /// Reason or event triggering version update (e.g., correction, routine,
+  /// regulatory, patient request).
+  reason_for_update String?
+  
+  /// Version creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  ehrEncounter healthcare_platform_ehr_encounters @relation(fields: [ehr_encounter_id], references: [id], onDelete: Cascade)
+  submittedByUser healthcare_platform_medicaldoctors @relation(fields: [submitted_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([submitted_by_user_id])
+  
+  @@unique([ehr_encounter_id, version_number], map: "healthcare_platform_ehr_versions_ehr_encounter_id_vers_4383d662")
+}
+
+/// Append-only table capturing patient record amendments, corrections, or
+/// updates that require full audit and regulatory compliance. All proposed
+/// and approved changes are logged here, with actor, rationale, approval
+/// status, and direct linkage to record and/or encounter. Supports workflows
+/// for regulatory amendment, patient-initiated requests, clinical
+/// corrections, etc.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_record_amendments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Patient record being amended {@link
+  /// healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// User who submitted the amendment {@link healthcare_platform_nurses.id} or
+  /// similar role.
+  submitted_by_user_id String
+  
+  /// Reviewer/approver's user id, if required by workflow.
+  reviewed_by_user_id String?
+  
+  /// Targeted EHR encounter (if amendment is to a specific event) {@link
+  /// healthcare_platform_ehr_encounters.id}.
+  ehr_encounter_id String?
+  
+  /// Type of amendment (correction, patient_request, regulatory, etc).
+  amendment_type String
+  
+  /// Prior value (serialized JSON form, to support review/storage).
+  old_value_json String
+  
+  /// New value (after amendment).
+  new_value_json String
+  
+  /// Reason/justification submitted with amendment.
+  rationale String
+  
+  /// Approval status (pending, approved, rejected, null if not applicable).
+  approval_status String?
+  
+  /// Amendment created timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  submittedByUser healthcare_platform_nurses @relation(fields: [submitted_by_user_id], references: [id], onDelete: Cascade)
+  reviewedByUser healthcare_platform_departmentheads? @relation(fields: [reviewed_by_user_id], references: [id], onDelete: Cascade)
+  ehrEncounter healthcare_platform_ehr_encounters? @relation(fields: [ehr_encounter_id], references: [id], onDelete: Cascade)
+  
+  @@index([submitted_by_user_id])
+  @@index([reviewed_by_user_id])
+  @@index([ehr_encounter_id])
+  
+  @@index([patient_record_id, amendment_type], map: "healthcare_platform_record_amendments_patient_record_i_b97b05ef")
+}
+
+/// Immutable audit log table recording every user or system action on
+/// patient records and EHRs. Provides a tamper-evident record for regulatory
+/// compliance, security, and medical-legal evidence. Captures the actor,
+/// timestamp, action, before/after state, request details, and event
+/// context. Used for investigation and compliance reporting.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_record_audit_trails {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Patient record for which event is audited {@link
+  /// healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// Actor user id (may be care team or admin user) for this action.
+  actor_user_id String
+  
+  /// Action performed (create, update, delete, access, lock, unlock,
+  /// emergency_access_override, etc).
+  audit_action String
+  
+  /// JSON context for additional event details (e.g., client device info,
+  /// session, location).
+  event_context_json String?
+  
+  /// Serialized form of entity prior to this event.
+  before_state_json String?
+  
+  /// Serialized after-event state, if updated.
+  after_state_json String?
+  
+  /// User/system provided justification or trigger, if supplied.
+  request_reason String?
+  
+  /// Audit event timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  actorUser healthcare_platform_medicaldoctors @relation(fields: [actor_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([patient_record_id, audit_action], map: "healthcare_platform_record_audit_trails_patient_record_2a465245")
+  @@index([actor_user_id])
+}
+
+/// Support table for legacy EHR/EPR (electronic medical record) data
+/// imported from upstream/legacy EMR solutions. Serves as a cold archive;
+/// not managed directly through APIs, but needed for historical
+/// clinical/legal access. Links to patient record, stores original
+/// identifiers, import timestamp, and raw EHR JSON. Used for compliance,
+/// investigation, and data mapping but not for active workflows. Subsidiary
+/// only.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_legacy_ehr_imports {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning patient record's {@link healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// Source system/provider for legacy data (e.g., "Epic", "Cerner").
+  legacy_system_name String
+  
+  /// Original id from source EHR (for mapping/reference).
+  legacy_ehr_id String
+  
+  /// Original EHR JSON (read-only, archival).
+  raw_ehr_json String
+  
+  /// Import timestamp.
+  imported_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  
+  @@index([patient_record_id])
+  
+  @@index([legacy_system_name])
+}
+
+/// Stores metadata and references to medical images (e.g., DICOM series)
+/// associated with an EHR encounter/event. Each record points to storage
+/// URI, basic image metadata, linked patient and EHR encounter ids, with
+/// upload/creation provenance for clinical and audit workflows. Critical for
+/// radiology, imaging management, and regulatory retention.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_medical_images {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning EHR encounter's {@link healthcare_platform_ehr_encounters.id}.
+  ehr_encounter_id String
+  
+  /// User (typically technician) who uploaded image record.
+  uploaded_by_user_id String
+  
+  /// Type of medical image (DICOM, JPEG, PNG, etc).
+  image_type String
+  
+  /// Storage URI of image file in secure system.
+  image_uri String
+  
+  /// Serialized metadata (e.g., series, study_uid, acquisition_params).
+  image_metadata_json String?
+  
+  /// Image upload timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  ehrEncounter healthcare_platform_ehr_encounters @relation(fields: [ehr_encounter_id], references: [id], onDelete: Cascade)
+  uploadedByUser healthcare_platform_technicians @relation(fields: [uploaded_by_user_id], references: [id], onDelete: Cascade)
+  
+  healthcare_platform_image_annotations healthcare_platform_image_annotations[]
+  
+  @@index([uploaded_by_user_id])
+  
+  @@index([ehr_encounter_id, image_type], map: "healthcare_platform_medical_images_ehr_encounter_id_im_a7868bb0")
+}
+
+/// Subsidiary table for user or AI-generated annotations on medical images.
+/// Each annotation references a specific image, annotation text or
+/// measurement, and the user who authored it. Serves radiology, AI
+/// diagnostics, and audit traceability needs. Not standalone business
+/// entity; governed via parent image audit.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_image_annotations {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Associated image record {@link healthcare_platform_medical_images.id}.
+  medical_image_id String
+  
+  /// Who created/attached this annotation.
+  author_user_id String
+  
+  /// Annotation free-text or label (radiology description, measurement, or AI
+  /// note).
+  annotation_text String
+  
+  /// Annotation creation datetime.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  medicalImage healthcare_platform_medical_images @relation(fields: [medical_image_id], references: [id], onDelete: Cascade)
+  authorUser healthcare_platform_technicians @relation(fields: [author_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([author_user_id])
+  
+  @@index([medical_image_id])
+}
+
+/// Primary table for storing clinical laboratory results belonging to a
+/// given EHR encounter (e.g., blood test, result panels, PCRs). Each result
+/// is linked to an encounter and reporting lab integration. Full JSON
+/// payload captured, plus reporting status and clinical alert indicators.
+/// Key business entity for longitudinal data analysis and compliance
+/// reporting.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_lab_results {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged encounter's {@link healthcare_platform_ehr_encounters.id}.
+  ehr_encounter_id String
+  
+  /// Reporting lab integration ({@link
+  /// healthcare_platform_lab_integrations.id}).
+  lab_integration_id String
+  
+  /// Name of test/panel performed.
+  test_name String
+  
+  /// Serialized (JSON) value of result or panel (machine and units).
+  test_result_value_json String
+  
+  /// Clinical flag (normal, abnormal, critical, corrected, etc.).
+  result_flag String
+  
+  /// Datetime when result was officially resulted on system.
+  resulted_at DateTime
+  
+  /// Status (pending, completed, revised, cancelled).
+  status String
+  
+  /// Lab result record creation timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  ehrEncounter healthcare_platform_ehr_encounters @relation(fields: [ehr_encounter_id], references: [id], onDelete: Cascade)
+  labIntegration healthcare_platform_lab_integrations @relation(fields: [lab_integration_id], references: [id], onDelete: Cascade)
+  
+  @@index([lab_integration_id])
+  
+  @@index([ehr_encounter_id, test_name])
+}
+
+/// Primary table for discrete patient vitals recorded during EHR encounters,
+/// e.g., temperature, pulse, respiratory rate, blood pressure, etc. Allows
+/// for high-frequency tracked data and enables analytic/alert capabilities.
+/// Each entry references encounter and submitting user. Designed for fast
+/// independent search, longitudinal analytics, and trend workflows.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_vitals {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Owning encounter's {@link healthcare_platform_ehr_encounters.id}.
+  ehr_encounter_id String
+  
+  /// User who recorded this vital sign measurement.
+  recorded_by_user_id String
+  
+  /// Vital sign type (heart_rate, temp_c, bp_systolic, bp_diastolic, etc).
+  vital_type String
+  
+  /// Value for the vital sign.
+  vital_value Float
+  
+  /// Units for the vital sign (e.g., bpm, C, mmHg).
+  unit String
+  
+  /// Datetime when measured.
+  measured_at DateTime
+  
+  /// Measurement created timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  ehrEncounter healthcare_platform_ehr_encounters @relation(fields: [ehr_encounter_id], references: [id], onDelete: Cascade)
+  recordedByUser healthcare_platform_nurses @relation(fields: [recorded_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([recorded_by_user_id])
+  
+  @@index([ehr_encounter_id, vital_type])
+}
+
+/// Subsidiary table for patient-level privacy and restriction enforcement.
+/// Flags include do_not_contact, do_not_share, sensitive, etc. Not
+/// independently managed; supporting data for access control and review
+/// processes. Linked to patient record and optionally to reason or user who
+/// enabled the flag.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_patient_privacy_flags {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belongs to patient record {@link healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// User who set/approved the flag (admin, privacy officer, etc).
+  set_by_user_id String?
+  
+  /// Type of flag (do_not_share, sensitive, etc).
+  privacy_flag_type String
+  
+  /// Reason for flag setting.
+  rationale String?
+  
+  /// Flag set timestamp.
+  created_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  setByUser healthcare_platform_organizationadmins? @relation(fields: [set_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([set_by_user_id])
+  
+  @@index([patient_record_id, privacy_flag_type], map: "healthcare_platform_patient_privacy_flags_patient_reco_488066d0")
+}
+
+/// Subsidiary table for record-level holds, locks, or restrictions (legal,
+/// regulatory, audit investigation, etc). Linked to patient record and
+/// referencing the user/authority imposing and releasing the lock. Each
+/// entry is append-only; supports regulatory disaster recovery and legal
+/// workflows. Not a direct API business entity.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_record_locks {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// The record under hold/lock {@link healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// User or authority imposing the lock.
+  set_by_user_id String?
+  
+  /// User or authority releasing/removing the lock.
+  released_by_user_id String?
+  
+  /// Type of lock/hold (legal, audit, pended, regulatory).
+  lock_type String
+  
+  /// Explanation/purpose for lock placement.
+  lock_reason String?
+  
+  /// Lock timestamp.
+  locked_at DateTime
+  
+  /// Release timestamp (null if active).
+  released_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  setByUser healthcare_platform_compliance_reviews? @relation("healthcare_platform_record_locks_of_set_by_user_id", fields: [set_by_user_id], references: [id], onDelete: Cascade)
+  releasedByUser healthcare_platform_compliance_reviews? @relation("healthcare_platform_record_locks_of_released_by_user_id", fields: [released_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([set_by_user_id])
+  @@index([released_by_user_id])
+  
+  @@index([patient_record_id, lock_type], map: "healthcare_platform_record_locks_patient_record_id_loc_cc9d3920")
+}
+
+/// Patient consent/entity logging table for all issued, updated, or revoked
+/// consent statements. Each consent record links to patient record,
+/// describing type of consent (treatment, HIPAA, research, sharing, etc),
+/// key dates (granted, revoked), scope, and reference to user obtaining or
+/// witnessing consent. Provides full regulatory audit of patient privacy and
+/// data rights across the record lifecycle. May be restored or queried
+/// independently for legal or workflow need.
+///
+/// @namespace PatientRecords
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model healthcare_platform_patient_consents {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Parent patient record {@link healthcare_platform_patient_records.id}.
+  patient_record_id String
+  
+  /// User obtaining/witnessing consent (admin, staff, etc).
+  obtained_by_user_id String?
+  
+  /// Type of consent (treatment, HIPAA, research, data_sharing, etc).
+  consent_type String
+  
+  /// Scope/coverage of this consent (clinical, legal, research, data_sharing,
+  /// etc).
+  scope String
+  
+  /// Datetime when consent was granted.
+  granted_at DateTime
+  
+  /// Datetime consent was revoked, if rescinded.
+  revoked_at DateTime?
+  
+  /// Explanation or patient-supplied rationale.
+  description_text String?
+  
+  //----
+  // RELATIONS
+  //----
+  patientRecord healthcare_platform_patient_records @relation(fields: [patient_record_id], references: [id], onDelete: Cascade)
+  obtainedByUser healthcare_platform_organizationadmins? @relation(fields: [obtained_by_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([obtained_by_user_id])
+  
+  @@unique([patient_record_id, consent_type], map: "healthcare_platform_patient_consents_patient_record_id_20ffbf60")
+  @@index([granted_at])
+}

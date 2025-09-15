@@ -1,0 +1,91 @@
+/// Table representing user following relationships in the Recipe Sharing
+/// platform social domain. Each record denotes a follower-followee
+/// connection between two users. This model references existing user tables
+/// for follower and followee identities. Supports soft delete and auditing
+/// with timestamps.
+///
+/// @namespace Social
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_user_followers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// ID of the user who is the follower. References
+  /// recipe_sharing_regularusers.id or recipe_sharing_premiumusers.id or
+  /// recipe_sharing_moderators.id.
+  follower_user_id String
+  
+  /// ID of the user being followed. References recipe_sharing_regularusers.id
+  /// or recipe_sharing_premiumusers.id or recipe_sharing_moderators.id.
+  followee_user_id String
+  
+  /// Timestamp when the following relationship was created.
+  created_at DateTime
+  
+  /// Timestamp when the following relationship was last updated.
+  updated_at DateTime
+  
+  /// Timestamp indicating soft deletion of the following relationship.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  followerUser recipe_sharing_regularusers @relation("recipe_sharing_user_followers_of_follower_user_id", fields: [follower_user_id], references: [id], onDelete: Cascade)
+  followeeUser recipe_sharing_regularusers @relation("recipe_sharing_user_followers_of_followee_user_id", fields: [followee_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([followee_user_id])
+  
+  @@unique([follower_user_id, followee_user_id], map: "recipe_sharing_user_followers_follower_user_id_followe_0f858118")
+  @@index([created_at, followee_user_id])
+}
+
+/// Stores personalized feed entries for users in the Recipe Sharing
+/// platform. This table contains references to the user, recipe, and
+/// originator of the recipe (usually the recipe creator), enabling dynamic
+/// feed content delivery. Timestamps support feed generation and
+/// maintenance.
+///
+/// @namespace Social
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model recipe_sharing_personalized_feeds {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// ID of the user owning the personalized feed entry. References
+  /// recipe_sharing_regularusers.id or recipe_sharing_premiumusers.id.
+  user_id String
+  
+  /// ID of the recipe shown in the personalized feed. References
+  /// recipe_sharing_recipes.id.
+  recipe_id String
+  
+  /// ID of the user who created the recipe shown in the feed. References
+  /// recipe_sharing_regularusers.id or recipe_sharing_premiumusers.id.
+  originator_user_id String
+  
+  /// Timestamp when the feed entry was created.
+  created_at DateTime
+  
+  /// Timestamp when the feed entry was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user recipe_sharing_regularusers @relation("recipe_sharing_personalized_feeds_of_user_id", fields: [user_id], references: [id], onDelete: Cascade)
+  recipe recipe_sharing_recipes @relation(fields: [recipe_id], references: [id], onDelete: Cascade)
+  originatorUser recipe_sharing_regularusers @relation("recipe_sharing_personalized_feeds_of_originator_user_id", fields: [originator_user_id], references: [id], onDelete: Cascade)
+  
+  @@index([recipe_id])
+  @@index([originator_user_id])
+  
+  @@unique([user_id, recipe_id])
+  @@index([created_at, user_id])
+}

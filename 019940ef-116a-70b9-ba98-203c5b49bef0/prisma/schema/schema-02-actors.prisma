@@ -1,0 +1,89 @@
+/// Employee identity and authentication information for the Job Performance
+/// Evaluation service. Includes email, password hash for login, personal
+/// name, and temporal audit fields. Unique email ensures no duplicates. Soft
+/// delete support via deleted_at to enable account recovery or deactivation.
+/// This table represents primary business entity for employees accessing the
+/// evaluation system.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_employees {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Employee's unique email address used for login and notifications.
+  email String
+  
+  /// Hashed password for authentication. Never store plaintext passwords.
+  password_hash String
+  
+  /// Employee's full name.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Timestamp when record was soft deleted, NULL if active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  job_performance_eval_self_evaluations job_performance_eval_self_evaluations[]
+  job_performance_eval_manager_evaluations job_performance_eval_manager_evaluations[]
+  job_performance_eval_employee_comments job_performance_eval_employee_comments[]
+  job_performance_eval_evaluation_snapshots job_performance_eval_evaluation_snapshots[]
+  
+  @@unique([email])
+  @@index([created_at])
+}
+
+/// Manager identity and authentication information for the Job Performance
+/// Evaluation service. Includes email, password hash for login, full name,
+/// and temporal audit fields. Unique email ensures distinct manager
+/// accounts. Supports soft delete with deleted_at. This table is a primary
+/// business entity for manager users who supervise employees.
+///
+/// @namespace Actors
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_managers {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Manager's unique email address used for login and notifications.
+  email String
+  
+  /// Hashed password for authentication. Passwords are never stored in
+  /// plaintext.
+  password_hash String
+  
+  /// Manager's full name.
+  name String
+  
+  /// Record creation timestamp.
+  created_at DateTime
+  
+  /// Record last update timestamp.
+  updated_at DateTime
+  
+  /// Soft delete timestamp; if null, record is active.
+  deleted_at DateTime?
+  
+  //----
+  // RELATIONS
+  //----
+  job_performance_eval_manager_evaluations job_performance_eval_manager_evaluations[]
+  job_performance_eval_manager_comments job_performance_eval_manager_comments[]
+  
+  @@unique([email])
+  @@index([created_at])
+}

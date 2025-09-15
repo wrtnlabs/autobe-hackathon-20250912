@@ -1,0 +1,85 @@
+/// Employee comments on their own performance evaluations, capturing
+/// qualitative feedback distinct from numeric scores. Linked to the employee
+/// making the comment and to the evaluation cycle. Provides contextual
+/// insights into employee perceptions and subjective assessment. Includes
+/// timestamps for creation and update tracking. This table is a primary
+/// business entity for independent CRUD operations on employee comments.
+///
+/// @namespace Comments
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_employee_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Belonged employee who authored the comment. {@link
+  /// job_performance_eval_employees.id}.
+  employee_id String
+  
+  /// Related evaluation cycle of the comment. {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// Content of the employee's comment on their evaluation.
+  comment String
+  
+  /// Timestamp of when the comment was created.
+  created_at DateTime
+  
+  /// Timestamp of when the comment was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  employee job_performance_eval_employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  
+  @@index([employee_id, created_at], map: "job_performance_eval_employee_comments_employee_id_cre_ab4c98d9")
+  @@index([evaluation_cycle_id, created_at], map: "job_performance_eval_employee_comments_evaluation_cycl_16e8d7ae")
+}
+
+/// Manager comments on employee performance evaluations, providing
+/// qualitative feedback separate from numeric evaluation scores. Linked to
+/// the manager who authored the comment and the specific evaluation cycle.
+/// Enables managerial insights and contextual remarks. Includes creation and
+/// update timestamps for audit and tracking. This table is a primary
+/// business entity allowing independent management of manager comments.
+///
+/// @namespace Comments
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model job_performance_eval_manager_comments {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Manager who authored the comment. {@link
+  /// job_performance_eval_managers.id}.
+  manager_id String
+  
+  /// Linked evaluation cycle for the comment. {@link
+  /// job_performance_eval_evaluation_cycles.id}.
+  evaluation_cycle_id String
+  
+  /// Content of the manager's comment on the employee's evaluation.
+  comment String
+  
+  /// Timestamp marking when the comment was created.
+  created_at DateTime
+  
+  /// Timestamp marking last update time of the comment.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  manager job_performance_eval_managers @relation(fields: [manager_id], references: [id], onDelete: Cascade)
+  evaluationCycle job_performance_eval_evaluation_cycles @relation(fields: [evaluation_cycle_id], references: [id], onDelete: Cascade)
+  
+  @@index([manager_id, created_at])
+  @@index([evaluation_cycle_id, created_at], map: "job_performance_eval_manager_comments_evaluation_cycle_f51caaf2")
+}

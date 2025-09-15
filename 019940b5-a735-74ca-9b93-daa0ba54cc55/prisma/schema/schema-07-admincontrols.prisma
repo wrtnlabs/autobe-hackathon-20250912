@@ -1,0 +1,44 @@
+/// Event organizer requests submitted by regular users seeking elevated
+/// organizer privileges. This table records the requesting user's ID,
+/// current status of the request (pending, approved, rejected), optional
+/// reason provided by the user, optional admin comments for approvals or
+/// rejections, and timestamps for creation and last update. This entity is
+/// crucial for admin workflows managing organizer approvals.
+///
+/// @namespace AdminControls
+/// @author AutoBE - https://github.com/wrtnlabs/autobe
+model event_registration_organizer_requests {
+  //----
+  // COLUMNS
+  //----
+  /// Primary Key.
+  id String @id
+  
+  /// Requesting user's {@link event_registration_regular_users.id}.
+  user_id String
+  
+  /// Current status of the organizer request: 'pending', 'approved', or
+  /// 'rejected'.
+  status String
+  
+  /// Optional reason provided by the user for requesting organizer status.
+  reason String?
+  
+  /// Optional admin comment on the request, e.g., reasons for approval or
+  /// rejection.
+  admin_comment String?
+  
+  /// Timestamp when the request was created.
+  created_at DateTime
+  
+  /// Timestamp when the request was last updated.
+  updated_at DateTime
+  
+  //----
+  // RELATIONS
+  //----
+  user event_registration_regular_users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([user_id])
+  @@index([status])
+}
